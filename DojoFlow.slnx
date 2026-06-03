@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/ADRs/">
+    <File Path="ADR-01-Carlos-Llanes.md" />
+  </Folder>
+  <Project Path="DojoFlow.API/DojoFlow.API.csproj" />
+  <Project Path="DojoFlow.Application/DojoFlow.Application.csproj" />
+  <Project Path="DojoFlow.Domain/DojoFlow.Domain.csproj" />
+  <Project Path="DojoFlow.Infraestructure/DojoFlow.Infrastructure.csproj" />
+</Solution>

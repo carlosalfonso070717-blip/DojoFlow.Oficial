@@ -1,0 +1,8 @@
+POST http://localhost:5244/api/Alumnos
+Content-Type: application/json
+
+{
+  "nombre": "Carlos",
+  "apellido": "Llanes",
+  "telefono": "9991234567"
+}
