@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/ADRs/">
-    <File Path="ADR-01-Carlos-Llanes.md" />
+    <File Path="ADRs/ADR-01-Carlos-Llanes.md" />
   </Folder>
   <Project Path="DojoFlow.API/DojoFlow.API.csproj" />
   <Project Path="DojoFlow.Application/DojoFlow.Application.csproj" />
