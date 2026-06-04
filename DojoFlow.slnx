@@ -3,10 +3,10 @@
     <File Path="ADRs/ADR-01-Carlos-Llanes.md" />
   </Folder>
   <Folder Name="/Arq_Views/">
-    <File Path="../../../Downloads/VistaDesarrollo.png" />
-    <File Path="../../../Downloads/VistaDespliegue.png" />
-    <File Path="../../../Downloads/VistaLogica.png" />
-    <File Path="../../../Downloads/VistaProcesos.png" />
+    <File Path="Arq_Views/VistaDesarrollo.png" />
+    <File Path="Arq_Views/VistaDespliegue.png" />
+    <File Path="Arq_Views/VistaLogica.png" />
+    <File Path="Arq_Views/VistaProcesos.png" />
   </Folder>
   <Project Path="DojoFlow.API/DojoFlow.API.csproj" />
   <Project Path="DojoFlow.Application/DojoFlow.Application.csproj" />
