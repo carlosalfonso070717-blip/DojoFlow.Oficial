@@ -3,7 +3,7 @@
 | Campo  | Valor |
 |--------|-------|
 | Autor  | Carlos Llanes |
-| Fecha  | 17/07/2007 |
+| Fecha  | 15/05/2007 |
 | Estado | `Propuesto`|
 
 ---
