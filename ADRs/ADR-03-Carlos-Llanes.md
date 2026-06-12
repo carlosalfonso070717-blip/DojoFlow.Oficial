@@ -43,6 +43,9 @@ En Dominio, las reglas de quién puede o no entrenar deben ser independientes de
 **Limitación Técnica:** El inicio del proyecto requiere crear más archivos y carpetas para separar los puertos de los adaptadores.
 **Deuda o riesgo:** Existe el riesgo de aumentar la complejidad si no se respeta la jerarquía de las capas desde el primer mes de desarrollo del proyecto.
 
+## Declaración de IA
+Para el desarrollo de esta documentación ADR no utilicé ningún agente de IA
+
 ## Diagrama
 
 <img width="678" height="499" alt="image" src="https://github.com/user-attachments/assets/0bd321a7-6b0a-4684-8acf-c69838f16b80" />
