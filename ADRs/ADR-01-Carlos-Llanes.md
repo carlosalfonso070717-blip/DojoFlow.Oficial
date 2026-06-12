@@ -45,5 +45,6 @@ En Dominio, las reglas de quién puede o no entrenar deben ser independientes de
 
 ## Diagrama
 
-<img width="1280" height="960" alt="WhatsApp Image 2026-05-13 at 8 10 09 PM" src="https://github.com/user-attachments/assets/728985d8-bb4e-4d9b-9a69-6669f87cfd2e" />
+<img width="1600" height="1200" alt="WhatsApp Image 2026-06-11 at 9 50 40 PM" src="https://github.com/user-attachments/assets/b9b16e09-655c-4425-9f67-3be3f6885dad" />
+
 
