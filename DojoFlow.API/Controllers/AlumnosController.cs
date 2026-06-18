@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using DojoFlow.Application.UseCases.Alumnos;
 
 namespace DojoFlow.API.Controllers
 {
@@ -7,35 +6,25 @@ namespace DojoFlow.API.Controllers
     [Route("api/[controller]")]
     public class AlumnosController : ControllerBase
     {
-        private readonly RegistrarAlumnoUseCase _registrarAlumnoUseCase;
-
-        // Inyectamos nuestro caso de uso
-        public AlumnosController(RegistrarAlumnoUseCase registrarAlumnoUseCase)
+        // Este endpoint será llamado por la tablet de recepción para ver a los alumnos
+        [HttpGet]
+        public IActionResult GetAlumnos()
         {
-            _registrarAlumnoUseCase = registrarAlumnoUseCase;
-        }
+            var alumnos = new[] {
+                new { Id = 1, Nombre = "Carlos Llanes", Peso = "77kg", Disciplina = "MMA", Nivel = "Pro", Estatus = "Activo" },
+                new { Id = 2, Nombre = "Alex Pereira", Peso = "93kg", Disciplina = "Kickboxing", Nivel = "Avanzado", Estatus = "Activo" },
+                new { Id = 3, Nombre = "Islam Makhachev", Peso = "70kg", Disciplina = "Sambo / Grappling", Nivel = "Pro", Estatus = "Activo" },
+                new { Id = 4, Nombre = "Max Holloway", Peso = "65kg", Disciplina = "Boxeo", Nivel = "Intermedio", Estatus = "En recuperación" }
+            };
 
+            return Ok(alumnos);
+        }
+      // Este endpoint será usado por el coach para dar de alta a un nuevo peleador
         [HttpPost]
-        public async Task<IActionResult> Registrar([FromBody] RegistrarAlumnoRequest request)
+        public IActionResult RegistrarAlumno([FromBody] object nuevoAlumno)
         {
-            try
-            {
-                // Ejecutamos la lógica que está en la capa de Aplicación
-                var id = await _registrarAlumnoUseCase.EjecutarAsync(request.Nombre, request.Apellido, request.Telefono);
-                return Ok(new { Mensaje = "Alumno registrado con éxito en DojoFlow", Id = id });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { Error = ex.Message });
-            }
+            // Más adelante aquí inyectaremos tu RegistrarAlumnoUseCase real
+            return StatusCode(201, new { Mensaje = "Peleador registrado correctamente en el tatami de Dominio Combat Club" });
         }
-    }
-
-    // DTO: Una clase simple para recibir los datos desde internet sin exponer el Dominio
-    public class RegistrarAlumnoRequest
-    {
-        public string Nombre { get; set; } = string.Empty;
-        public string Apellido { get; set; } = string.Empty;
-        public string Telefono { get; set; } = string.Empty;
     }
 }
