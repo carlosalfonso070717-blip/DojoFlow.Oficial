@@ -4,31 +4,35 @@ using DojoFlow.Infrastructure.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// SERVICIOS DEL CONTENEDOR
 builder.Services.AddControllers();
 
-// 1. CONFIGURACIÓN DE SWAGGER (Reemplaza a AddOpenApi)
+// CONFIGURACIÓN DE SWAGGER
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 2. TUS INYECCIONES DE DEPENDENCIAS (Intactas para que nada se rompa)
-// Le decimos al sistema: "Cuando alguien pida un IAlumnoRepository, dale el InMemoryAlumnoRepository"
+// INYECCIONES DE DEPENDENCIAS
 builder.Services.AddSingleton<IAlumnoRepository, InMemoryAlumnoRepository>();
-
-// Registramos el Caso de Uso para que el Controlador pueda usarlo
 builder.Services.AddScoped<RegistrarAlumnoUseCase>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// PIPELINE DE SOLICITUDES HTTP Y PERSONALIZACIÓN VISUAL
 if (app.Environment.IsDevelopment())
 {
-    // 3. ACTIVAR LA INTERFAZ GRÁFICA DE SWAGGER (Reemplaza a MapOpenApi)
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+       
+        c.InjectStylesheet("/swagger-ui/custom.css");
+       
+        c.DocumentTitle = "API Dominio Combat Club";
+    });
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseAuthorization();
 

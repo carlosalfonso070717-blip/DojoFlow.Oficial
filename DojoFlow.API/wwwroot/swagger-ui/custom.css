@@ -1,0 +1,47 @@
+﻿/*Fondo de la barra superior en negro puro con borde naranja inspirado en tu logo */
+.swagger-ui .topbar {
+    background-color: #000000;
+    border-bottom: 4px solid #F26B21;
+}
+
+    /* Reemplazar el logo genérico de Swagger por el logo físico del Dojo */
+    /* 1. Ocultamos CUALQUIER rastro del logo viejo de Swagger (sea imagen o vector) */
+    .swagger-ui .topbar .topbar-wrapper a svg,
+    .swagger-ui .topbar .topbar-wrapper a img {
+        display: none !important;
+    }
+
+    /* 2. Le ponemos tu logo físico directamente a la caja principal */
+    /* 2. Le ponemos tu logo físico directamente a la caja principal */
+    .swagger-ui .topbar .topbar-wrapper a {
+        background-image: url('logo.jpg') !important;
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+        /* Obligamos a Swagger a respetar el cuadrado perfecto */
+        width: 60px !important;
+        height: 60px !important;
+        min-width: 60px !important;
+        max-width: 60px !important;
+        display: block !important;
+        border-radius: 50% !important;
+        text-indent: -9999px !important;
+        overflow: hidden !important;
+    }
+
+/*Colorear el título del documento en Naranja */
+.swagger-ui .info .title {
+    color: #F26B21;
+    font-weight: bold;
+}
+
+/*Cambiar los botones genéricos (GET / POST) a los colores del club */
+.swagger-ui .opblock.opblock-get .opblock-summary-method {
+    background: #F26B21;
+}
+
+.swagger-ui .opblock.opblock-post .opblock-summary-method {
+    background: #000000;
+    border: 1px solid #F26B21;
+    color: #F26B21;
+}   
