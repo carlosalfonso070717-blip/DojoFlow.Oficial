@@ -47,3 +47,7 @@ REST utiliza el protocolo HTTP y verbos estándar (GET, POST, PUT, DELETE), lo c
 ## Diagrama
 
 <img width="665" height="152" alt="image" src="https://github.com/user-attachments/assets/555fee02-829b-4087-aff5-5a85f473191b" />
+
+## Declaración de Uso de IA
+
+En el desarrollo de esta etapa del proyecto el uso de IA se limitó a apoyo con el código y estilos, la lógica funcional fue pensada por mí.
