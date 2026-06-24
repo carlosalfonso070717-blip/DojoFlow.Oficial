@@ -12,7 +12,9 @@ namespace DojoFlow.Domain.Entities
         public DateTime FechaInscripcion { get; private set; }
         public bool Activo { get; private set; }
 
-        // Ahora es una lista para admitir múltiples disciplinas a la vez
+        // ID de 5 dígitos generado automáticamente para el kiosco
+        public int ClaveKiosco { get; private set; }
+
         public List<string> Disciplinas { get; private set; } = new();
 
         private Alumno() { }
@@ -20,23 +22,26 @@ namespace DojoFlow.Domain.Entities
         public void Desactivar() => Activo = false;
         public void Activar() => Activo = true;
 
-        // --- PATRÓN BUILDER ADAPTADO ---
         public class Builder
         {
             private readonly Alumno _alumno = new Alumno();
+            // Usamos Random para generar el PIN
+            private static readonly Random _random = new Random();
 
             public Builder()
             {
                 _alumno.Id = Guid.NewGuid();
                 _alumno.FechaInscripcion = DateTime.UtcNow;
                 _alumno.Activo = true;
+
+                // AUTOGENERAMOS LA CLAVE: Un número entre 10000 y 99999
+                _alumno.ClaveKiosco = _random.Next(10000, 100000);
             }
 
             public Builder ConNombre(string nombre) { _alumno.Nombre = nombre; return this; }
             public Builder ConApellido(string apellido) { _alumno.Apellido = apellido; return this; }
             public Builder ConTelefono(string telefono) { _alumno.Telefono = telefono; return this; }
 
-            // Reemplaza el método viejo por este que acepta la lista completa
             public Builder ConDisciplinas(List<string> disciplinas)
             {
                 _alumno.Disciplinas = disciplinas ?? new List<string>();
