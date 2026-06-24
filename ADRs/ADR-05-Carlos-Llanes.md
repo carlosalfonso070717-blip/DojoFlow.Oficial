@@ -10,7 +10,7 @@
 
 ## Contexto
 
-DojoFlow necesita registrar peleadores en el sistema asegurando la integridad de sus datos y calcular dinámicamente la mensualidad que deben pagar. La academia ofrece 5 disciplinas (MMA, Boxeo, Kickboxing, Judo, JiuJitsu) y un esquema de promociones donde el costo varía según la cantidad de disciplinas contratadas (ej. 1 por $850, 2 por $1500, 5 por $4000). Hacer estas validaciones y cálculos de precio directamente en el controlador o mediante múltiples sentencias condicionales generaría un código frágil, difícil de escalar y violaría los principios SOLID de nuestra Arquitectura Hexagonal.
+DojoFlow necesita registrar peleadores en el sistema asegurando la integridad de sus datos y calcular dinámicamente la mensualidad que deben pagar. La academia ofrece 5 disciplinas (MMA, Boxeo, Kickboxing, Judo, JiuJitsu) y un esquema de promociones por volumen (multidisciplina) donde el costo varía según la cantidad de disciplinas contratadas (1 por $850, 2 por $1500, 3 por $2400, 4 por $3200 y 5 por $4000). Hacer estas validaciones y cálculos de precio directamente en el controlador o mediante múltiples sentencias condicionales generaría un código frágil, difícil de escalar y violaría los principios SOLID de nuestra Arquitectura Hexagonal.
 
 ---
 
@@ -24,7 +24,7 @@ Se decidió implementar dos Patrones de Diseño GOF de categorías distintas en 
 ### ¿Por qué?
 
 * **Builder:** Resuelve el problema de inicializar un objeto complejo. En un endpoint HTTP, los datos llegan mediante un DTO. El Builder nos permite ir "armando" al alumno paso a paso (`ConNombre`, `ConTelefono`, `ConDisciplinas`) y, mediante su método final `Build()`, aplicar las reglas de negocio estrictas antes de instanciar el objeto real.
-* **Strategy:** Resuelve el cálculo de los precios multidisplina cumpliendo el principio *Open/Closed*. En lugar de un método con 5 `if/else`, cada esquema de cobro es una clase separada (`PrecioIndividualStrategy`, `PrecioDobleStrategy`, etc.). El contexto simplemente inyecta la estrategia correcta según el tamaño del arreglo de disciplinas seleccionado por el cliente.
+* **Strategy:** Resuelve el cálculo de los precios multidisplina cumpliendo el principio *Open/Closed*. En lugar de un método con múltiples `if/else`, cada esquema de cobro es una clase separada (`PrecioIndividualStrategy`, `PrecioDobleStrategy`, etc.). El contexto simplemente inyecta la estrategia correcta según el tamaño del arreglo de disciplinas seleccionado por el cliente.
 
 ### Alternativas consideradas
 
@@ -52,48 +52,8 @@ Se decidió implementar dos Patrones de Diseño GOF de categorías distintas en 
 
 ## Diagrama
 
-flowchart TB
-    subgraph API [DojoFlow.API - Capa de Presentación]
-        Swagger[Interfaz Swagger UI Custom] -->|Envía JSON| Ctrl[AlumnosController]
-        Request[RegistrarAlumnoRequest DTO] -.->|Moldea datos| Ctrl
-    end
+![Uploading Tablet Reception API-2026-06-24-143005.png…]()
 
-    subgraph APP [DojoFlow.Application - Capa de Aplicación]
-        Ctrl -->|Invoca flujo| UC[RegistrarAlumnoUseCase]
-        Port[IAlumnoRepository Puerto / Interfaz] -.->|Define contrato| UC
-    end
 
-    subgraph DOM [DojoFlow.Domain - Núcleo del Sistema]
-        UC -->|1. Solicita creación paso a paso| Builder[Alumno.Builder]
-        Builder -->|Construye de forma segura| Entity[Entidad: Alumno]
-        
-        UC -->|2. Solicita cotización por volumen| Calc[CalculadoraMensualidad Contexto]
-        Calc -->|Elegible según cantidad| Strategy[ICalculoMensualidadStrategy]
-        
-        Strategy <|-- S1[PrecioIndividualStrategy $850]
-        Strategy <|-- S2[PrecioDobleStrategy $1500]
-        Strategy <|-- S3[PrecioFullAcademyStrategy $4000]
-    end
-
-    subgraph INFRA [DojoFlow.Infrastructure - Capa de Infraestructura]
-        Adapter[InMemoryAlumnoRepository Adaptador] --->|Implementa| Port
-        UC -->|3. Envía para persistencia| Port
-        Port --->|Guarda en memoria RAM| Adapter
-    end
-
-    %% Estilos estéticos para diferenciar las capas de la arquitectura
-    classDef apiLayer fill:#eef2f7,stroke:#0056b3,stroke-width:2px,color:#000;
-    classDef appLayer fill:#f0fbf4,stroke:#1e7e34,stroke-width:2px,color:#000;
-    classDef domLayer fill:#fff9db,stroke:#d39e00,stroke-width:2px,color:#000;
-    classDef infraLayer fill:#fdf2f2,stroke:#bd2130,stroke-width:2px,color:#000;
-
-    class Swagger,Ctrl,Request apiLayer;
-    class UC,Port appLayer;
-    class Builder,Entity,Calc,Strategy,S1,S2,S3 domLayer;
-    class Adapter infraLayer;
-
----
-
-## Declaración de Uso de IA
-
+### Declaración de uso de IA
 En cumplimiento con los lineamientos de entrega, se declara que se utilizaron herramientas de Inteligencia Artificial (LLMs) como asistencia en el desarrollo. Su uso se limitó a sugerencias para el mapeo de los patrones Builder y Strategy en C# y ajustes de formato Markdown. El diseño arquitectónico, la definición de las reglas de negocio de los descuentos del dojo, las propiedades de la entidad y la toma de decisiones descrita en este documento fueron desarrollados en su totalidad por el autor.
