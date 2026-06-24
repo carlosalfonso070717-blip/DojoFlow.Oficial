@@ -15,6 +15,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IAlumnoRepository, InMemoryAlumnoRepository>();
 builder.Services.AddScoped<RegistrarAlumnoUseCase>();
 
+// 🔥 RECUPERAMOS LA POLÍTICA DE CORS AQUÍ 🔥
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("PermitirTodo", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 // PIPELINE DE SOLICITUDES HTTP Y PERSONALIZACIÓN VISUAL
@@ -23,16 +34,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-       
         c.InjectStylesheet("/swagger-ui/custom.css");
-       
         c.DocumentTitle = "API Dominio Combat Club";
     });
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
+
+// 🔥 ACTIVAMOS EL CORS AQUÍ (ZONA SEGURA ANTES DE AUTHORIZATION) 🔥
+app.UseCors("PermitirTodo");
 
 app.UseAuthorization();
 
