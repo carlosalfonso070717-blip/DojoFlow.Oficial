@@ -52,7 +52,8 @@ Se decidió implementar dos Patrones de Diseño GOF de categorías distintas en 
 
 ## Diagrama
 
-![Uploading Tablet Reception API-2026-06-24-143005.png…]()
+<img width="8192" height="2169" alt="Tablet Reception API-2026-06-24-143005" src="https://github.com/user-attachments/assets/20ff8078-2c8e-44e8-ad67-b23c0d53b566" />
+
 
 
 ### Declaración de uso de IA
