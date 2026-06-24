@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DojoFlow.Domain.Entities
 {
@@ -11,23 +12,15 @@ namespace DojoFlow.Domain.Entities
         public DateTime FechaInscripcion { get; private set; }
         public bool Activo { get; private set; }
 
-        // Añadimos esta propiedad para que el patrón Strategy pueda funcionar después
-        public string Disciplina { get; private set; } = string.Empty; // Ej: "MMA", "Boxeo", "Muay Thai"
+        // Ahora es una lista para admitir múltiples disciplinas a la vez
+        public List<string> Disciplinas { get; private set; } = new();
 
-        // Hacemos el constructor privado para que la creación pase obligatoriamente por el Builder
         private Alumno() { }
 
-        public void Desactivar()
-        {
-            Activo = false;
-        }
+        public void Desactivar() => Activo = false;
+        public void Activar() => Activo = true;
 
-        public void Activar()
-        {
-            Activo = true;
-        }
-
-        // --- ENCAPSULACIÓN DEL PATRÓN BUILDER (CREACIONAL) ---
+        // --- PATRÓN BUILDER ADAPTADO ---
         public class Builder
         {
             private readonly Alumno _alumno = new Alumno();
@@ -39,33 +32,19 @@ namespace DojoFlow.Domain.Entities
                 _alumno.Activo = true;
             }
 
-            public Builder ConNombre(string nombre)
-            {
-                _alumno.Nombre = nombre;
-                return this;
-            }
+            public Builder ConNombre(string nombre) { _alumno.Nombre = nombre; return this; }
+            public Builder ConApellido(string apellido) { _alumno.Apellido = apellido; return this; }
+            public Builder ConTelefono(string telefono) { _alumno.Telefono = telefono; return this; }
 
-            public Builder ConApellido(string apellido)
+            // Reemplaza el método viejo por este que acepta la lista completa
+            public Builder ConDisciplinas(List<string> disciplinas)
             {
-                _alumno.Apellido = apellido;
-                return this;
-            }
-
-            public Builder ConTelefono(string telefono)
-            {
-                _alumno.Telefono = telefono;
-                return this;
-            }
-
-            public Builder EnDisciplina(string disciplina)
-            {
-                _alumno.Disciplina = disciplina;
+                _alumno.Disciplinas = disciplinas ?? new List<string>();
                 return this;
             }
 
             public Alumno Build()
             {
-                // Validación de negocio para asegurar datos mínimos firmes
                 if (string.IsNullOrWhiteSpace(_alumno.Nombre) || string.IsNullOrWhiteSpace(_alumno.Apellido))
                 {
                     throw new ArgumentException("Error: El alumno debe tener un nombre y un apellido válidos.");

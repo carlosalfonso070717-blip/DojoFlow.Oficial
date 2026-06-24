@@ -23,13 +23,18 @@ namespace DojoFlow.Application.UseCases.Alumnos
             }
 
             // 2. Instanciar la entidad pidiendo las reglas al Dominio
-            var nuevoAlumno = new Alumno(nombre, apellido, telefono);
+        var alumno = new Alumno.Builder()
+            .ConNombre(nombre)
+            .ConApellido(apellido)
+            .ConTelefono(telefono)
+            .ConDisciplinas(new List<string> { "Por definir" }) // Le ponemos un valor por defecto para que no marque error
+            .Build();
 
             // 3. Persistir usando el puerto abstractamente
-            await _alumnoRepository.GuardarAsync(nuevoAlumno);
+            await _alumnoRepository.GuardarAsync(alumno);
 
             // 4. Retornar el ID del alumno creado
-            return nuevoAlumno.Id;
+            return alumno.Id;
         }
     }
 }

@@ -1,47 +1,45 @@
-﻿namespace DojoFlow.Domain.Strategies
+﻿using System.Collections.Generic;
+
+namespace DojoFlow.Domain.Strategies
 {
     public interface ICalculoMensualidadStrategy
     {
         decimal CalcularCosto();
     }
 
-    // Estrategia 1: Disciplinas de contacto total e híbridas (MMA / JiuJitsu)
-    public class PrecioFullCombatStrategy : ICalculoMensualidadStrategy
-    {
-        public decimal CalcularCosto() => 800.00m;
-    }
+    // Estrategia 1 disciplina: $850 c/u
+    public class PrecioIndividualStrategy : ICalculoMensualidadStrategy { public decimal CalcularCosto() => 850.00m; }
 
-    // Estrategia 2: Disciplinas puras de Striking (Boxeo / Kickboxing)
-    public class PrecioStrikingStrategy : ICalculoMensualidadStrategy
-    {
-        public decimal CalcularCosto() => 500.00m;
-    }
+    // Estrategia 2 disciplinas: combo $1500
+    public class PrecioDobleStrategy : ICalculoMensualidadStrategy { public decimal CalcularCosto() => 1500.00m; }
 
-    // Estrategia 3: Disciplinas de derribo y proyección (Judo)
-    public class PrecioGrapplingStrategy : ICalculoMensualidadStrategy
-    {
-        public decimal CalcularCosto() => 600.00m;
-    }
+    // Estrategia 3 disciplinas: combo $2400
+    public class PrecioTripleStrategy : ICalculoMensualidadStrategy { public decimal CalcularCosto() => 2400.00m; }
+
+    // Estrategia 4 disciplinas: combo $3200
+    public class PrecioCuadrupleStrategy : ICalculoMensualidadStrategy { public decimal CalcularCosto() => 3200.00m; }
+
+    // Estrategia 5 disciplinas (Full Academy): combo $4000
+    public class PrecioFullAcademyStrategy : ICalculoMensualidadStrategy { public decimal CalcularCosto() => 4000.00m; }
 
     public class CalculadoraMensualidad
     {
         private readonly ICalculoMensualidadStrategy _estrategia;
 
-        public CalculadoraMensualidad(string disciplina)
+        public CalculadoraMensualidad(int cantidadDisciplinas)
         {
-            // El motor evalúa rigurosamente las 5 disciplinas de la academia
-            _estrategia = disciplina.ToLower().Trim() switch
+            // El contexto selecciona la estrategia adecuada según el tamaño de la lista
+            _estrategia = cantidadDisciplinas switch
             {
-                "mma" or "jiujitsu" => new PrecioFullCombatStrategy(),
-                "boxeo" or "kickboxing" => new PrecioStrikingStrategy(),
-                "judo" => new PrecioGrapplingStrategy(),
-                _ => new PrecioStrikingStrategy() // Estrategia por defecto
+                1 => new PrecioIndividualStrategy(),
+                2 => new PrecioDobleStrategy(),
+                3 => new PrecioTripleStrategy(),
+                4 => new PrecioCuadrupleStrategy(),
+                5 => new PrecioFullAcademyStrategy(),
+                _ => new PrecioIndividualStrategy() // Por si mandan un número inválido o 0
             };
         }
 
-        public decimal ObtenerCostoMensual()
-        {
-            return _estrategia.CalcularCosto();
-        }
+        public decimal ObtenerCostoMensual() => _estrategia.CalcularCosto();
     }
 }
