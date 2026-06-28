@@ -84,7 +84,7 @@ namespace DojoFlow.API.Controllers
                     NombreCompleto = $"{nuevoAlumno.Nombre} {nuevoAlumno.Apellido}",
                     ClaveKioscoAsignada = nuevoAlumno.ClaveKiosco,
                     DisciplinasInscritas = nuevoAlumno.Disciplinas,
-                    CostoMensualidadAsignado = $"${costoMensualidad} MXN"
+                    CostoMensualidadAsignado = $"{costoMensualidad} MXN"
                 });
             }
             catch (ArgumentException ex)
