@@ -20,13 +20,13 @@ namespace DojoFlow.API.Controllers
     [Route("api/[controller]")]
     public class InventarioController : ControllerBase
     {
+        // Base de datos en memoria para el Inventario
         public static readonly List<Producto> _catalogo = new List<Producto>();
         private static readonly AlertaStockObserver _vigia = new AlertaStockObserver();
-        private object p;
 
+        // Constructor estático para cargar datos iniciales
         static InventarioController()
         {
-            // Productos iniciales precargados
             AgregarProductoInicial("Cinturón (Todos los colores)", 10, 3);
             AgregarProductoInicial("Guantes de 16 oz", 10, 3);
             AgregarProductoInicial("Guantes de 14 oz", 10, 3);
@@ -65,7 +65,7 @@ namespace DojoFlow.API.Controllers
 
             var nuevoProducto = new Producto(Guid.NewGuid(), request.Nombre, request.Cantidad, request.StockMinimo);
 
-            // 🔥 CLAVE: Registramos al observador para que este nuevo producto también esté vigilado
+            // Suscribimos al vigía para el Patrón Observer
             nuevoProducto.Suscribir(_vigia);
             _catalogo.Add(nuevoProducto);
 
@@ -88,7 +88,7 @@ namespace DojoFlow.API.Controllers
         }
 
         [HttpPost("{id}/salida")]
-        public IActionResult RegistrarSalida(Guid id, [FromQuery] int cantidad = 1)
+        public IActionResult RegistrarSalida(Guid id, [FromQuery] int cantidad = 1, [FromQuery] decimal precioVenta = 0)
         {
             var producto = _catalogo.FirstOrDefault(p => p.Id == id);
 
@@ -98,7 +98,16 @@ namespace DojoFlow.API.Controllers
             if (producto.StockActual < cantidad)
                 return BadRequest(new { Error = "No hay suficiente stock para esta salida." });
 
+            // Reducimos el stock (El patrón Observer actuará automáticamente si se llega al mínimo)
             producto.ReducirStock(cantidad);
+
+            // 🔥 INTEGRACIÓN CON FINANZAS 🔥
+            // Si la salida de almacén tuvo un precio de venta, lo mandamos al libro contable
+            if (precioVenta > 0)
+            {
+                decimal totalVenta = precioVenta * cantidad;
+                FinanzasController.RegistrarIngreso(totalVenta, esVenta: true);
+            }
 
             return Ok(new
             {

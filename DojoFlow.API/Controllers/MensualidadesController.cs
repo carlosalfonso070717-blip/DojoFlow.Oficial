@@ -54,6 +54,7 @@ namespace DojoFlow.API.Controllers
             try
             {
                 mensualidad.Pagar();
+                FinanzasController.RegistrarIngreso(mensualidad.Monto, false);
                 return Ok(new { Mensaje = "¡Pago registrado exitosamente!", NuevoEstado = mensualidad.EstadoActual });
             }
             catch (InvalidOperationException ex)
