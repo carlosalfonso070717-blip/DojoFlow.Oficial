@@ -1,0 +1,23 @@
+[
+  {
+    "MesAnio": "04-2026",
+    "IngresosMensualidades": 15000,
+    "IngresosVentas": 4500,
+    "Total": 19500,
+    "VentasRealizadas": 20
+  },
+  {
+    "MesAnio": "05-2026",
+    "IngresosMensualidades": 18500,
+    "IngresosVentas": 3200,
+    "Total": 21700,
+    "VentasRealizadas": 15
+  },
+  {
+    "MesAnio": "06-2026",
+    "IngresosMensualidades": 2350.00,
+    "IngresosVentas": 1250,
+    "Total": 3600.00,
+    "VentasRealizadas": 3
+  }
+]

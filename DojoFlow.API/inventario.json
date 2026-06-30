@@ -1,0 +1,38 @@
+[
+  {
+    "Id": "989701e8-5c8b-41ee-a0f9-d8d1df4b5ede",
+    "Nombre": "Cintur\u00F3n (Todos los colores)",
+    "StockActual": 10,
+    "StockMinimo": 3
+  },
+  {
+    "Id": "3bdff5ba-3d91-4002-833e-1a7a1f50c051",
+    "Nombre": "Guantes de 16 oz",
+    "StockActual": 9,
+    "StockMinimo": 3
+  },
+  {
+    "Id": "3f1cf42d-f5eb-401f-bd68-fd397dc0d139",
+    "Nombre": "Guantes de 14 oz",
+    "StockActual": 10,
+    "StockMinimo": 3
+  },
+  {
+    "Id": "3a64d8ce-e94d-442e-8ce1-7166d1b26f93",
+    "Nombre": "Espinilleras Fighter Legend",
+    "StockActual": 9,
+    "StockMinimo": 2
+  },
+  {
+    "Id": "440e946c-0c1e-4b13-b008-72e9267599a4",
+    "Nombre": "Bucales de GuardPro",
+    "StockActual": 10,
+    "StockMinimo": 4
+  },
+  {
+    "Id": "313a50aa-9c55-42c3-a878-407dae756735",
+    "Nombre": "Aguas",
+    "StockActual": 10,
+    "StockMinimo": 5
+  }
+]

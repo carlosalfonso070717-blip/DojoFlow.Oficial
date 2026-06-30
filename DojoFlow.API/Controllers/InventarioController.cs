@@ -1,14 +1,14 @@
-﻿// Ubicación: DojoFlow.API/Controllers/InventarioController.cs
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using DojoFlow.Domain.Entities;
 using DojoFlow.Domain.Observers;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace DojoFlow.API.Controllers
 {
-    // DTO para recibir los datos desde el formulario web
     public class AgregarProductoRequest
     {
         public string Nombre { get; set; } = string.Empty;
@@ -20,12 +20,43 @@ namespace DojoFlow.API.Controllers
     [Route("api/[controller]")]
     public class InventarioController : ControllerBase
     {
-        // Base de datos en memoria para el Inventario
-        public static readonly List<Producto> _catalogo = new List<Producto>();
+        private static readonly string ArchivoJson = "inventario.json";
+
+        // Base de datos persistente para el catálogo
+        public static readonly List<Producto> _catalogo;
         private static readonly AlertaStockObserver _vigia = new AlertaStockObserver();
 
-        // Constructor estático para cargar datos iniciales
         static InventarioController()
+        {
+            if (System.IO.File.Exists(ArchivoJson))
+            {
+                try
+                {
+                    string jsonExistente = System.IO.File.ReadAllText(ArchivoJson);
+                    _catalogo = JsonSerializer.Deserialize<List<Producto>>(jsonExistente)
+                                ?? new List<Producto>();
+
+                    // Muy importante: Al reconstruir los objetos desde JSON, volvemos a suscribir el Patrón Observer
+                    foreach (var producto in _catalogo)
+                    {
+                        producto.Suscribir(_vigia);
+                    }
+                }
+                catch
+                {
+                    _catalogo = new List<Producto>();
+                    GenerarCatalogoInicial();
+                }
+            }
+            else
+            {
+                _catalogo = new List<Producto>();
+                GenerarCatalogoInicial();
+                GuardarEnJson();
+            }
+        }
+
+        private static void GenerarCatalogoInicial()
         {
             AgregarProductoInicial("Cinturón (Todos los colores)", 10, 3);
             AgregarProductoInicial("Guantes de 16 oz", 10, 3);
@@ -40,6 +71,13 @@ namespace DojoFlow.API.Controllers
             var p = new Producto(Guid.NewGuid(), nombre, stock, minimo);
             p.Suscribir(_vigia);
             _catalogo.Add(p);
+        }
+
+        private static void GuardarEnJson()
+        {
+            var opciones = new JsonSerializerOptions { WriteIndented = true };
+            string jsonTexto = JsonSerializer.Serialize(_catalogo, opciones);
+            System.IO.File.WriteAllText(ArchivoJson, jsonTexto);
         }
 
         [HttpGet]
@@ -65,15 +103,17 @@ namespace DojoFlow.API.Controllers
 
             var nuevoProducto = new Producto(Guid.NewGuid(), request.Nombre, request.Cantidad, request.StockMinimo);
 
-            // Suscribimos al vigía para el Patrón Observer
             nuevoProducto.Suscribir(_vigia);
             _catalogo.Add(nuevoProducto);
+
+            // 🔥 GUARDADO AUTOMÁTICO: Guarda el nuevo artículo en el archivo plano
+            GuardarEnJson();
 
             return StatusCode(201, nuevoProducto);
         }
 
         [HttpDelete("{id}")]
-        public IActionResult EliminarProducto(Guid id)
+        public IActionResult DeleteProducto(Guid id)
         {
             var producto = _catalogo.FirstOrDefault(p => p.Id == id);
             if (producto == null)
@@ -81,8 +121,10 @@ namespace DojoFlow.API.Controllers
 
             _catalogo.Remove(producto);
 
-            // Limpieza: Removemos las alertas viejas de la memoria asociadas a este producto
             AlertaStockObserver.AlertasActivas.RemoveAll(a => a.Contains($"'{producto.Nombre}'"));
+
+            // 🔥 GUARDADO AUTOMÁTICO: Sincroniza el JSON tras la eliminación
+            GuardarEnJson();
 
             return Ok(new { Mensaje = $"El artículo '{producto.Nombre}' fue removido con éxito." });
         }
@@ -98,11 +140,11 @@ namespace DojoFlow.API.Controllers
             if (producto.StockActual < cantidad)
                 return BadRequest(new { Error = "No hay suficiente stock para esta salida." });
 
-            // Reducimos el stock (El patrón Observer actuará automáticamente si se llega al mínimo)
             producto.ReducirStock(cantidad);
 
-            // 🔥 INTEGRACIÓN CON FINANZAS 🔥
-            // Si la salida de almacén tuvo un precio de venta, lo mandamos al libro contable
+            // 🔥 GUARDADO AUTOMÁTICO: Guarda los nuevos niveles de Stock en el JSON
+            GuardarEnJson();
+
             if (precioVenta > 0)
             {
                 decimal totalVenta = precioVenta * cantidad;

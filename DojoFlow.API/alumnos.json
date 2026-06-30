@@ -1,0 +1,35 @@
+[
+  {
+    "Id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+    "Nombre": "Carlos Llanes",
+    "Telefono": "9991234567",
+    "Disciplinas": [
+      "MMA",
+      "JiuJitsu"
+    ],
+    "CostoMensualidad": 1500.00,
+    "ClaveKiosco": 12345
+  },
+  {
+    "Id": "9e7b6b5f-14a8-443d-a7aa-c911f3fc8711",
+    "Nombre": "Joshua Cruz",
+    "Telefono": "9996765432",
+    "Disciplinas": [
+      "Kickboxing"
+    ],
+    "CostoMensualidad": 850.00,
+    "ClaveKiosco": 98021
+  },
+  {
+    "Id": "c1b4faca-086c-4976-8c07-365f472e380e",
+    "Nombre": "Roberto Pedregales",
+    "Telefono": "9907865434",
+    "Disciplinas": [
+      "MMA",
+      "JiuJitsu",
+      "Kickboxing"
+    ],
+    "CostoMensualidad": 2400.00,
+    "ClaveKiosco": 61924
+  }
+]

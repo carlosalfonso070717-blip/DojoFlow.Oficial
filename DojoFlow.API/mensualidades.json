@@ -1,0 +1,29 @@
+[
+  {
+    "Id": "4bf64899-1bbd-4258-bece-6e85d6b5414b",
+    "AlumnoId": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+    "Monto": 1500.00,
+    "FechaGeneracion": "2026-06-30T17:41:19.5880071Z",
+    "FechaVencimiento": "2026-06-15T00:00:00",
+    "FechaPago": null,
+    "EstadoActual": "Pendiente"
+  },
+  {
+    "Id": "943ff7ae-1564-4846-b9ad-199ea31d1c16",
+    "AlumnoId": "9e7b6b5f-14a8-443d-a7aa-c911f3fc8711",
+    "Monto": 850.00,
+    "FechaGeneracion": "2026-06-30T17:41:47.3900864Z",
+    "FechaVencimiento": "2026-07-15T00:00:00",
+    "FechaPago": "2026-06-30T17:41:52.699328Z",
+    "EstadoActual": "Pagado"
+  },
+  {
+    "Id": "e664a19f-0dcb-463f-8ceb-7541a4e6b95f",
+    "AlumnoId": "c1b4faca-086c-4976-8c07-365f472e380e",
+    "Monto": 2400.00,
+    "FechaGeneracion": "2026-06-30T17:46:57.0160531Z",
+    "FechaVencimiento": "2026-07-15T00:00:00",
+    "FechaPago": null,
+    "EstadoActual": "Pendiente"
+  }
+]

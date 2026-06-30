@@ -5,15 +5,15 @@ namespace DojoFlow.Domain.Entities
 {
     public class Mensualidad
     {
-        public Guid Id { get; private set; }
-        public Guid AlumnoId { get; private set; }
-        public decimal Monto { get; private set; }
-        public DateTime FechaGeneracion { get; private set; }
-        public DateTime FechaVencimiento { get; private set; }
-        public DateTime? FechaPago { get; private set; }
+        public Guid Id { get; set; }
+        public Guid AlumnoId { get; set; }
+        public decimal Monto { get; set; }
+        public DateTime FechaGeneracion { get; set; }
+        public DateTime FechaVencimiento { get; set; }
+        public DateTime? FechaPago { get; set; }
 
         // Propiedad de solo lectura para mandar al Frontend y la BD
-        public string EstadoActual { get; private set; }
+        public string EstadoActual { get; set; }
 
         // El motor del Patrón State
         private IEstadoMensualidad _estado;

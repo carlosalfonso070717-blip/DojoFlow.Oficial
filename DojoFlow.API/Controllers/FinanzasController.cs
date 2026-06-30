@@ -1,14 +1,15 @@
-﻿// Ubicación: DojoFlow.API/Controllers/FinanzasController.cs
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace DojoFlow.API.Controllers
 {
     public class RegistroFinanciero
     {
-        public string MesAnio { get; set; } // Ejemplo: "06-2026"
+        public string MesAnio { get; set; } = string.Empty; // Ejemplo: "06-2026"
         public decimal IngresosMensualidades { get; set; }
         public decimal IngresosVentas { get; set; }
         public decimal Total => IngresosMensualidades + IngresosVentas;
@@ -19,14 +20,48 @@ namespace DojoFlow.API.Controllers
     [Route("api/[controller]")]
     public class FinanzasController : ControllerBase
     {
-        // Diccionario para persistir los meses en memoria
-        public static List<RegistroFinanciero> HistorialFinanciero = new List<RegistroFinanciero>();
+        private static readonly string ArchivoJson = "finanzas.json";
 
+        // Lista estática administrada mediante el JSON
+        public static readonly List<RegistroFinanciero> HistorialFinanciero;
+
+        // Constructor estático para cargar el historial persistente
         static FinanzasController()
         {
-            // Datos de ejemplo para ver el historial de meses anteriores
-            HistorialFinanciero.Add(new RegistroFinanciero { MesAnio = "04-2026", IngresosMensualidades = 15000, IngresosVentas = 4500, VentasRealizadas = 20 });
-            HistorialFinanciero.Add(new RegistroFinanciero { MesAnio = "05-2026", IngresosMensualidades = 18500, IngresosVentas = 3200, VentasRealizadas = 15 });
+            if (System.IO.File.Exists(ArchivoJson))
+            {
+                try
+                {
+                    string jsonExistente = System.IO.File.ReadAllText(ArchivoJson);
+                    HistorialFinanciero = JsonSerializer.Deserialize<List<RegistroFinanciero>>(jsonExistente)
+                                         ?? new List<RegistroFinanciero>();
+                }
+                catch
+                {
+                    HistorialFinanciero = GenerarDatosSemilla();
+                }
+            }
+            else
+            {
+                HistorialFinanciero = GenerarDatosSemilla();
+                GuardarEnJson();
+            }
+        }
+
+        private static List<RegistroFinanciero> GenerarDatosSemilla()
+        {
+            return new List<RegistroFinanciero>
+            {
+                new RegistroFinanciero { MesAnio = "04-2026", IngresosMensualidades = 15000, IngresosVentas = 4500, VentasRealizadas = 20 },
+                new RegistroFinanciero { MesAnio = "05-2026", IngresosMensualidades = 18500, IngresosVentas = 3200, VentasRealizadas = 15 }
+            };
+        }
+
+        private static void GuardarEnJson()
+        {
+            var opciones = new JsonSerializerOptions { WriteIndented = true };
+            string jsonTexto = JsonSerializer.Serialize(HistorialFinanciero, opciones);
+            System.IO.File.WriteAllText(ArchivoJson, jsonTexto);
         }
 
         [HttpGet]
@@ -56,6 +91,9 @@ namespace DojoFlow.API.Controllers
             {
                 registro.IngresosMensualidades += monto;
             }
+
+            // 🔥 GUARDADO AUTOMÁTICO: Guarda el balance financiero cada vez que ingresa dinero
+            GuardarEnJson();
         }
 
         [HttpDelete("{mesAnio}")]
@@ -63,7 +101,12 @@ namespace DojoFlow.API.Controllers
         {
             var registro = HistorialFinanciero.FirstOrDefault(f => f.MesAnio == mesAnio);
             if (registro == null) return NotFound();
+
             HistorialFinanciero.Remove(registro);
+
+            // 🔥 GUARDADO AUTOMÁTICO: Sincroniza el JSON tras eliminar un mes
+            GuardarEnJson();
+
             return Ok(new { Mensaje = $"Registro de {mesAnio} eliminado." });
         }
     }

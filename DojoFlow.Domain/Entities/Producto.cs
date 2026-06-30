@@ -9,7 +9,7 @@ namespace DojoFlow.Domain.Entities
     {
         public Guid Id { get; set; }
         public string Nombre { get; set; }
-        public int StockActual { get; private set; }
+        public int StockActual { get; set; }
         public int StockMinimo { get; set; }
 
         // La lista oculta de vigías (Observer Pattern)

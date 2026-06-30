@@ -1,13 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+	<NuGetAudit>false</NuGetAudit>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.9">
       <PrivateAssets>all</PrivateAssets>
@@ -18,7 +20,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DojoFlow.Application\DojoFlow.Application.csproj" />
-    <ProjectReference Include="..\DojoFlow.Infraestructure\DojoFlow.Infrastructure.csproj" />
+    <ProjectReference Include="..\DojoFlow.Domain\DojoFlow.Domain.csproj" />
+    <ProjectReference Include="..\DojoFlow.Infrastructure\DojoFlow.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
