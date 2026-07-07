@@ -1,4 +1,4 @@
-# Arquitectura del Sistema - DojoFlow (Modelo C4)
+# Arquitectura del Sistema - DojoFlow (Modelo C4) 
 
 Este documento describe el diseño técnico del sistema de gestión para el club de combate **DojoFlow**, estructurado mediante el modelo C4 para mantener los diagramas versionados como código en el repositorio.
 
