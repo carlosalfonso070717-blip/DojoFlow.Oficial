@@ -23,7 +23,16 @@
     "Monto": 2400.00,
     "FechaGeneracion": "2026-06-30T17:46:57.0160531Z",
     "FechaVencimiento": "2026-07-15T00:00:00",
-    "FechaPago": null,
-    "EstadoActual": "Pendiente"
+    "FechaPago": "2026-07-01T01:41:51.9562963Z",
+    "EstadoActual": "Pagado"
+  },
+  {
+    "Id": "48b56dab-e84c-46a2-9ac4-4e9e6fd16178",
+    "AlumnoId": "889cceab-5f6d-43f0-b767-f59b573d564f",
+    "Monto": 4000.00,
+    "FechaGeneracion": "2026-07-01T01:42:14.3626004Z",
+    "FechaVencimiento": "2026-07-15T00:00:00",
+    "FechaPago": "2026-07-01T01:42:26.1907175Z",
+    "EstadoActual": "Pagado"
   }
 ]

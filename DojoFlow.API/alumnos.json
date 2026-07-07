@@ -31,5 +31,19 @@
     ],
     "CostoMensualidad": 2400.00,
     "ClaveKiosco": 61924
+  },
+  {
+    "Id": "889cceab-5f6d-43f0-b767-f59b573d564f",
+    "Nombre": "Paola Tello",
+    "Telefono": "9994590160",
+    "Disciplinas": [
+      "MMA",
+      "Boxeo",
+      "JiuJitsu",
+      "Kickboxing",
+      "Judo"
+    ],
+    "CostoMensualidad": 4000.00,
+    "ClaveKiosco": 31455
   }
 ]
