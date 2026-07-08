@@ -15,4 +15,5 @@ flowchart TD
     
     System(DojoFlow System\n*Gestión integral del club*)
     
-    Admin -- "Opera en" --> System
+    Admin -- "Opera en" --> System --"Responde a"--> Admin
+   
