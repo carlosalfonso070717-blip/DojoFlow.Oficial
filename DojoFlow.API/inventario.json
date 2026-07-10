@@ -1,38 +1,65 @@
 [
   {
-    "Id": "989701e8-5c8b-41ee-a0f9-d8d1df4b5ede",
+    "Id": "1131813f-44d3-4112-841c-a281c47e69aa",
     "Nombre": "Cintur\u00F3n (Todos los colores)",
-    "StockActual": 9,
-    "StockMinimo": 3
+    "StockActual": 10,
+    "StockMinimo": 3,
+    "ImagenUrl": ""
   },
   {
-    "Id": "3bdff5ba-3d91-4002-833e-1a7a1f50c051",
+    "Id": "e64598fa-ef69-436a-a579-d4919bf70da3",
     "Nombre": "Guantes de 16 oz",
-    "StockActual": 9,
-    "StockMinimo": 3
+    "StockActual": 10,
+    "StockMinimo": 3,
+    "ImagenUrl": ""
   },
   {
-    "Id": "3f1cf42d-f5eb-401f-bd68-fd397dc0d139",
+    "Id": "8ef7d297-4d81-434a-bbca-effcd6ea7cb5",
     "Nombre": "Guantes de 14 oz",
     "StockActual": 10,
-    "StockMinimo": 3
+    "StockMinimo": 3,
+    "ImagenUrl": ""
   },
   {
-    "Id": "3a64d8ce-e94d-442e-8ce1-7166d1b26f93",
+    "Id": "a7e6eb85-05b8-48a2-8a29-b9a72107ea39",
     "Nombre": "Espinilleras Fighter Legend",
-    "StockActual": 9,
-    "StockMinimo": 2
+    "StockActual": 10,
+    "StockMinimo": 2,
+    "ImagenUrl": ""
   },
   {
-    "Id": "440e946c-0c1e-4b13-b008-72e9267599a4",
+    "Id": "cd64d4ca-8e43-4fc0-a758-b5e95ed26b7a",
     "Nombre": "Bucales de GuardPro",
     "StockActual": 10,
-    "StockMinimo": 4
+    "StockMinimo": 4,
+    "ImagenUrl": ""
   },
   {
-    "Id": "313a50aa-9c55-42c3-a878-407dae756735",
+    "Id": "5a1ae80a-592e-4ea5-94e4-2d26509ba8d0",
     "Nombre": "Aguas",
     "StockActual": 10,
-    "StockMinimo": 5
+    "StockMinimo": 5,
+    "ImagenUrl": ""
+  },
+  {
+    "Id": "3b3a5f47-56fc-45b3-bfc0-f052b68d9139",
+    "Nombre": "Guantes Twin 16oz",
+    "StockActual": 13,
+    "StockMinimo": 2,
+    "ImagenUrl": ""
+  },
+  {
+    "Id": "6ea17d5c-b9d0-4565-bdc9-125d9c325427",
+    "Nombre": "Coderas Venum ",
+    "StockActual": 10,
+    "StockMinimo": 3,
+    "ImagenUrl": ""
+  },
+  {
+    "Id": "1a29b510-1fa7-4249-aefc-d59b3446af3e",
+    "Nombre": "Coderas Venum ",
+    "StockActual": 10,
+    "StockMinimo": 3,
+    "ImagenUrl": ""
   }
 ]

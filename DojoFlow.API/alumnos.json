@@ -45,5 +45,15 @@
     ],
     "CostoMensualidad": 4000.00,
     "ClaveKiosco": 31455
+  },
+  {
+    "Id": "6c71272a-db5c-4fa9-b9dd-d681bbd7233c",
+    "Nombre": "Javier Soberanis",
+    "Telefono": "9907655651",
+    "Disciplinas": [
+      "Judo"
+    ],
+    "CostoMensualidad": 850.00,
+    "ClaveKiosco": 35668
   }
 ]

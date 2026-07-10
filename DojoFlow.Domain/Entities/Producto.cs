@@ -12,6 +12,8 @@ namespace DojoFlow.Domain.Entities
         public int StockActual { get; set; }
         public int StockMinimo { get; set; }
 
+        public string ImagenUrl { get; set; } = string.Empty;
+
         // La lista oculta de vigías (Observer Pattern)
         private readonly List<INotificadorInventario> _observadores = new();
 

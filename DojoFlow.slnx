@@ -8,6 +8,12 @@
     <File Path="Arq_Views/VistaLogica.png" />
     <File Path="Arq_Views/VistaProcesos.png" />
   </Folder>
+  <Folder Name="/docs/">
+    <File Path="nivel1_c4.md" />
+    <File Path="nivel2_c4.md" />
+    <File Path="nivel3_c4.md" />
+  </Folder>
+  <Folder Name="/Elementos de la solución/" />
   <Project Path="DojoFlow.API/DojoFlow.API.csproj" />
   <Project Path="DojoFlow.Application/DojoFlow.Application.csproj" />
   <Project Path="DojoFlow.Domain/DojoFlow.Domain.csproj" />

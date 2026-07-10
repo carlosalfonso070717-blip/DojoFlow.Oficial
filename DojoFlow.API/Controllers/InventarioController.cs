@@ -14,6 +14,16 @@ namespace DojoFlow.API.Controllers
         public string Nombre { get; set; } = string.Empty;
         public int Cantidad { get; set; }
         public int StockMinimo { get; set; }
+
+        public string ImagenUrl { get; set; } = string.Empty;
+    }
+
+    public class EditarProductoRequest
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public int NuevoStockActual { get; set; }
+        public int NuevoStockMinimo { get; set; }
+        public string ImagenUrl { get; set; } = string.Empty;
     }
 
     [ApiController]
@@ -58,17 +68,20 @@ namespace DojoFlow.API.Controllers
 
         private static void GenerarCatalogoInicial()
         {
-            AgregarProductoInicial("Cinturón (Todos los colores)", 10, 3);
-            AgregarProductoInicial("Guantes de 16 oz", 10, 3);
-            AgregarProductoInicial("Guantes de 14 oz", 10, 3);
-            AgregarProductoInicial("Espinilleras Fighter Legend", 10, 2);
-            AgregarProductoInicial("Bucales de GuardPro", 10, 4);
-            AgregarProductoInicial("Aguas", 10, 5);
+            AgregarProductoInicial("Cinturón (Todos los colores)", 10, 3, "");
+            AgregarProductoInicial("Guantes de 16 oz", 10, 3, "");
+            AgregarProductoInicial("Guantes de 14 oz", 10, 3, "");
+            AgregarProductoInicial("Espinilleras Fighter Legend", 10, 2, "");
+            AgregarProductoInicial("Bucales de GuardPro", 10, 4, "");
+            AgregarProductoInicial("Aguas", 10, 5, "");
         }
 
-        private static void AgregarProductoInicial(string nombre, int stock, int minimo)
+        private static void AgregarProductoInicial(string nombre, int stock, int minimo, string imagenUrl)
         {
-            var p = new Producto(Guid.NewGuid(), nombre, stock, minimo);
+            var p = new Producto(Guid.NewGuid(), nombre, stock, minimo)
+            {
+                ImagenUrl = imagenUrl
+            };
             p.Suscribir(_vigia);
             _catalogo.Add(p);
         }
@@ -101,7 +114,10 @@ namespace DojoFlow.API.Controllers
             if (request.Cantidad < 0 || request.StockMinimo < 0)
                 return BadRequest(new { Error = "Las cantidades no pueden ser negativas." });
 
-            var nuevoProducto = new Producto(Guid.NewGuid(), request.Nombre, request.Cantidad, request.StockMinimo);
+            var nuevoProducto = new Producto(Guid.NewGuid(), request.Nombre, request.Cantidad, request.StockMinimo) {
+
+                ImagenUrl = request.ImagenUrl
+            };
 
             nuevoProducto.Suscribir(_vigia);
             _catalogo.Add(nuevoProducto);
@@ -110,6 +126,32 @@ namespace DojoFlow.API.Controllers
             GuardarEnJson();
 
             return StatusCode(201, nuevoProducto);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult EditarProducto(Guid id, [FromBody] EditarProductoRequest request)
+        {
+            var producto = _catalogo.FirstOrDefault(p => p.Id == id);
+
+            if (producto == null)
+                return NotFound(new { Error = "Artículo no encontrado." });
+
+            if (request.NuevoStockActual < 0 || request.NuevoStockMinimo < 0)
+                return BadRequest(new { Error = "Las cantidades no pueden ser negativas." });
+
+            // Actualizamos todos los valores con los nuevos datos recibidos
+            if (!string.IsNullOrWhiteSpace(request.Nombre))
+                producto.Nombre = request.Nombre;
+
+            producto.StockActual = request.NuevoStockActual;
+            producto.StockMinimo = request.NuevoStockMinimo;
+            producto.ImagenUrl = request.ImagenUrl;
+
+            producto.ReducirStock(0);
+
+            GuardarEnJson();
+
+            return Ok(new { Mensaje = "Artículo actualizado exitosamente.", Producto = producto });
         }
 
         [HttpDelete("{id}")]
