@@ -1,12 +1,5 @@
 [
   {
-    "Id": "1131813f-44d3-4112-841c-a281c47e69aa",
-    "Nombre": "Cintur\u00F3n (Todos los colores)",
-    "StockActual": 10,
-    "StockMinimo": 3,
-    "ImagenUrl": ""
-  },
-  {
     "Id": "e64598fa-ef69-436a-a579-d4919bf70da3",
     "Nombre": "Guantes de 16 oz",
     "StockActual": 10,
@@ -49,15 +42,15 @@
     "ImagenUrl": ""
   },
   {
-    "Id": "6ea17d5c-b9d0-4565-bdc9-125d9c325427",
+    "Id": "36923bd6-aa41-4fcc-ac80-937eced1a95b",
     "Nombre": "Coderas Venum ",
-    "StockActual": 10,
+    "StockActual": 4,
     "StockMinimo": 3,
     "ImagenUrl": ""
   },
   {
-    "Id": "1a29b510-1fa7-4249-aefc-d59b3446af3e",
-    "Nombre": "Coderas Venum ",
+    "Id": "fef3fc0c-614f-40d5-866b-8a7f804b28e5",
+    "Nombre": "papas",
     "StockActual": 10,
     "StockMinimo": 3,
     "ImagenUrl": ""

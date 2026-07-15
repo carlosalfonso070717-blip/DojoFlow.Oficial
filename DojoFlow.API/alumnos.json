@@ -55,5 +55,26 @@
     ],
     "CostoMensualidad": 850.00,
     "ClaveKiosco": 35668
+  },
+  {
+    "Id": "2ccda419-227b-4365-a8af-399a04249f79",
+    "Nombre": "Luis Santiago",
+    "Telefono": "9987487761",
+    "Disciplinas": [
+      "Kickboxing"
+    ],
+    "CostoMensualidad": 850.00,
+    "ClaveKiosco": 14509
+  },
+  {
+    "Id": "69803f27-b228-451f-9bf5-834399e4ca89",
+    "Nombre": "Yosandy Carballo",
+    "Telefono": "9907821254",
+    "Disciplinas": [
+      "Boxeo",
+      "Kickboxing"
+    ],
+    "CostoMensualidad": 1500.00,
+    "ClaveKiosco": 34626
   }
 ]

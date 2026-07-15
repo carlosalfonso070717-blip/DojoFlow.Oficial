@@ -43,5 +43,23 @@
     "FechaVencimiento": "2026-07-15T00:00:00",
     "FechaPago": "2026-07-10T14:26:37.1196419Z",
     "EstadoActual": "Pagado"
+  },
+  {
+    "Id": "663db567-4d16-435e-9645-e9e06cbb95e3",
+    "AlumnoId": "2ccda419-227b-4365-a8af-399a04249f79",
+    "Monto": 850.00,
+    "FechaGeneracion": "2026-07-12T21:43:25.3363257Z",
+    "FechaVencimiento": "2026-07-15T00:00:00",
+    "FechaPago": "2026-07-12T21:43:39.2015498Z",
+    "EstadoActual": "Pagado"
+  },
+  {
+    "Id": "f2205560-f48b-4c62-b059-c156ae3ce58d",
+    "AlumnoId": "69803f27-b228-451f-9bf5-834399e4ca89",
+    "Monto": 1500.00,
+    "FechaGeneracion": "2026-07-15T15:15:24.3440036Z",
+    "FechaVencimiento": "2026-07-15T00:00:00",
+    "FechaPago": "2026-07-15T15:15:38.4223963Z",
+    "EstadoActual": "Pagado"
   }
 ]

@@ -22,9 +22,9 @@
   },
   {
     "MesAnio": "07-2026",
-    "IngresosMensualidades": 2350.00,
-    "IngresosVentas": 0,
-    "Total": 2350.00,
-    "VentasRealizadas": 0
+    "IngresosMensualidades": 4700.00,
+    "IngresosVentas": 300,
+    "Total": 5000.00,
+    "VentasRealizadas": 2
   }
 ]
