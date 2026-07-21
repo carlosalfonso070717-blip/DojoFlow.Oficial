@@ -1,6 +1,9 @@
 using DojoFlow.Application.Interfaces;
 using DojoFlow.Application.UseCases.Alumnos;
 using DojoFlow.Infrastructure.Persistence.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +18,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IAlumnoRepository, InMemoryAlumnoRepository>();
 builder.Services.AddScoped<RegistrarAlumnoUseCase>();
 
-// 🔥 RECUPERAMOS LA POLÍTICA DE CORS AQUÍ 🔥
+// RECUPERAMOS LA POLÍTICA DE CORS AQUÍ 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirTodo", policy =>
@@ -25,6 +28,22 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+
+// Configuración de JWT
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
 
 var app = builder.Build();
 
@@ -40,9 +59,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseStaticFiles();
 
-// 🔥 ACTIVAMOS EL CORS AQUÍ (ZONA SEGURA ANTES DE AUTHORIZATION) 🔥
+// ACTIVAMOS EL CORS AQUÍ (ZONA SEGURA ANTES DE AUTHORIZATION) 🔥
 app.UseCors("PermitirTodo");
 
 app.UseAuthorization();

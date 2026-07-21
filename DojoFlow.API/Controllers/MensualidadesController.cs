@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using DojoFlow.Domain.Entities;
+﻿using DojoFlow.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,6 +9,8 @@ using System.Text.Json;
 
 namespace DojoFlow.API.Controllers
 {
+
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class MensualidadesController : ControllerBase

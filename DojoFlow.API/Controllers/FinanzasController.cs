@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,6 +17,7 @@ namespace DojoFlow.API.Controllers
         public int VentasRealizadas { get; set; }
     }
 
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class FinanzasController : ControllerBase
