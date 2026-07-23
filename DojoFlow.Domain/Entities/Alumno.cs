@@ -5,9 +5,9 @@ namespace DojoFlow.Domain.Entities
 {
     public class Alumno
     {
-        public Guid Id { get; private set; }
-        public string Nombre { get; private set; } = string.Empty;
-        public string Apellido { get; private set; } = string.Empty;
+        public Guid Id { get;  set; }
+        public string Nombre { get;  set; } = string.Empty;
+        public string Apellido { get;  set; } = string.Empty;
         public string Telefono { get; private set; } = string.Empty;
         public DateTime FechaInscripcion { get; private set; }
         public bool Activo { get; private set; }
@@ -17,7 +17,7 @@ namespace DojoFlow.Domain.Entities
 
         public List<string> Disciplinas { get; private set; } = new();
 
-        private Alumno() { }
+        public Alumno() { }
 
         public void Desactivar() => Activo = false;
         public void Activar() => Activo = true;

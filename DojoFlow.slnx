@@ -18,4 +18,5 @@
   <Project Path="DojoFlow.Application/DojoFlow.Application.csproj" />
   <Project Path="DojoFlow.Domain/DojoFlow.Domain.csproj" />
   <Project Path="DojoFlow.Infrastructure/DojoFlow.Infrastructure.csproj" />
+  <Project Path="DojoFlow.Tests/DojoFlow.Tests.csproj" />
 </Solution>
