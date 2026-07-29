@@ -1,71 +1,39 @@
-﻿using DojoFlow.Domain.Entities;
+using DojoFlow.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
 
 namespace DojoFlow.API.Controllers
 {
-
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class MensualidadesController : ControllerBase
     {
-        private static readonly string ArchivoJson = "mensualidades.json";
-        public static readonly List<Mensualidad> _tablaMensualidades;
+        private readonly IMensualidadRepository _mensualidadRepository;
+        private readonly IAlumnoRepository _alumnoRepository;
+        private readonly IRegistroFinancieroRepository _registroFinancieroRepository;
 
-        // Constructor estático: lee o crea el archivo al arrancar
-        static MensualidadesController()
+        public MensualidadesController(
+            IMensualidadRepository mensualidadRepository,
+            IAlumnoRepository alumnoRepository,
+            IRegistroFinancieroRepository registroFinancieroRepository)
         {
-            if (System.IO.File.Exists(ArchivoJson))
-            {
-                try
-                {
-                    string jsonExistente = System.IO.File.ReadAllText(ArchivoJson);
-                    _tablaMensualidades = JsonSerializer.Deserialize<List<Mensualidad>>(jsonExistente)
-                                          ?? new List<Mensualidad>();
-                }
-                catch
-                {
-                    _tablaMensualidades = GenerarDatosSemilla();
-                }
-            }
-            else
-            {
-                _tablaMensualidades = GenerarDatosSemilla();
-                GuardarEnJson();
-            }
-        }
-
-        private static List<Mensualidad> GenerarDatosSemilla()
-        {
-            return new List<Mensualidad>
-            {
-                new Mensualidad(Guid.Parse("a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"), 1500.00m, new DateTime(2026, 06, 15))
-            };
-        }
-
-        // 🔥 MÉTODO PÚBLICO para guardar cambios en el disco duro
-        public static void GuardarEnJson()
-        {
-            var opciones = new JsonSerializerOptions { WriteIndented = true };
-            string jsonTexto = JsonSerializer.Serialize(_tablaMensualidades, opciones);
-            System.IO.File.WriteAllText(ArchivoJson, jsonTexto);
+            _mensualidadRepository = mensualidadRepository;
+            _alumnoRepository = alumnoRepository;
+            _registroFinancieroRepository = registroFinancieroRepository;
         }
 
         [HttpGet]
-        public IActionResult ObtenerMensualidades()
+        public async Task<IActionResult> ObtenerMensualidades()
         {
-            var resultado = _tablaMensualidades.Select(m =>
-            {
-                var alumno = AlumnosController._baseDeDatosEnMemoria
-                    .FirstOrDefault(a => a.Id == m.AlumnoId);
+            var mensualidades = await _mensualidadRepository.ObtenerTodasAsync();
+            var alumnos = await _alumnoRepository.ObtenerTodosAsync();
 
-                string nombreAlumno = alumno != null ? alumno.Nombre : "Peleador Desconocido";
+            var resultado = mensualidades.Select(m =>
+            {
+                var alumno = alumnos.FirstOrDefault(a => a.Id == m.AlumnoId);
+
+                string nombreAlumno = alumno != null ? $"{alumno.Nombre} {alumno.Apellido}" : "Peleador Desconocido";
                 string claveKiosco = alumno != null ? alumno.ClaveKiosco.ToString() : "N/A";
 
                 return new
@@ -85,9 +53,9 @@ namespace DojoFlow.API.Controllers
         }
 
         [HttpPost("{id}/pagar")]
-        public IActionResult PagarMensualidad(Guid id)
+        public async Task<IActionResult> PagarMensualidad(Guid id)
         {
-            var mensualidad = _tablaMensualidades.FirstOrDefault(m => m.Id == id);
+            var mensualidad = await _mensualidadRepository.ObtenerPorIdAsync(id);
 
             if (mensualidad == null)
                 return NotFound(new { Error = "Recibo no encontrado." });
@@ -96,10 +64,9 @@ namespace DojoFlow.API.Controllers
             {
                 mensualidad.Pagar();
 
-                // GUARDADO AUTOMÁTICO: Actualiza el JSON tras el pago
-                GuardarEnJson();
+                await _mensualidadRepository.ActualizarAsync(mensualidad);
+                await _registroFinancieroRepository.RegistrarIngresoAsync(mensualidad.Monto, false);
 
-                FinanzasController.RegistrarIngreso(mensualidad.Monto, false);
                 return Ok(new { Mensaje = "¡Pago registrado exitosamente!", NuevoEstado = mensualidad.EstadoActual });
             }
             catch (InvalidOperationException ex)

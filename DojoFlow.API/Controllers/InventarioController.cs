@@ -1,12 +1,8 @@
-﻿using DojoFlow.Domain.Entities;
+using DojoFlow.Application.Interfaces;
+using DojoFlow.Domain.Entities;
 using DojoFlow.Domain.Observers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
 
 namespace DojoFlow.API.Controllers
 {
@@ -15,7 +11,6 @@ namespace DojoFlow.API.Controllers
         public string Nombre { get; set; } = string.Empty;
         public int Cantidad { get; set; }
         public int StockMinimo { get; set; }
-
         public string ImagenUrl { get; set; } = string.Empty;
     }
 
@@ -32,73 +27,19 @@ namespace DojoFlow.API.Controllers
     [Route("api/[controller]")]
     public class InventarioController : ControllerBase
     {
-        private static readonly string ArchivoJson = "inventario.json";
+        private readonly IProductoRepository _productoRepository;
+        private readonly IRegistroFinancieroRepository _registroFinancieroRepository;
 
-        // Base de datos persistente para el catálogo
-        public static readonly List<Producto> _catalogo;
-        private static readonly AlertaStockObserver _vigia = new AlertaStockObserver();
-
-        static InventarioController()
+        public InventarioController(IProductoRepository productoRepository, IRegistroFinancieroRepository registroFinancieroRepository)
         {
-            if (System.IO.File.Exists(ArchivoJson))
-            {
-                try
-                {
-                    string jsonExistente = System.IO.File.ReadAllText(ArchivoJson);
-                    _catalogo = JsonSerializer.Deserialize<List<Producto>>(jsonExistente)
-                                ?? new List<Producto>();
-
-                    // Muy importante: Al reconstruir los objetos desde JSON, volvemos a suscribir el Patrón Observer
-                    foreach (var producto in _catalogo)
-                    {
-                        producto.Suscribir(_vigia);
-                    }
-                }
-                catch
-                {
-                    _catalogo = new List<Producto>();
-                    GenerarCatalogoInicial();
-                }
-            }
-            else
-            {
-                _catalogo = new List<Producto>();
-                GenerarCatalogoInicial();
-                GuardarEnJson();
-            }
-        }
-
-        private static void GenerarCatalogoInicial()
-        {
-            AgregarProductoInicial("Cinturón (Todos los colores)", 10, 3, "");
-            AgregarProductoInicial("Guantes de 16 oz", 10, 3, "");
-            AgregarProductoInicial("Guantes de 14 oz", 10, 3, "");
-            AgregarProductoInicial("Espinilleras Fighter Legend", 10, 2, "");
-            AgregarProductoInicial("Bucales de GuardPro", 10, 4, "");
-            AgregarProductoInicial("Aguas", 10, 5, "");
-        }
-
-        private static void AgregarProductoInicial(string nombre, int stock, int minimo, string imagenUrl)
-        {
-            var p = new Producto(Guid.NewGuid(), nombre, stock, minimo)
-            {
-                ImagenUrl = imagenUrl
-            };
-            p.Suscribir(_vigia);
-            _catalogo.Add(p);
-        }
-
-        private static void GuardarEnJson()
-        {
-            var opciones = new JsonSerializerOptions { WriteIndented = true };
-            string jsonTexto = JsonSerializer.Serialize(_catalogo, opciones);
-            System.IO.File.WriteAllText(ArchivoJson, jsonTexto);
+            _productoRepository = productoRepository;
+            _registroFinancieroRepository = registroFinancieroRepository;
         }
 
         [HttpGet]
-        public IActionResult ObtenerInventario()
+        public async Task<IActionResult> ObtenerInventario()
         {
-            return Ok(_catalogo);
+            return Ok(await _productoRepository.ObtenerTodosAsync());
         }
 
         [HttpGet("alertas")]
@@ -108,7 +49,7 @@ namespace DojoFlow.API.Controllers
         }
 
         [HttpPost]
-        public IActionResult AgregarProducto([FromBody] AgregarProductoRequest request)
+        public async Task<IActionResult> AgregarProducto([FromBody] AgregarProductoRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Nombre))
                 return BadRequest(new { Error = "El nombre del artículo es obligatorio." });
@@ -116,24 +57,20 @@ namespace DojoFlow.API.Controllers
             if (request.Cantidad < 0 || request.StockMinimo < 0)
                 return BadRequest(new { Error = "Las cantidades no pueden ser negativas." });
 
-            var nuevoProducto = new Producto(Guid.NewGuid(), request.Nombre, request.Cantidad, request.StockMinimo) {
-
+            var nuevoProducto = new Producto(Guid.NewGuid(), request.Nombre, request.Cantidad, request.StockMinimo)
+            {
                 ImagenUrl = request.ImagenUrl
             };
 
-            nuevoProducto.Suscribir(_vigia);
-            _catalogo.Add(nuevoProducto);
-
-            // 🔥 GUARDADO AUTOMÁTICO: Guarda el nuevo artículo en el archivo plano
-            GuardarEnJson();
+            await _productoRepository.AgregarAsync(nuevoProducto);
 
             return StatusCode(201, nuevoProducto);
         }
 
         [HttpPut("{id}")]
-        public IActionResult EditarProducto(Guid id, [FromBody] EditarProductoRequest request)
+        public async Task<IActionResult> EditarProducto(Guid id, [FromBody] EditarProductoRequest request)
         {
-            var producto = _catalogo.FirstOrDefault(p => p.Id == id);
+            var producto = await _productoRepository.ObtenerPorIdAsync(id);
 
             if (producto == null)
                 return NotFound(new { Error = "Artículo no encontrado." });
@@ -141,7 +78,6 @@ namespace DojoFlow.API.Controllers
             if (request.NuevoStockActual < 0 || request.NuevoStockMinimo < 0)
                 return BadRequest(new { Error = "Las cantidades no pueden ser negativas." });
 
-            // Actualizamos todos los valores con los nuevos datos recibidos
             if (!string.IsNullOrWhiteSpace(request.Nombre))
                 producto.Nombre = request.Nombre;
 
@@ -151,32 +87,29 @@ namespace DojoFlow.API.Controllers
 
             producto.ReducirStock(0);
 
-            GuardarEnJson();
+            await _productoRepository.ActualizarAsync(producto);
 
             return Ok(new { Mensaje = "Artículo actualizado exitosamente.", Producto = producto });
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteProducto(Guid id)
+        public async Task<IActionResult> DeleteProducto(Guid id)
         {
-            var producto = _catalogo.FirstOrDefault(p => p.Id == id);
+            var producto = await _productoRepository.ObtenerPorIdAsync(id);
             if (producto == null)
                 return NotFound(new { Error = "Artículo no encontrado." });
 
-            _catalogo.Remove(producto);
+            await _productoRepository.EliminarAsync(producto);
 
             AlertaStockObserver.AlertasActivas.RemoveAll(a => a.Contains($"'{producto.Nombre}'"));
-
-            // 🔥 GUARDADO AUTOMÁTICO: Sincroniza el JSON tras la eliminación
-            GuardarEnJson();
 
             return Ok(new { Mensaje = $"El artículo '{producto.Nombre}' fue removido con éxito." });
         }
 
         [HttpPost("{id}/salida")]
-        public IActionResult RegistrarSalida(Guid id, [FromQuery] int cantidad = 1, [FromQuery] decimal precioVenta = 0)
+        public async Task<IActionResult> RegistrarSalida(Guid id, [FromQuery] int cantidad = 1, [FromQuery] decimal precioVenta = 0)
         {
-            var producto = _catalogo.FirstOrDefault(p => p.Id == id);
+            var producto = await _productoRepository.ObtenerPorIdAsync(id);
 
             if (producto == null)
                 return NotFound(new { Error = "Artículo no encontrado." });
@@ -186,13 +119,12 @@ namespace DojoFlow.API.Controllers
 
             producto.ReducirStock(cantidad);
 
-            // 🔥 GUARDADO AUTOMÁTICO: Guarda los nuevos niveles de Stock en el JSON
-            GuardarEnJson();
+            await _productoRepository.ActualizarAsync(producto);
 
             if (precioVenta > 0)
             {
                 decimal totalVenta = precioVenta * cantidad;
-                FinanzasController.RegistrarIngreso(totalVenta, esVenta: true);
+                await _registroFinancieroRepository.RegistrarIngresoAsync(totalVenta, esVenta: true);
             }
 
             return Ok(new

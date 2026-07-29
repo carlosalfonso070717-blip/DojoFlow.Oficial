@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+.git/
+.github/
+DojoFlow.Tests/
+ADRs/
+Arq_Views/
+*.md

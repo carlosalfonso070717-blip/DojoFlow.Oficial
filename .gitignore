@@ -361,3 +361,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Copia del frontend generada en build (ver target CopyFrontend en DojoFlow.API.csproj)
+DojoFlow.API/wwwroot/index.html
+DojoFlow.API/wwwroot/login.html
+DojoFlow.API/wwwroot/kiosco.html
+DojoFlow.API/wwwroot/app.js
+DojoFlow.API/wwwroot/logo.jpg

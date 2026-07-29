@@ -19,7 +19,7 @@ function obtenerHeaders() {
 // ==========================================
 // CONFIGURACIÓN GENERAL
 // ==========================================
-const API_URL = "http://localhost:5244/api"; 
+const API_URL = "/api";
 
 // CACHÉS LOCALES
 let cacheAlumnos = [];

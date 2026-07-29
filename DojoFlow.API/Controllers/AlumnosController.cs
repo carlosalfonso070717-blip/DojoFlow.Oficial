@@ -1,12 +1,8 @@
-﻿using DojoFlow.Domain.Entities;
+using DojoFlow.Application.Interfaces;
+using DojoFlow.Domain.Entities;
 using DojoFlow.Domain.Strategies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
 
 namespace DojoFlow.API.Controllers
 {
@@ -33,58 +29,34 @@ namespace DojoFlow.API.Controllers
     [Route("api/[controller]")]
     public class AlumnosController : ControllerBase
     {
-        private static readonly string ArchivoJson = "alumnos.json";
+        private readonly IAlumnoRepository _alumnoRepository;
+        private readonly IMensualidadRepository _mensualidadRepository;
 
-        public static readonly List<AlumnoVista> _baseDeDatosEnMemoria;
-
-        static AlumnosController()
+        public AlumnosController(IAlumnoRepository alumnoRepository, IMensualidadRepository mensualidadRepository)
         {
-            // 🔥 CORRECCIÓN: Le especificamos explícitamente que use System.IO.File
-            if (System.IO.File.Exists(ArchivoJson))
-            {
-                try
-                {
-                    string jsonExistente = System.IO.File.ReadAllText(ArchivoJson);
-                    _baseDeDatosEnMemoria = JsonSerializer.Deserialize<List<AlumnoVista>>(jsonExistente)
-                                            ?? new List<AlumnoVista>();
-                }
-                catch
-                {
-                    _baseDeDatosEnMemoria = GenerarDatosSemilla();
-                }
-            }
-            else
-            {
-                _baseDeDatosEnMemoria = GenerarDatosSemilla();
-                GuardarEnJson();
-            }
+            _alumnoRepository = alumnoRepository;
+            _mensualidadRepository = mensualidadRepository;
         }
 
-        private static List<AlumnoVista> GenerarDatosSemilla()
+        private static AlumnoVista AVista(Alumno a) => new AlumnoVista
         {
-            return new List<AlumnoVista>
-            {
-                new AlumnoVista { Id = Guid.Parse("a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"), Nombre = "Carlos Llanes", Telefono = "9991234567", Disciplinas = new List<string>{ "MMA", "JiuJitsu" }, CostoMensualidad = 1500.00m, ClaveKiosco = 12345 },
-                new AlumnoVista { Id = Guid.NewGuid(), Nombre = "María Sosa", Telefono = "9999876543", Disciplinas = new List<string>{ "Boxeo" }, CostoMensualidad = 850.00m, ClaveKiosco = 98765 }
-            };
-        }
-
-        private static void GuardarEnJson()
-        {
-            var opciones = new JsonSerializerOptions { WriteIndented = true };
-            string jsonTexto = JsonSerializer.Serialize(_baseDeDatosEnMemoria, opciones);
-            // 🔥 CORRECCIÓN: Le especificamos explícitamente que use System.IO.File
-            System.IO.File.WriteAllText(ArchivoJson, jsonTexto);
-        }
+            Id = a.Id,
+            Nombre = $"{a.Nombre} {a.Apellido}",
+            Telefono = a.Telefono,
+            Disciplinas = a.Disciplinas,
+            CostoMensualidad = a.CostoMensualidad,
+            ClaveKiosco = a.ClaveKiosco
+        };
 
         [HttpGet]
-        public IActionResult GetAlumnos()
+        public async Task<IActionResult> GetAlumnos()
         {
-            return Ok(_baseDeDatosEnMemoria);
+            var alumnos = await _alumnoRepository.ObtenerTodosAsync();
+            return Ok(alumnos.Select(AVista));
         }
 
         [HttpPost]
-        public IActionResult RegistrarAlumno([FromBody] RegistrarAlumnoRequest request)
+        public async Task<IActionResult> RegistrarAlumno([FromBody] RegistrarAlumnoRequest request)
         {
             try
             {
@@ -97,27 +69,17 @@ namespace DojoFlow.API.Controllers
 
                 var calculadora = new CalculadoraMensualidad(nuevoAlumno.Disciplinas.Count);
                 decimal costoMensualidad = calculadora.ObtenerCostoMensual();
+                nuevoAlumno.CostoMensualidad = costoMensualidad;
 
-                var alumnoParaTabla = new AlumnoVista
-                {
-                    Id = nuevoAlumno.Id,
-                    Nombre = $"{nuevoAlumno.Nombre} {nuevoAlumno.Apellido}",
-                    Telefono = nuevoAlumno.Telefono,
-                    Disciplinas = nuevoAlumno.Disciplinas,
-                    CostoMensualidad = costoMensualidad,
-                    ClaveKiosco = nuevoAlumno.ClaveKiosco
-                };
-
-                _baseDeDatosEnMemoria.Add(alumnoParaTabla);
-                GuardarEnJson();
+                await _alumnoRepository.GuardarAsync(nuevoAlumno);
 
                 DateTime hoy = DateTime.UtcNow;
                 DateTime fechaVencimiento = new DateTime(hoy.Year, hoy.Month, 15);
                 if (hoy.Day > 15) fechaVencimiento = fechaVencimiento.AddMonths(1);
 
                 var primeraMensualidad = new Mensualidad(nuevoAlumno.Id, costoMensualidad, fechaVencimiento);
-                MensualidadesController._tablaMensualidades.Add(primeraMensualidad);
-                MensualidadesController.GuardarEnJson();
+                await _mensualidadRepository.AgregarAsync(primeraMensualidad);
+
                 return StatusCode(201, new
                 {
                     Mensaje = $"¡Registro exitoso! Su PIN de acceso es: {nuevoAlumno.ClaveKiosco}",
@@ -135,18 +97,16 @@ namespace DojoFlow.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult EliminarAlumno(Guid id)
+        public async Task<IActionResult> EliminarAlumno(Guid id)
         {
-            var alumno = _baseDeDatosEnMemoria.FirstOrDefault(a => a.Id == id);
+            var alumno = await _alumnoRepository.ObtenerPorIdAsync(id);
 
             if (alumno == null)
                 return NotFound(new { Error = "Peleador no encontrado en el sistema." });
 
-            _baseDeDatosEnMemoria.Remove(alumno);
-            GuardarEnJson();
+            await _alumnoRepository.EliminarAsync(alumno);
+            await _mensualidadRepository.EliminarPorAlumnoIdAsync(id);
 
-            MensualidadesController._tablaMensualidades.RemoveAll(m => m.AlumnoId == id);
-            MensualidadesController.GuardarEnJson();
             return Ok(new { Mensaje = "El peleador y sus recibos han sido eliminados correctamente." });
         }
     }

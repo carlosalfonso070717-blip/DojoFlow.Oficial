@@ -8,14 +8,16 @@ namespace DojoFlow.Domain.Entities
         public Guid Id { get;  set; }
         public string Nombre { get;  set; } = string.Empty;
         public string Apellido { get;  set; } = string.Empty;
-        public string Telefono { get; private set; } = string.Empty;
-        public DateTime FechaInscripcion { get; private set; }
-        public bool Activo { get; private set; }
+        public string Telefono { get; set; } = string.Empty;
+        public DateTime FechaInscripcion { get; set; }
+        public bool Activo { get; set; }
 
         // ID de 5 dígitos generado automáticamente para el kiosco
-        public int ClaveKiosco { get; private set; }
+        public int ClaveKiosco { get; set; }
 
-        public List<string> Disciplinas { get; private set; } = new();
+        public List<string> Disciplinas { get; set; } = new();
+
+        public decimal CostoMensualidad { get; set; }
 
         public Alumno() { }
 
