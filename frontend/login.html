@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DojoFlow - Acceso Coach</title>
+    <!-- Incluimos SweetAlert2 para las alertas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Estilos base con temática oscura para DojoFlow */
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .auth-container {
+            background-color: #1e1e1e;
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+            width: 100%;
+            max-width: 380px;
+            border-top: 4px solid #e53935; /* Un toque rojo agresivo/marcial */
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: #e53935;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #bbbbbb;
+            font-size: 0.9rem;
+        }
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #333333;
+            background-color: #2c2c2c;
+            color: #ffffff;
+            border-radius: 4px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #e53935;
+        }
+        .btn {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #e53935;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #c62828;
+        }
+        .toggle-text {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #888888;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .toggle-text:hover {
+            color: #e53935;
+            text-decoration: underline;
+        }
+        
+        /* Clase para ocultar formularios dinámicaente */
+        .oculto { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <!-- FORMULARIO DE INICIO DE SESIÓN -->
+        <div id="loginSection">
+            <h2>Acceso Coach</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsuario">Usuario Sensei</label>
+                    <input type="text" id="loginUsuario" placeholder="Ej. CoachPrincipal" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña</label>
+                    <input type="password" id="loginPassword" placeholder="Tu contraseña" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+            </form>
+            <div class="toggle-text" onclick="toggleFormularios()">¿No tienes acceso? Registra un nuevo Coach aquí</div>
+        </div>
+
+        <!-- FORMULARIO DE REGISTRO (Oculto por defecto) -->
+        <div id="signupSection" class="oculto">
+            <h2>Registrar Coach</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupUsuario">Nuevo Usuario</label>
+                    <input type="text" id="signupUsuario" placeholder="Ej. NuevoCoach" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Contraseña de acceso</label>
+                    <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres" required autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn btn-primary">Crear Cuenta</button>
+            </form>
+            <div class="toggle-text" onclick="toggleFormularios()">Ya tengo cuenta. Volver al Login</div>
+        </div>
+    </div>
+
+    <script>
+        // URL base de tu API (Asegúrate de que el puerto sea el correcto, usualmente 5244 o similar)
+        const API_URL = 'http://localhost:5244/api/Auth';
+
+        // 1. Función para alternar entre la vista de Login y Registro
+        function toggleFormularios() {
+            const loginSec = document.getElementById('loginSection');
+            const signupSec = document.getElementById('signupSection');
+            
+            if (loginSec.classList.contains('oculto')) {
+                loginSec.classList.remove('oculto');
+                signupSec.classList.add('oculto');
+            } else {
+                loginSec.classList.add('oculto');
+                signupSec.classList.remove('oculto');
+            }
+        }
+
+        // 2. Lógica para procesar el INICIO DE SESIÓN
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Evita que la página se recargue
+
+            const usuario = document.getElementById('loginUsuario').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: usuario, password: password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // ¡Éxito! Guardamos el Token en el localStorage del navegador
+                    localStorage.setItem('coachToken', data.token);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Acceso Concedido',
+                        text: data.mensaje,
+                        background: '#1e1e1e', color: '#fff',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        // Redirigir al panel principal (cambia 'index.html' por tu vista real)
+                        window.location.href = 'index.html'; 
+                    });
+                } else {
+                    // Falló la validación (usuario o contraseña incorrectos)
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Acceso Denegado',
+                        text: data.error,
+                        background: '#1e1e1e', color: '#fff',
+                        confirmButtonColor: '#e53935'
+                    });
+                }
+            } catch (error) {
+                console.error("Error al conectar con la API:", error);
+                Swal.fire('Error de conexión', 'No se pudo contactar al servidor de DojoFlow.', 'error');
+            }
+        });
+
+        // 3. Lógica para procesar el REGISTRO DE COACH
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const usuario = document.getElementById('signupUsuario').value;
+            const password = document.getElementById('signupPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: usuario, password: password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Registro Exitoso',
+                        text: data.mensaje,
+                        background: '#1e1e1e', color: '#fff',
+                        confirmButtonColor: '#4CAF50'
+                    }).then(() => {
+                        // Limpiar formulario y volver a la pantalla de Login
+                        document.getElementById('signupForm').reset();
+                        toggleFormularios(); 
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Atención',
+                        text: data.error,
+                        background: '#1e1e1e', color: '#fff',
+                        confirmButtonColor: '#e53935'
+                    });
+                }
+            } catch (error) {
+                console.error("Error al conectar con la API:", error);
+                Swal.fire('Error de conexión', 'No se pudo contactar al servidor de DojoFlow.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

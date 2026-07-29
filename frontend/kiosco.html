@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Kiosco | DojoFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="bg-white w-full max-w-lg rounded-xl shadow-lg border border-slate-200 p-8">
+        <div class="text-center mb-8">
+            <div class="flex justify-center mb-3">
+                <img src="logo.jpg" alt="Logo DojoFlow" class="h-20 rounded-lg shadow-sm object-contain">
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800 uppercase tracking-tight">DojoFlow</h1>
+            <p class="text-slate-500 text-sm mt-1">Terminal de Acceso de Peleadores</p>
+        </div>
+
+        <div id="pin-display" class="bg-slate-100 h-20 flex items-center justify-center text-4xl font-mono text-slate-700 rounded-lg border border-slate-200 mb-8 tracking-[0.5em] font-bold">
+            &nbsp;
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 mb-6">
+            <button class="key h-16 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-200 transition text-xl shadow-sm" onclick="press('1')">1</button>
+            <button class="key h-16 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-200 transition text-xl shadow-sm" onclick="press('2')">2</button>
+            <button class="key h-16 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-200 transition text-xl shadow-sm" onclick="press('3')">3</button>
+            
+            <button class="key h-16 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-200 transition text-xl shadow-sm" onclick="press('4')">4</button>
+            <button class="key h-16 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-200 transition text-xl shadow-sm" onclick="press('5')">5</button>
+            <button class="key h-16 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-200 transition text-xl shadow-sm" onclick="press('6')">6</button>
+            
+            <button class="key h-16 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-200 transition text-xl shadow-sm" onclick="press('7')">7</button>
+            <button class="key h-16 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-200 transition text-xl shadow-sm" onclick="press('8')">8</button>
+            <button class="key h-16 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-200 transition text-xl shadow-sm" onclick="press('9')">9</button>
+            
+            <button class="key h-16 bg-slate-100 text-slate-600 border border-slate-300 rounded-lg font-bold hover:bg-slate-200 transition text-2xl shadow-sm flex items-center justify-center" onclick="backspace()">⌫</button>
+            <button class="key h-16 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-200 transition text-xl shadow-sm" onclick="press('0')">0</button>
+            <button class="key h-16 bg-red-600 text-white border-none rounded-lg font-bold hover:bg-red-700 transition shadow-md text-lg" onclick="validate()">ENTRAR</button>
+        </div>
+    </div>
+
+    <div id="modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div id="modal-content" class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
+            </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:5244/api"; 
+        
+        let currentPin = "";
+        const display = document.getElementById('pin-display');
+
+        function press(num) {
+            if (currentPin.length < 5) {
+                currentPin += num;
+                display.innerText = currentPin;
+            }
+        }
+
+        // Nueva función para borrar de uno en uno
+        function backspace() {
+            if (currentPin.length > 0) {
+                currentPin = currentPin.slice(0, -1);
+                if (currentPin.length === 0) {
+                    display.innerHTML = "&nbsp;";
+                } else {
+                    display.innerText = currentPin;
+                }
+            }
+        }
+
+        // Esta función se mantiene para limpiar todo cuando se cierra el modal
+        function clearPin() { 
+            currentPin = ""; 
+            display.innerHTML = "&nbsp;"; 
+        }
+
+        async function validate() {
+            if (currentPin.length !== 5) {
+                alert("Por favor, ingresa los 5 dígitos de tu PIN.");
+                return;
+            }
+
+            const modal = document.getElementById('modal');
+            const content = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            
+            // Animación de espera
+            content.innerHTML = `
+                <div class="text-slate-400 text-5xl mb-4 animate-pulse">⏳</div>
+                <h2 class="text-xl font-bold text-slate-800 mb-2">Validando en el servidor...</h2>
+                <p class="text-slate-500">Consultando datos del Dojo</p>
+            `;
+
+            try {
+                // Petición HTTP real al endpoint de C#
+                const response = await fetch(`${API_URL}/Asistencias/checar?pin=${currentPin}`, { 
+                    method: "POST",
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.permitirAcceso) {
+                        let estatusBadge = data.estatusFinanciero === "Pagado" 
+                            ? `<span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-sm font-bold border border-green-200">CUOTA CUBIERTA ✅</span>`
+                            : `<span class="bg-yellow-100 text-yellow-700 px-4 py-1.5 rounded-full text-sm font-bold border border-yellow-200">PAGO PENDIENTE ⏳</span>`;
+
+                        content.innerHTML = `
+                            <div class="text-green-500 text-6xl mb-4">✓</div>
+                            <h2 class="text-xl font-bold text-slate-800 mb-2">¡Bienvenido al Tatami!</h2>
+                            <p class="text-slate-600 font-bold text-lg mb-4">${data.nombreCompleto}</p>
+                            <div class="mb-5">${estatusBadge}</div>
+                            <button onclick="closeModal()" class="w-full bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition shadow-md">CERRAR</button>
+                        `;
+                    } else {
+                        content.innerHTML = `
+                            <div class="text-red-500 text-6xl mb-4">✕</div>
+                            <h2 class="text-xl font-bold text-slate-800 mb-2">Acceso Restringido</h2>
+                            <p class="text-slate-600 font-bold text-lg mb-4">${data.nombreCompleto}</p>
+                            <div class="mb-4"><span class="bg-red-100 text-red-700 px-4 py-1.5 rounded-full text-sm font-bold border border-red-200">RECIBO VENCIDO ❌</span></div>
+                            <p class="text-slate-500 text-sm mb-6">Favor de pasar a administración.</p>
+                            <button onclick="closeModal()" class="w-full bg-slate-200 text-slate-700 py-3 rounded-lg font-bold hover:bg-slate-300 transition">CERRAR</button>
+                        `;
+                    }
+                } else {
+                    content.innerHTML = `
+                        <div class="text-red-500 text-6xl mb-4">✕</div>
+                        <h2 class="text-xl font-bold text-slate-800 mb-2">Acceso Denegado</h2>
+                        <p class="text-slate-500 mb-6 font-medium">${data.error || "El PIN no está registrado."}</p>
+                        <button onclick="closeModal()" class="w-full bg-slate-200 text-slate-700 py-3 rounded-lg font-bold hover:bg-slate-300 transition">INTENTAR OTRA VEZ</button>
+                    `;
+                }
+            } catch (error) {
+                content.innerHTML = `
+                    <div class="text-red-500 text-6xl mb-4">⚠</div>
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Error de Conexión</h2>
+                    <p class="text-slate-500 mb-6 text-sm">No se pudo contactar al servidor. Asegúrate de que la API está corriendo en Visual Studio.</p>
+                    <button onclick="closeModal()" class="w-full bg-slate-200 text-slate-700 py-3 rounded-lg font-bold hover:bg-slate-300 transition">CERRAR</button>
+                `;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            clearPin();
+        }
+    </script>
+</body>
+</html>

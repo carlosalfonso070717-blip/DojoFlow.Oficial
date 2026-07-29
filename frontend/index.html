@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DojoFlow | Admin Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root {
+            --primary: #d90429;
+            --primary-hover: #ef233c;
+            --dark-bg: #111418;
+            --sidebar-bg: #1a1d24;
+            --light-bg: #f4f7f6;
+            --text-main: #2b2d42;
+            --text-muted: #8d99ae;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 { font-family: 'Poppins', sans-serif; }
+
+        /* Sidebar Moderno y Responsivo */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: 100vh;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.05);
+            padding: 20px 15px;
+            z-index: 1050;
+            transition: all 0.3s ease;
+        }
+        
+        /* Contenedor del Logo */
+        .logo-container {
+            text-align: center;
+            padding: 10px 0 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 20px;
+        }
+        .logo-container img {
+            max-height: 90px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(217, 4, 41, 0.3);
+        }
+        .logo-text { color: white; font-weight: 700; font-size: 1.4rem; letter-spacing: -0.5px;}
+        .logo-text span { color: var(--primary); }
+
+        .sidebar a {
+            color: #a0a5b1;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            padding: 14px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .sidebar a i { font-size: 1.2rem; width: 24px; text-align: center; }
+        .sidebar a:hover { background-color: rgba(255,255,255,0.05); color: white; }
+        .sidebar a.active { background-color: var(--primary); color: white; box-shadow: 0 4px 15px rgba(217, 4, 41, 0.4); }
+
+        /* Top Navbar */
+        .top-nav { background: white; padding: 15px 30px; box-shadow: 0 2px 15px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-radius: 0 0 16px 0; }
+        
+        /* Tarjetas de Contenido */
+        .card { border: none; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); background: #ffffff; transition: transform 0.2s; }
+        .card-header { background: transparent; border-bottom: 1px solid #f0f0f0; padding: 24px 30px; }
+        
+        .form-control { border-radius: 10px; padding: 12px 15px; border: 1px solid #e0e0e0; background: #fdfdfd; }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(217,4,41,0.1); }
+        .btn-primary { background-color: var(--primary); border: none; border-radius: 10px; padding: 10px 20px; font-weight: 600; }
+        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(217,4,41,0.3); }
+        
+        /* Tablas */
+        .table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; border-bottom: 2px solid #f0f0f0; padding: 15px; }
+        .table td { padding: 15px; vertical-align: middle; border-bottom: 1px solid #f8f9fa; color: var(--text-main); font-weight: 500; }
+        .table tbody tr:hover { background-color: #fcfcfc; }
+
+        /* Badges */
+        .badge { padding: 8px 12px; border-radius: 8px; font-weight: 600; letter-spacing: 0.3px; }
+        .badge.bg-success { background-color: #d1fae5 !important; color: #065f46 !important; }
+        .badge.bg-danger { background-color: #fee2e2 !important; color: #991b1b !important; }
+        .badge.bg-warning { background-color: #fef3c7 !important; color: #92400e !important; }
+        .badge.bg-secondary { background-color: #f3f4f6 !important; color: #374151 !important; }
+
+        .btn-outline-danger { border-color: #e2e8f0; color: var(--text-main); border-radius: 12px; padding: 12px 20px; font-weight: 500; }
+        .btn-check:checked + .btn-outline-danger { background-color: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(217,4,41,0.3); }
+
+        .finance-card { border-radius: 20px; padding: 25px; color: white; position: relative; overflow: hidden; }
+        .finance-card::after { content: ''; position: absolute; top: -50%; right: -50%; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .bg-gradient-primary { background: linear-gradient(135deg, #111418, #2b2d42); }
+        .bg-gradient-info { background: linear-gradient(135deg, #3a0ca3, #4cc9f0); }
+        .bg-gradient-success { background: linear-gradient(135deg, #00b4d8, #0077b6); }
+
+        /* --- ADAPTACIÓN RESPONSIVA --- */
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1040; }
+        
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -280px; width: 280px; }
+            .sidebar.show { left: 0; }
+            .sidebar-overlay.show { display: block; }
+            .top-nav { padding: 15px; flex-direction: column; gap: 15px; align-items: stretch; border-radius: 0; }
+            .top-nav-header { display: flex; align-items: center; justify-content: space-between; }
+            .content-wrapper { padding: 15px !important; }
+            .card-body { padding: 15px !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <div class="col-md-2 sidebar d-flex flex-column" id="sidebar">
+                <div class="logo-container">
+                    <img src="logo.jpg" alt="Logo de academia de artes marciales">
+                    <div class="logo-text mt-2">Dojo<span>Flow</span></div>
+                </div>
+
+                <div class="d-flex flex-column gap-1 w-100 mt-2">
+                    <a href="#" id="nav-registro" class="active"><i class="fa-solid fa-user-plus"></i> Nuevo Registro</a>
+                    <a href="#" id="nav-lista"><i class="fa-solid fa-users"></i> Peleadores</a>
+                    <a href="#" id="nav-mensualidades"><i class="fa-solid fa-file-invoice-dollar"></i> Mensualidades</a>
+                    <a href="#" id="nav-inventario"><i class="fa-solid fa-box-open"></i> Inventario</a>
+                    <a href="#" id="nav-finanzas"><i class="fa-solid fa-chart-pie"></i> Finanzas</a>
+                </div>
+            </div>
+
+            <div class="col-md-10 bg-light-bg pb-5">
+                
+                <div class="top-nav">
+                    <div class="top-nav-header w-100 d-flex justify-content-between d-md-block">
+                        <div class="d-flex align-items-center gap-3">
+                            <button class="btn btn-light border d-md-none" id="btnToggleMenu"><i class="fa-solid fa-bars"></i></button>
+                            <div>
+                                <h4 class="mb-0 text-dark fw-bold" id="page-title">Panel de Control</h4>
+                                <small class="text-muted">Administración Central del Dojo</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 align-items-center mt-3 mt-md-0 justify-content-between w-100 justify-content-md-end">
+                        <a href="kiosco.html" target="_blank" class="btn btn-dark" style="border-radius: 10px;">
+                            <i class="fa-solid fa-tablet-screen-button me-2"></i> Kiosco
+                        </a>
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="https://ui-avatars.com/api/?name=Admin&background=1a1d24&color=fff&rounded=true" width="40" height="40" class="rounded-circle">
+                            <div class="d-none d-sm-block">
+                                <div class="fw-bold fs-6 lh-1">Administrador</div>
+                                <span class="badge bg-success" style="font-size: 0.6rem;">Online</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-3 px-md-5 content-wrapper">
+                    
+                    <div id="vista-registro" class="card fade-in">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-user-plus text-danger me-2"></i> Inscribir Peleador</h5>
+                        </div>
+                        <div class="card-body p-4 p-md-5">
+                            <form id="registroForm">
+                                <div class="row mb-4 g-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted fw-bold small">Nombre</label>
+                                        <input type="text" class="form-control form-control-lg" id="nombre" placeholder="Ej. Carlos" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted fw-bold small">Apellido</label>
+                                        <input type="text" class="form-control form-control-lg" id="apellido" placeholder="Ej. Llanes" required>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label text-muted fw-bold small">Teléfono de Contacto</label>
+                                    <input type="tel" class="form-control form-control-lg" id="telefono" placeholder="10 dígitos" required>
+                                </div>
+                                
+                                <div class="mb-5">
+                                    <label class="form-label text-muted fw-bold small mb-3">Disciplinas a Contratar</label>
+                                    <div class="d-flex flex-wrap gap-2" id="contenedor-disciplinas">
+                                        <input type="checkbox" class="btn-check disciplina-check" id="btn-mma" value="MMA">
+                                        <label class="btn btn-outline-danger" for="btn-mma">MMA</label>
+
+                                        <input type="checkbox" class="btn-check disciplina-check" id="btn-boxeo" value="Boxeo">
+                                        <label class="btn btn-outline-danger" for="btn-boxeo">Boxeo</label>
+
+                                        <input type="checkbox" class="btn-check disciplina-check" id="btn-jiujitsu" value="JiuJitsu">
+                                        <label class="btn btn-outline-danger" for="btn-jiujitsu">JiuJitsu</label>
+
+                                        <input type="checkbox" class="btn-check disciplina-check" id="btn-kickboxing" value="Kickboxing">
+                                        <label class="btn btn-outline-danger" for="btn-kickboxing">Kickboxing</label>
+                                        
+                                        <input type="checkbox" class="btn-check disciplina-check" id="btn-judo" value="Judo">
+                                        <label class="btn btn-outline-danger" for="btn-judo">Judo</label>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-lg w-100"><i class="fa-solid fa-check me-2"></i> Completar Registro y Calcular Cuota</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="vista-lista" class="card d-none">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold">Alumnos Activos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-4" style="max-width: 100%;">
+                                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
+                                <input type="text" id="buscador-alumnos" class="form-control border-start-0 ps-0" placeholder="Buscar por nombre...">
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table align-middle" style="min-width: 800px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Peleador</th>
+                                            <th>Teléfono</th>
+                                            <th>PIN Kiosco</th>
+                                            <th>Disciplinas</th>
+                                            <th>Mensualidad</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabla-alumnos"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="vista-mensualidades" class="card d-none">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold">Control de Pagos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-4" style="max-width: 100%;">
+                                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
+                                <input type="text" id="buscador-mensualidades" class="form-control border-start-0 ps-0" placeholder="Buscar ID, Alumno o PIN...">
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table align-middle" style="min-width: 900px;">
+                                    <thead>
+                                        <tr>
+                                            <th>ID Recibo</th>
+                                            <th>Alumno</th>
+                                            <th>Monto</th>
+                                            <th>Vencimiento</th>
+                                            <th>Pago</th>
+                                            <th>Estado</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabla-mensualidades-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="vista-inventario" class="card d-none">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold">Almacén y Utilería</h5>
+                        </div>
+                        <div class="card-body">
+                            
+                            <div id="panel-alertas-observer" class="mb-4"></div>
+                            
+                            <div class="bg-light p-3 p-md-4 rounded-4 mb-4 border" style="border-color: #eee !important;">
+                                <h6 class="fw-bold mb-3"><i class="fa-solid fa-plus text-danger me-2"></i> Nuevo Artículo</h6>
+                                <form id="formNuevoProducto" class="row g-3 align-items-end">
+                                    <div class="col-md-5 col-12">
+                                        <label class="small fw-bold text-muted mb-1">Nombre del Producto</label>
+                                        <input type="text" class="form-control" id="inv-nombre" required>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="small fw-bold text-muted mb-1">Existencias</label>
+                                        <input type="number" class="form-control" id="inv-cantidad" value="10" required>
+                                    </div>
+                                    <div class="col-md-2 col-6">
+                                        <label class="small fw-bold text-muted mb-1">Alerta Mín.</label>
+                                        <input type="number" class="form-control" id="inv-minimo" value="3" required>
+                                    </div>
+                                    <div class="col-md-2 col-12">
+                                        <button type="submit" class="btn btn-dark w-100 mt-2 mt-md-0">Guardar</button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div class="input-group mb-4" style="max-width: 100%;">
+                                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
+                                <input type="text" id="buscador-inventario" class="form-control border-start-0 ps-0" placeholder="Buscar artículo...">
+                            </div>                     
+                            
+                            <div class="table-responsive">
+                                <table class="table align-middle" style="min-width: 800px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Artículo</th>
+                                            <th>Stock</th>
+                                            <th>Mínimo</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabla-inventario-body"></tbody>
+                                </table>
+                            </div>
+                        </div> 
+                    </div>
+
+                    <div id="vista-finanzas" class="card d-none">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold">Balance General</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-5 g-4">
+                                <div class="col-12 col-md-4">
+                                    <div class="finance-card bg-gradient-primary shadow-lg">
+                                        <div class="small fw-bold opacity-75 text-uppercase">Mensualidades</div>
+                                        <h2 id="total-mensualidades" class="fw-bold mt-2 mb-0">$0.00</h2>
+                                        <i class="fa-solid fa-users position-absolute opacity-25" style="font-size: 80px; bottom: -10px; right: 10px;"></i>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <div class="finance-card bg-gradient-info shadow-lg">
+                                        <div class="small fw-bold opacity-75 text-uppercase">Venta Equipo</div>
+                                        <h2 id="total-ventas" class="fw-bold mt-2 mb-0">$0.00</h2>
+                                        <i class="fa-solid fa-cart-shopping position-absolute opacity-25" style="font-size: 80px; bottom: -10px; right: 10px;"></i>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <div class="finance-card bg-gradient-success shadow-lg">
+                                        <div class="small fw-bold opacity-75 text-uppercase">Utilidad Bruta</div>
+                                        <h2 id="total-utilidad" class="fw-bold mt-2 mb-0">$0.00</h2>
+                                        <i class="fa-solid fa-wallet position-absolute opacity-25" style="font-size: 80px; bottom: -10px; right: 10px;"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold text-dark mb-3 text-uppercase small">Histórico Contable</h6>
+                            <div class="table-responsive">
+                                <table class="table align-middle text-center" style="min-width: 800px;">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-start">Periodo</th>
+                                            <th>Mensualidades</th>
+                                            <th>Ventas</th>
+                                            <th>Artículos</th>
+                                            <th>Total</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabla-finanzas-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEditar" style="display: none; position: fixed; top: 20%; left: 50%; transform: translate(-50%, 0); background: white; padding: 20px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2); border-radius: 8px; z-index: 1000; width: 400px;">
+        <h4>Editar Artículo</h4>
+        <hr>
+        <div class="mb-2">
+            <label>Nombre del Producto</label>
+            <input type="text" id="editNombre" class="form-control">
+        </div>
+        <div class="mb-2">
+            <label>Existencias Reales</label>
+            <input type="number" id="editStock" class="form-control">
+        </div>
+        <div class="mb-4">
+            <label>Alerta Mínima</label>
+            <input type="number" id="editMinimo" class="form-control">
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn btn-dark" onclick="guardarEdicion()">Guardar Cambios</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
