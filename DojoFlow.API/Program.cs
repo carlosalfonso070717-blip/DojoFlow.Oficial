@@ -65,11 +65,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
-// Crea la base de datos y las tablas si todavía no existen (incluye datos semilla)
+// Aplica las migraciones pendientes al arrancar (crea/actualiza tablas, incluye datos semilla)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DojoFlowDbContext>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
 // PIPELINE DE SOLICITUDES HTTP Y PERSONALIZACIÓN VISUAL
