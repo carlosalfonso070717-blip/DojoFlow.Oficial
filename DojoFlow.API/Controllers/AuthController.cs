@@ -55,12 +55,30 @@ namespace DojoFlow.API.Controllers
                 Id = Guid.NewGuid(),
                 Nombre = request.Nombre.Trim(),
                 Email = request.Email.Trim().ToLowerInvariant(),
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                EmailVerificado = false,
+                TokenVerificacion = Guid.NewGuid().ToString("N")
             };
 
             await _usuarioRepository.AgregarAsync(nuevoCoach);
 
-            return Ok(new { Mensaje = "Coach registrado exitosamente en DojoFlow." });
+            string urlVerificacion = $"{Request.Scheme}://{Request.Host}/api/Auth/verificar-correo?token={nuevoCoach.TokenVerificacion}";
+
+            string cuerpoVerificacion = $@"
+                <div style='font-family:sans-serif;'>
+                    <h2 style='color:#e53935;'>DojoFlow</h2>
+                    <p>Hola {nuevoCoach.Nombre}, gracias por registrarte como coach. Confirma que este es tu correo dándole clic al botón:</p>
+                    <p>
+                        <a href='{urlVerificacion}' style='display:inline-block; background-color:#e53935; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:4px; font-weight:bold;'>
+                            Verificar mi correo
+                        </a>
+                    </p>
+                    <p>Si el botón no funciona, copia y pega este link en tu navegador:<br>{urlVerificacion}</p>
+                </div>";
+
+            await _emailSender.EnviarAsync(nuevoCoach.Email, "Verifica tu correo - DojoFlow", cuerpoVerificacion);
+
+            return Ok(new { Mensaje = "Coach registrado. Revisa tu correo y verifica tu cuenta antes de iniciar sesión." });
         }
 
         [HttpPost("login")]
@@ -71,6 +89,11 @@ namespace DojoFlow.API.Controllers
             if (coach == null || !BCrypt.Net.BCrypt.Verify(request.Password, coach.PasswordHash))
             {
                 return Unauthorized(new { Error = "Correo o contraseña incorrectos." });
+            }
+
+            if (!coach.EmailVerificado)
+            {
+                return Unauthorized(new { Error = "Debes verificar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada." });
             }
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
@@ -129,6 +152,25 @@ namespace DojoFlow.API.Controllers
             return Ok(new { Mensaje = "Si el correo está registrado, te enviamos un PIN para restablecer tu contraseña." });
         }
 
+        [HttpGet("verificar-correo")]
+        public async Task<IActionResult> VerificarCorreo([FromQuery] string token)
+        {
+            var coach = string.IsNullOrWhiteSpace(token)
+                ? null
+                : await _usuarioRepository.ObtenerPorTokenVerificacionAsync(token);
+
+            if (coach == null)
+            {
+                return ContentHtml(PaginaVerificacion("Link inválido", "Este link de verificación no es válido o ya fue usado.", exito: false));
+            }
+
+            coach.EmailVerificado = true;
+            coach.TokenVerificacion = null;
+            await _usuarioRepository.ActualizarAsync(coach);
+
+            return ContentHtml(PaginaVerificacion("¡Correo verificado!", $"Listo, {coach.Nombre}. Ya puedes iniciar sesión en DojoFlow.", exito: true));
+        }
+
         [HttpPost("resetear-password")]
         public async Task<IActionResult> ResetearPassword([FromBody] ResetearPasswordRequest request)
         {
@@ -173,6 +215,47 @@ namespace DojoFlow.API.Controllers
             {
                 return false;
             }
+        }
+
+        private ContentResult ContentHtml(string html)
+        {
+            return Content(html, "text/html");
+        }
+
+        private static string PaginaVerificacion(string titulo, string mensaje, bool exito)
+        {
+            string color = exito ? "#4CAF50" : "#e53935";
+            return $@"
+                <!DOCTYPE html>
+                <html lang='es'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>DojoFlow - Verificación</title>
+                    <style>
+                        body {{
+                            background-color: #121212; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
+                        }}
+                        .card {{
+                            background-color: #1e1e1e; padding: 2.5rem; border-radius: 8px; text-align: center;
+                            box-shadow: 0 8px 24px rgba(0,0,0,0.8); border-top: 4px solid {color}; max-width: 420px;
+                        }}
+                        h2 {{ color: {color}; text-transform: uppercase; letter-spacing: 2px; }}
+                        a {{
+                            display: inline-block; margin-top: 1.5rem; background-color: #e53935; color: #ffffff;
+                            padding: 0.8rem 1.6rem; border-radius: 4px; text-decoration: none; font-weight: bold; text-transform: uppercase;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class='card'>
+                        <h2>{titulo}</h2>
+                        <p>{mensaje}</p>
+                        <a href='/login.html'>Ir al login</a>
+                    </div>
+                </body>
+                </html>";
         }
     }
 

@@ -12,5 +12,9 @@ namespace DojoFlow.Domain.Entities
         // Recuperación de contraseña vía PIN enviado por correo
         public string? ResetPinHash { get; set; }
         public DateTime? ResetPinExpiracion { get; set; }
+
+        // Verificación de correo al registrarse
+        public bool EmailVerificado { get; set; }
+        public string? TokenVerificacion { get; set; }
     }
 }
