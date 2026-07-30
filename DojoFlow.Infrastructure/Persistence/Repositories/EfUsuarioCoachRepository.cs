@@ -19,11 +19,6 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
             return await _context.UsuariosCoach.FirstOrDefaultAsync(u => u.Email == emailNormalizado);
         }
 
-        public async Task<UsuarioCoach?> ObtenerPorTokenVerificacionAsync(string token)
-        {
-            return await _context.UsuariosCoach.FirstOrDefaultAsync(u => u.TokenVerificacion == token);
-        }
-
         public async Task AgregarAsync(UsuarioCoach usuario)
         {
             _context.UsuariosCoach.Add(usuario);

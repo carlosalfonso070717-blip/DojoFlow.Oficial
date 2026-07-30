@@ -108,6 +108,38 @@
             color: #e53935;
             text-decoration: underline;
         }
+        .fila-con-boton {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .fila-con-boton input {
+            flex: 1;
+        }
+        .btn-mini {
+            padding: 0 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            background-color: #333333;
+            color: #ffffff;
+            white-space: nowrap;
+        }
+        .btn-mini:hover:not(:disabled) {
+            background-color: #444444;
+        }
+        .btn-mini:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .aviso-verificado {
+            color: #4CAF50;
+            font-size: 0.85rem;
+            margin-top: -0.7rem;
+            margin-bottom: 1.2rem;
+        }
 
         /* Clase para ocultar formularios dinámicamente */
         .oculto { display: none; }
@@ -144,8 +176,19 @@
                 </div>
                 <div class="form-group">
                     <label for="signupEmail">Correo</label>
-                    <input type="email" id="signupEmail" placeholder="tucorreo@ejemplo.com" required autocomplete="email">
+                    <div class="fila-con-boton">
+                        <input type="email" id="signupEmail" placeholder="tucorreo@ejemplo.com" required autocomplete="email">
+                        <button type="button" class="btn-mini" id="btnEnviarVerificacion">Verificar</button>
+                    </div>
                 </div>
+                <div class="form-group oculto" id="grupoPinVerificacion">
+                    <label for="signupPin">Código recibido por correo</label>
+                    <div class="fila-con-boton">
+                        <input type="text" id="signupPin" placeholder="123456" maxlength="6" inputmode="numeric">
+                        <button type="button" class="btn-mini" id="btnConfirmarVerificacion">Confirmar</button>
+                    </div>
+                </div>
+                <div class="aviso-verificado oculto" id="avisoVerificado">✓ Correo verificado</div>
                 <div class="form-group">
                     <label for="signupPassword">Contraseña de acceso</label>
                     <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres" required autocomplete="new-password" minlength="6">
@@ -247,13 +290,103 @@
             }
         });
 
-        // 2. REGISTRO DE COACH
+        // 2. REGISTRO DE COACH (requiere haber verificado el correo primero)
+        let correoVerificado = false;
+        let correoVerificadoValor = '';
+
+        const inputSignupEmail = document.getElementById('signupEmail');
+        const grupoPin = document.getElementById('grupoPinVerificacion');
+        const avisoVerificado = document.getElementById('avisoVerificado');
+        const btnEnviarVerificacion = document.getElementById('btnEnviarVerificacion');
+        const btnConfirmarVerificacion = document.getElementById('btnConfirmarVerificacion');
+
+        function reiniciarVerificacion() {
+            correoVerificado = false;
+            grupoPin.classList.add('oculto');
+            avisoVerificado.classList.add('oculto');
+            document.getElementById('signupPin').value = '';
+        }
+
+        inputSignupEmail.addEventListener('input', () => {
+            if (inputSignupEmail.value.trim().toLowerCase() !== correoVerificadoValor) {
+                reiniciarVerificacion();
+            }
+        });
+
+        btnEnviarVerificacion.addEventListener('click', async () => {
+            const email = inputSignupEmail.value.trim();
+            if (!email) {
+                return mostrarError('Escribe tu correo antes de verificarlo.');
+            }
+
+            btnEnviarVerificacion.disabled = true;
+            btnEnviarVerificacion.textContent = 'Enviando...';
+
+            try {
+                const response = await fetch(`${API_URL}/enviar-verificacion`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    grupoPin.classList.remove('oculto');
+                    Swal.fire({
+                        icon: 'success', title: 'Revisa tu correo', text: data.mensaje,
+                        background: '#1e1e1e', color: '#fff', confirmButtonColor: '#4CAF50', timer: 2500, showConfirmButton: false
+                    });
+                } else {
+                    mostrarError(data.error);
+                }
+            } catch (error) {
+                console.error("Error al conectar con la API:", error);
+                Swal.fire('Error de conexión', 'No se pudo contactar al servidor de DojoFlow.', 'error');
+            } finally {
+                btnEnviarVerificacion.disabled = false;
+                btnEnviarVerificacion.textContent = 'Verificar';
+            }
+        });
+
+        btnConfirmarVerificacion.addEventListener('click', async () => {
+            const email = inputSignupEmail.value.trim();
+            const pin = document.getElementById('signupPin').value.trim();
+            if (!pin) {
+                return mostrarError('Escribe el código que te llegó por correo.');
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/confirmar-verificacion`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, pin })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    correoVerificado = true;
+                    correoVerificadoValor = email.toLowerCase();
+                    grupoPin.classList.add('oculto');
+                    avisoVerificado.classList.remove('oculto');
+                } else {
+                    mostrarError(data.error);
+                }
+            } catch (error) {
+                console.error("Error al conectar con la API:", error);
+                Swal.fire('Error de conexión', 'No se pudo contactar al servidor de DojoFlow.', 'error');
+            }
+        });
+
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const nombre = document.getElementById('signupNombre').value;
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
+
+            if (!correoVerificado || email.trim().toLowerCase() !== correoVerificadoValor) {
+                return mostrarError('Primero debes verificar tu correo con el botón "Verificar".');
+            }
 
             try {
                 const response = await fetch(`${API_URL}/signup`, {
@@ -273,6 +406,8 @@
                         confirmButtonColor: '#4CAF50'
                     }).then(() => {
                         document.getElementById('signupForm').reset();
+                        reiniciarVerificacion();
+                        correoVerificadoValor = '';
                         mostrarSeccion('loginSection');
                     });
                 } else {

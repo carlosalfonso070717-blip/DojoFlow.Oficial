@@ -33,6 +33,7 @@ builder.Services.AddScoped<IMensualidadRepository, EfMensualidadRepository>();
 builder.Services.AddScoped<IProductoRepository, EfProductoRepository>();
 builder.Services.AddScoped<IRegistroFinancieroRepository, EfRegistroFinancieroRepository>();
 builder.Services.AddScoped<IUsuarioCoachRepository, EfUsuarioCoachRepository>();
+builder.Services.AddScoped<IVerificacionEmailRepository, EfVerificacionEmailRepository>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<RegistrarAlumnoUseCase>();
 

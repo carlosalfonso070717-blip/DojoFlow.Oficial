@@ -13,11 +13,16 @@ namespace DojoFlow.Infrastructure.Persistence
         public DbSet<Producto> Productos => Set<Producto>();
         public DbSet<RegistroFinanciero> RegistrosFinancieros => Set<RegistroFinanciero>();
         public DbSet<UsuarioCoach> UsuariosCoach => Set<UsuarioCoach>();
+        public DbSet<VerificacionEmail> VerificacionesEmail => Set<VerificacionEmail>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<RegistroFinanciero>()
                 .HasIndex(r => r.MesAnio)
+                .IsUnique();
+
+            modelBuilder.Entity<VerificacionEmail>()
+                .HasIndex(v => v.Email)
                 .IsUnique();
 
             // Comparador explícito para que EF detecte correctamente los cambios en la lista
