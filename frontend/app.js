@@ -17,6 +17,49 @@ function obtenerHeaders() {
 }
 
 // ==========================================
+// CERRAR SESIÓN
+// ==========================================
+const btnCerrarSesion = document.getElementById('btnCerrarSesion');
+if (btnCerrarSesion) {
+    btnCerrarSesion.addEventListener('click', () => {
+        Swal.fire({
+            title: '¿Cerrar sesión?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d90429'
+        }).then((resultado) => {
+            if (resultado.isConfirmed) {
+                localStorage.removeItem('coachToken');
+                window.location.href = 'login.html';
+            }
+        });
+    });
+}
+
+// ==========================================
+// TEMA CLARO / OSCURO
+// ==========================================
+const btnTema = document.getElementById('btnTema');
+if (btnTema) {
+    function aplicarIconoTema() {
+        const esOscuro = document.documentElement.getAttribute('data-theme') === 'dark';
+        btnTema.textContent = esOscuro ? '☀️' : '🌙';
+    }
+
+    btnTema.addEventListener('click', () => {
+        const actual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        const nuevo = actual === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', nuevo);
+        localStorage.setItem('dojoflow-theme', nuevo);
+        aplicarIconoTema();
+    });
+
+    aplicarIconoTema();
+}
+
+// ==========================================
 // CONFIGURACIÓN GENERAL
 // ==========================================
 const API_URL = "/api";

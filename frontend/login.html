@@ -7,37 +7,81 @@
     <!-- Incluimos SweetAlert2 para las alertas -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* Estilos base con temática oscura para DojoFlow */
+        /* Tema claro (por defecto) */
+        :root {
+            --bg-body: #f4f7f6;
+            --bg-card: #ffffff;
+            --text-main: #2b2d42;
+            --text-muted: #6b7280;
+            --input-bg: #f9fafb;
+            --input-border: #e0e0e0;
+            --primary: #d90429;
+            --primary-hover: #ef233c;
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+
+        /* Tema oscuro */
+        :root[data-theme="dark"] {
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #ffffff;
+            --text-muted: #999999;
+            --input-bg: #2c2c2c;
+            --input-border: #333333;
+            --primary: #e53935;
+            --primary-hover: #c62828;
+            --shadow: rgba(0, 0, 0, 0.8);
+        }
+
         body {
-            background-color: #121212;
-            color: #ffffff;
+            background-color: var(--bg-body);
+            color: var(--text-main);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 1.2rem;
+            right: 1.2rem;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid var(--input-border);
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px var(--shadow);
         }
         .auth-container {
-            background-color: #1e1e1e;
+            background-color: var(--bg-card);
             padding: 2.5rem;
             border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 8px 24px var(--shadow);
             width: 100%;
             max-width: 380px;
-            border-top: 4px solid #e53935; /* Un toque rojo agresivo/marcial */
+            border-top: 4px solid var(--primary);
+            transition: background-color 0.3s;
         }
         h2 {
             text-align: center;
             margin-top: 0;
             margin-bottom: 1.5rem;
-            color: #e53935;
+            color: var(--primary);
             text-transform: uppercase;
             letter-spacing: 2px;
         }
         p.subtitulo {
             text-align: center;
-            color: #aaaaaa;
+            color: var(--text-muted);
             font-size: 0.85rem;
             margin-top: -1rem;
             margin-bottom: 1.5rem;
@@ -48,22 +92,22 @@
         label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #bbbbbb;
+            color: var(--text-muted);
             font-size: 0.9rem;
         }
         input {
             width: 100%;
             padding: 0.8rem;
-            border: 1px solid #333333;
-            background-color: #2c2c2c;
-            color: #ffffff;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--text-main);
             border-radius: 4px;
             box-sizing: border-box;
             transition: border-color 0.3s;
         }
         input:focus {
             outline: none;
-            border-color: #e53935;
+            border-color: var(--primary);
         }
         .btn {
             width: 100%;
@@ -78,34 +122,34 @@
             transition: background-color 0.3s;
         }
         .btn-primary {
-            background-color: #e53935;
+            background-color: var(--primary);
             color: white;
         }
         .btn-primary:hover {
-            background-color: #c62828;
+            background-color: var(--primary-hover);
         }
         .toggle-text {
             text-align: center;
             margin-top: 1.5rem;
             font-size: 0.9rem;
-            color: #888888;
+            color: var(--text-muted);
             cursor: pointer;
             transition: color 0.3s;
         }
         .toggle-text:hover {
-            color: #e53935;
+            color: var(--primary);
             text-decoration: underline;
         }
         .link-olvide {
             text-align: right;
             font-size: 0.8rem;
-            color: #888888;
+            color: var(--text-muted);
             cursor: pointer;
             margin-top: -0.5rem;
             margin-bottom: 1rem;
         }
         .link-olvide:hover {
-            color: #e53935;
+            color: var(--primary);
             text-decoration: underline;
         }
         .fila-con-boton {
@@ -117,18 +161,18 @@
         }
         .btn-mini {
             padding: 0 1rem;
-            border: none;
+            border: 1px solid var(--input-border);
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
             font-size: 0.8rem;
             text-transform: uppercase;
-            background-color: #333333;
-            color: #ffffff;
+            background-color: var(--input-bg);
+            color: var(--text-main);
             white-space: nowrap;
         }
         .btn-mini:hover:not(:disabled) {
-            background-color: #444444;
+            background-color: var(--input-border);
         }
         .btn-mini:disabled {
             opacity: 0.6;
@@ -144,8 +188,17 @@
         /* Clase para ocultar formularios dinámicamente */
         .oculto { display: none; }
     </style>
+    <script>
+        // Aplica el tema guardado ANTES de pintar la página (evita parpadeo)
+        (function () {
+            var temaGuardado = localStorage.getItem('dojoflow-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', temaGuardado);
+        })();
+    </script>
 </head>
 <body>
+
+    <button class="theme-toggle" id="btnTema" title="Cambiar tema" type="button">🌙</button>
 
     <div class="auth-container">
         <!-- FORMULARIO DE INICIO DE SESIÓN -->
@@ -230,6 +283,32 @@
     <script>
         const API_URL = '/api/Auth';
 
+        // Tema claro/oscuro
+        const btnTema = document.getElementById('btnTema');
+
+        function aplicarIconoTema() {
+            const esOscuro = document.documentElement.getAttribute('data-theme') === 'dark';
+            btnTema.textContent = esOscuro ? '☀️' : '🌙';
+        }
+
+        btnTema.addEventListener('click', () => {
+            const actual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            const nuevo = actual === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', nuevo);
+            localStorage.setItem('dojoflow-theme', nuevo);
+            aplicarIconoTema();
+        });
+
+        aplicarIconoTema();
+
+        function coloresSwal() {
+            const estilos = getComputedStyle(document.documentElement);
+            return {
+                background: estilos.getPropertyValue('--bg-card').trim(),
+                color: estilos.getPropertyValue('--text-main').trim()
+            };
+        }
+
         // Alterna entre login / registro / recuperación de contraseña
         function mostrarSeccion(idSeccion) {
             ['loginSection', 'signupSection', 'forgotSection'].forEach(id => {
@@ -247,7 +326,7 @@
                 icon: 'error',
                 title: 'Atención',
                 text: mensaje,
-                background: '#1e1e1e', color: '#fff',
+                background: coloresSwal().background, color: coloresSwal().color,
                 confirmButtonColor: '#e53935'
             });
         }
@@ -275,7 +354,7 @@
                         icon: 'success',
                         title: 'Acceso Concedido',
                         text: data.mensaje,
-                        background: '#1e1e1e', color: '#fff',
+                        background: coloresSwal().background, color: coloresSwal().color,
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
@@ -334,7 +413,7 @@
                     grupoPin.classList.remove('oculto');
                     Swal.fire({
                         icon: 'success', title: 'Revisa tu correo', text: data.mensaje,
-                        background: '#1e1e1e', color: '#fff', confirmButtonColor: '#4CAF50', timer: 2500, showConfirmButton: false
+                        background: coloresSwal().background, color: coloresSwal().color, confirmButtonColor: '#4CAF50', timer: 2500, showConfirmButton: false
                     });
                 } else {
                     mostrarError(data.error);
@@ -402,7 +481,7 @@
                         icon: 'success',
                         title: 'Registro Exitoso',
                         text: data.mensaje,
-                        background: '#1e1e1e', color: '#fff',
+                        background: coloresSwal().background, color: coloresSwal().color,
                         confirmButtonColor: '#4CAF50'
                     }).then(() => {
                         document.getElementById('signupForm').reset();
@@ -442,7 +521,7 @@
                         icon: 'success',
                         title: 'Revisa tu correo',
                         text: data.mensaje,
-                        background: '#1e1e1e', color: '#fff',
+                        background: coloresSwal().background, color: coloresSwal().color,
                         confirmButtonColor: '#4CAF50'
                     });
                     document.getElementById('resetPasswordForm').classList.remove('oculto');
@@ -480,7 +559,7 @@
                         icon: 'success',
                         title: '¡Listo!',
                         text: data.mensaje,
-                        background: '#1e1e1e', color: '#fff',
+                        background: coloresSwal().background, color: coloresSwal().color,
                         confirmButtonColor: '#4CAF50'
                     }).then(() => {
                         document.getElementById('pedirPinForm').reset();
