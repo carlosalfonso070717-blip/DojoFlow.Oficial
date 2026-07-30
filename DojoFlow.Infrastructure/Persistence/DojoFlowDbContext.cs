@@ -56,10 +56,15 @@ namespace DojoFlow.Infrastructure.Persistence
             );
 
             modelBuilder.Entity<Mensualidad>().HasData(
-                new Mensualidad(idCarlos, 1500.00m, new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc))
+                new Mensualidad
                 {
                     Id = Guid.Parse("c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f"),
-                    FechaGeneracion = new DateTime(2026, 5, 15, 0, 0, 0, DateTimeKind.Utc)
+                    AlumnoId = idCarlos,
+                    Monto = 1500.00m,
+                    FechaGeneracion = new DateTime(2026, 5, 15, 0, 0, 0, DateTimeKind.Utc),
+                    FechaVencimiento = new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc),
+                    FechaPago = null,
+                    EstadoActual = "Pendiente"
                 }
             );
 

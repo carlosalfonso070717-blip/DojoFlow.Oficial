@@ -13,10 +13,12 @@ namespace DojoFlow.Domain.Entities
         public DateTime? FechaPago { get; set; }
 
         // Propiedad de solo lectura para mandar al Frontend y la BD
-        public string EstadoActual { get; set; }
+        public string EstadoActual { get; set; } = string.Empty;
 
         // El motor del Patrón State
         private IEstadoMensualidad _estado;
+
+        public Mensualidad() { }
 
         public Mensualidad(Guid alumnoId, decimal monto, DateTime fechaVencimiento)
         {
