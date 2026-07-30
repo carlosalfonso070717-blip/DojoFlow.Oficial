@@ -1,5 +1,6 @@
 using DojoFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace DojoFlow.Infrastructure.Persistence
 {
@@ -18,6 +19,15 @@ namespace DojoFlow.Infrastructure.Persistence
             modelBuilder.Entity<RegistroFinanciero>()
                 .HasIndex(r => r.MesAnio)
                 .IsUnique();
+
+            // Comparador explícito para que EF detecte correctamente los cambios en la lista
+            // (sin esto, compara por referencia y cree que "cambia" en cada build)
+            modelBuilder.Entity<Alumno>()
+                .Property(a => a.Disciplinas)
+                .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                    (listaA, listaB) => listaA!.SequenceEqual(listaB!),
+                    lista => lista.Aggregate(0, (hash, valor) => HashCode.Combine(hash, valor.GetHashCode())),
+                    lista => lista.ToList()));
 
             SeedData(modelBuilder);
         }
