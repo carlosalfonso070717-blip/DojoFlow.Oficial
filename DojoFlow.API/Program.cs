@@ -2,6 +2,7 @@ using DojoFlow.Application.Interfaces;
 using DojoFlow.Application.UseCases.Alumnos;
 using DojoFlow.Infrastructure.Persistence;
 using DojoFlow.Infrastructure.Persistence.Repositories;
+using DojoFlow.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -32,6 +33,7 @@ builder.Services.AddScoped<IMensualidadRepository, EfMensualidadRepository>();
 builder.Services.AddScoped<IProductoRepository, EfProductoRepository>();
 builder.Services.AddScoped<IRegistroFinancieroRepository, EfRegistroFinancieroRepository>();
 builder.Services.AddScoped<IUsuarioCoachRepository, EfUsuarioCoachRepository>();
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<RegistrarAlumnoUseCase>();
 
 // RECUPERAMOS LA POLÍTICA DE CORS AQUÍ

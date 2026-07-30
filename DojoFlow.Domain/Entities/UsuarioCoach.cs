@@ -1,11 +1,16 @@
-﻿using System;
+using System;
 
 namespace DojoFlow.Domain.Entities
 {
     public class UsuarioCoach
     {
         public Guid Id { get; set; }
-        public string Username { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
+
+        // Recuperación de contraseña vía PIN enviado por correo
+        public string? ResetPinHash { get; set; }
+        public DateTime? ResetPinExpiracion { get; set; }
     }
 }

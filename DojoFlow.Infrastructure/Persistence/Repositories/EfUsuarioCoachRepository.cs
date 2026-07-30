@@ -13,14 +13,21 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
             _context = context;
         }
 
-        public async Task<UsuarioCoach?> ObtenerPorUsernameAsync(string username)
+        public async Task<UsuarioCoach?> ObtenerPorEmailAsync(string email)
         {
-            return await _context.UsuariosCoach.FirstOrDefaultAsync(u => u.Username == username);
+            var emailNormalizado = email.Trim().ToLowerInvariant();
+            return await _context.UsuariosCoach.FirstOrDefaultAsync(u => u.Email == emailNormalizado);
         }
 
         public async Task AgregarAsync(UsuarioCoach usuario)
         {
             _context.UsuariosCoach.Add(usuario);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ActualizarAsync(UsuarioCoach usuario)
+        {
+            _context.UsuariosCoach.Update(usuario);
             await _context.SaveChangesAsync();
         }
     }

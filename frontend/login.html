@@ -15,7 +15,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
         }
         .auth-container {
@@ -34,6 +34,13 @@
             color: #e53935;
             text-transform: uppercase;
             letter-spacing: 2px;
+        }
+        p.subtitulo {
+            text-align: center;
+            color: #aaaaaa;
+            font-size: 0.85rem;
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
         }
         .form-group {
             margin-bottom: 1.2rem;
@@ -89,8 +96,20 @@
             color: #e53935;
             text-decoration: underline;
         }
-        
-        /* Clase para ocultar formularios dinámicaente */
+        .link-olvide {
+            text-align: right;
+            font-size: 0.8rem;
+            color: #888888;
+            cursor: pointer;
+            margin-top: -0.5rem;
+            margin-bottom: 1rem;
+        }
+        .link-olvide:hover {
+            color: #e53935;
+            text-decoration: underline;
+        }
+
+        /* Clase para ocultar formularios dinámicamente */
         .oculto { display: none; }
     </style>
 </head>
@@ -102,16 +121,17 @@
             <h2>Acceso Coach</h2>
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="loginUsuario">Usuario Sensei</label>
-                    <input type="text" id="loginUsuario" placeholder="Ej. CoachPrincipal" required autocomplete="username">
+                    <label for="loginEmail">Correo</label>
+                    <input type="email" id="loginEmail" placeholder="tucorreo@ejemplo.com" required autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label for="loginPassword">Contraseña</label>
                     <input type="password" id="loginPassword" placeholder="Tu contraseña" required autocomplete="current-password">
                 </div>
+                <div class="link-olvide" onclick="mostrarSeccion('forgotSection')">¿Olvidaste tu contraseña?</div>
                 <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
             </form>
-            <div class="toggle-text" onclick="toggleFormularios()">¿No tienes acceso? Registra un nuevo Coach aquí</div>
+            <div class="toggle-text" onclick="mostrarSeccion('signupSection')">¿No tienes acceso? Registra un nuevo Coach aquí</div>
         </div>
 
         <!-- FORMULARIO DE REGISTRO (Oculto por defecto) -->
@@ -119,56 +139,95 @@
             <h2>Registrar Coach</h2>
             <form id="signupForm">
                 <div class="form-group">
-                    <label for="signupUsuario">Nuevo Usuario</label>
-                    <input type="text" id="signupUsuario" placeholder="Ej. NuevoCoach" required autocomplete="off">
+                    <label for="signupNombre">Nombre</label>
+                    <input type="text" id="signupNombre" placeholder="Ej. Carlos Llanes" required autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Correo</label>
+                    <input type="email" id="signupEmail" placeholder="tucorreo@ejemplo.com" required autocomplete="email">
                 </div>
                 <div class="form-group">
                     <label for="signupPassword">Contraseña de acceso</label>
-                    <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres" required autocomplete="new-password">
+                    <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres" required autocomplete="new-password" minlength="6">
                 </div>
                 <button type="submit" class="btn btn-primary">Crear Cuenta</button>
             </form>
-            <div class="toggle-text" onclick="toggleFormularios()">Ya tengo cuenta. Volver al Login</div>
+            <div class="toggle-text" onclick="mostrarSeccion('loginSection')">Ya tengo cuenta. Volver al Login</div>
+        </div>
+
+        <!-- RECUPERACIÓN DE CONTRASEÑA (Oculto por defecto) -->
+        <div id="forgotSection" class="oculto">
+            <h2>Recuperar Acceso</h2>
+            <p class="subtitulo">Te enviaremos un PIN de 6 dígitos a tu correo.</p>
+
+            <form id="pedirPinForm">
+                <div class="form-group">
+                    <label for="forgotEmail">Correo</label>
+                    <input type="email" id="forgotEmail" placeholder="tucorreo@ejemplo.com" required autocomplete="email">
+                </div>
+                <button type="submit" class="btn btn-primary" id="btnPedirPin">Enviar PIN</button>
+            </form>
+
+            <form id="resetPasswordForm" class="oculto">
+                <div class="form-group">
+                    <label for="resetPin">PIN recibido por correo</label>
+                    <input type="text" id="resetPin" placeholder="123456" required maxlength="6" inputmode="numeric">
+                </div>
+                <div class="form-group">
+                    <label for="resetPassword">Nueva contraseña</label>
+                    <input type="password" id="resetPassword" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn btn-primary">Restablecer contraseña</button>
+            </form>
+
+            <div class="toggle-text" onclick="mostrarSeccion('loginSection')">Volver al Login</div>
         </div>
     </div>
 
     <script>
         const API_URL = '/api/Auth';
 
-        // 1. Función para alternar entre la vista de Login y Registro
-        function toggleFormularios() {
-            const loginSec = document.getElementById('loginSection');
-            const signupSec = document.getElementById('signupSection');
-            
-            if (loginSec.classList.contains('oculto')) {
-                loginSec.classList.remove('oculto');
-                signupSec.classList.add('oculto');
-            } else {
-                loginSec.classList.add('oculto');
-                signupSec.classList.remove('oculto');
+        // Alterna entre login / registro / recuperación de contraseña
+        function mostrarSeccion(idSeccion) {
+            ['loginSection', 'signupSection', 'forgotSection'].forEach(id => {
+                document.getElementById(id).classList.toggle('oculto', id !== idSeccion);
+            });
+
+            if (idSeccion === 'forgotSection') {
+                document.getElementById('pedirPinForm').classList.remove('oculto');
+                document.getElementById('resetPasswordForm').classList.add('oculto');
             }
         }
 
-        // 2. Lógica para procesar el INICIO DE SESIÓN
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Evita que la página se recargue
+        function mostrarError(mensaje) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Atención',
+                text: mensaje,
+                background: '#1e1e1e', color: '#fff',
+                confirmButtonColor: '#e53935'
+            });
+        }
 
-            const usuario = document.getElementById('loginUsuario').value;
+        // 1. INICIO DE SESIÓN
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
 
             try {
                 const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: usuario, password: password })
+                    body: JSON.stringify({ email, password })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    // ¡Éxito! Guardamos el Token en el localStorage del navegador
                     localStorage.setItem('coachToken', data.token);
-                    
+
                     Swal.fire({
                         icon: 'success',
                         title: 'Acceso Concedido',
@@ -177,18 +236,10 @@
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
-                        // Redirigir al panel principal (cambia 'index.html' por tu vista real)
-                        window.location.href = 'index.html'; 
+                        window.location.href = 'index.html';
                     });
                 } else {
-                    // Falló la validación (usuario o contraseña incorrectos)
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Acceso Denegado',
-                        text: data.error,
-                        background: '#1e1e1e', color: '#fff',
-                        confirmButtonColor: '#e53935'
-                    });
+                    mostrarError(data.error);
                 }
             } catch (error) {
                 console.error("Error al conectar con la API:", error);
@@ -196,18 +247,19 @@
             }
         });
 
-        // 3. Lógica para procesar el REGISTRO DE COACH
+        // 2. REGISTRO DE COACH
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const usuario = document.getElementById('signupUsuario').value;
+            const nombre = document.getElementById('signupNombre').value;
+            const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
 
             try {
                 const response = await fetch(`${API_URL}/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: usuario, password: password })
+                    body: JSON.stringify({ nombre, email, password })
                 });
 
                 const data = await response.json();
@@ -220,18 +272,88 @@
                         background: '#1e1e1e', color: '#fff',
                         confirmButtonColor: '#4CAF50'
                     }).then(() => {
-                        // Limpiar formulario y volver a la pantalla de Login
                         document.getElementById('signupForm').reset();
-                        toggleFormularios(); 
+                        mostrarSeccion('loginSection');
                     });
                 } else {
+                    mostrarError(data.error);
+                }
+            } catch (error) {
+                console.error("Error al conectar con la API:", error);
+                Swal.fire('Error de conexión', 'No se pudo contactar al servidor de DojoFlow.', 'error');
+            }
+        });
+
+        // 3. SOLICITAR PIN DE RECUPERACIÓN
+        document.getElementById('pedirPinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('forgotEmail').value;
+            const boton = document.getElementById('btnPedirPin');
+            boton.disabled = true;
+            boton.textContent = 'Enviando...';
+
+            try {
+                const response = await fetch(`${API_URL}/olvide-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
                     Swal.fire({
-                        icon: 'warning',
-                        title: 'Atención',
-                        text: data.error,
+                        icon: 'success',
+                        title: 'Revisa tu correo',
+                        text: data.mensaje,
                         background: '#1e1e1e', color: '#fff',
-                        confirmButtonColor: '#e53935'
+                        confirmButtonColor: '#4CAF50'
                     });
+                    document.getElementById('resetPasswordForm').classList.remove('oculto');
+                } else {
+                    mostrarError(data.error);
+                }
+            } catch (error) {
+                console.error("Error al conectar con la API:", error);
+                Swal.fire('Error de conexión', 'No se pudo contactar al servidor de DojoFlow.', 'error');
+            } finally {
+                boton.disabled = false;
+                boton.textContent = 'Enviar PIN';
+            }
+        });
+
+        // 4. RESTABLECER CONTRASEÑA CON EL PIN
+        document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('forgotEmail').value;
+            const pin = document.getElementById('resetPin').value;
+            const nuevaPassword = document.getElementById('resetPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/resetear-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, pin, nuevaPassword })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Listo!',
+                        text: data.mensaje,
+                        background: '#1e1e1e', color: '#fff',
+                        confirmButtonColor: '#4CAF50'
+                    }).then(() => {
+                        document.getElementById('pedirPinForm').reset();
+                        document.getElementById('resetPasswordForm').reset();
+                        mostrarSeccion('loginSection');
+                    });
+                } else {
+                    mostrarError(data.error);
                 }
             } catch (error) {
                 console.error("Error al conectar con la API:", error);
