@@ -50,10 +50,17 @@
 
         .theme-toggle-btn {
             width: 42px; height: 42px; border-radius: 50%; border: 1px solid #e2e8f0;
-            background-color: white; cursor: pointer; font-size: 1.1rem;
+            background-color: white; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
+            color: var(--text-main);
+            transition: background-color 0.2s;
         }
         [data-theme="dark"] .theme-toggle-btn { background-color: #22262f; border-color: #333844; }
+        .theme-toggle-btn svg { width: 18px; height: 18px; }
+        .theme-toggle-btn .icono-luna { display: block; }
+        .theme-toggle-btn .icono-sol { display: none; }
+        [data-theme="dark"] .theme-toggle-btn .icono-luna { display: none; }
+        [data-theme="dark"] .theme-toggle-btn .icono-sol { display: block; }
 
         body {
             font-family: 'Inter', sans-serif;
@@ -190,7 +197,22 @@
                     </div>
 
                     <div class="d-flex gap-3 align-items-center mt-3 mt-md-0 justify-content-between w-100 justify-content-md-end">
-                        <button type="button" class="theme-toggle-btn" id="btnTema" title="Cambiar tema">🌙</button>
+                        <button type="button" class="theme-toggle-btn" id="btnTema" title="Cambiar tema">
+                            <svg class="icono-luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                            <svg class="icono-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                        </button>
                         <a href="kiosco.html" target="_blank" class="btn btn-dark" style="border-radius: 10px;">
                             <i class="fa-solid fa-tablet-screen-button me-2"></i> Kiosco
                         </a>

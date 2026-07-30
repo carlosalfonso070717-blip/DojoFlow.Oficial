@@ -43,20 +43,12 @@ if (btnCerrarSesion) {
 // ==========================================
 const btnTema = document.getElementById('btnTema');
 if (btnTema) {
-    function aplicarIconoTema() {
-        const esOscuro = document.documentElement.getAttribute('data-theme') === 'dark';
-        btnTema.textContent = esOscuro ? '☀️' : '🌙';
-    }
-
     btnTema.addEventListener('click', () => {
         const actual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
         const nuevo = actual === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', nuevo);
         localStorage.setItem('dojoflow-theme', nuevo);
-        aplicarIconoTema();
     });
-
-    aplicarIconoTema();
 }
 
 // ==========================================
