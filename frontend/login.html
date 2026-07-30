@@ -6,6 +6,7 @@
     <title>DojoFlow - Acceso Coach</title>
     <!-- Incluimos SweetAlert2 para las alertas -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Tema claro (por defecto) */
         :root {
@@ -33,8 +34,9 @@
             --shadow: rgba(0, 0, 0, 0.8);
         }
 
+        /* Fondo fijo tipo atardecer, detrás del contenedor (no cambia con el tema) */
         body {
-            background-color: var(--bg-body);
+            background: linear-gradient(180deg, #ffb066 0%, #ff8845 12%, #e5573d 28%, #b8352f 46%, #7a1f24 64%, #3d1015 82%, #120608 100%);
             color: var(--text-main);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -42,8 +44,33 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            transition: background-color 0.3s, color 0.3s;
+            position: relative;
+            overflow: hidden;
         }
+
+        /* Silueta decorativa del peleador, muy tenue, detrás de la tarjeta */
+        .silueta-fondo {
+            position: fixed;
+            bottom: -8%;
+            right: -6%;
+            font-size: 48rem;
+            line-height: 1;
+            color: rgba(0, 0, 0, 0.22);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .silueta-fondo-izq {
+            position: fixed;
+            top: -10%;
+            left: -12%;
+            font-size: 26rem;
+            line-height: 1;
+            color: rgba(0, 0, 0, 0.12);
+            z-index: 0;
+            pointer-events: none;
+            transform: rotate(-15deg);
+        }
+
         .theme-toggle {
             position: fixed;
             top: 1.2rem;
@@ -60,16 +87,19 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 8px var(--shadow);
+            z-index: 2;
         }
         .auth-container {
             background-color: var(--bg-card);
             padding: 2.5rem;
             border-radius: 8px;
-            box-shadow: 0 8px 24px var(--shadow);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
             width: 100%;
             max-width: 380px;
             border-top: 4px solid var(--primary);
             transition: background-color 0.3s;
+            position: relative;
+            z-index: 1;
         }
         h2 {
             text-align: center;
@@ -197,6 +227,9 @@
     </script>
 </head>
 <body>
+
+    <i class="fa-solid fa-hand-fist silueta-fondo"></i>
+    <i class="fa-solid fa-mitten silueta-fondo-izq"></i>
 
     <button class="theme-toggle" id="btnTema" title="Cambiar tema" type="button">🌙</button>
 
