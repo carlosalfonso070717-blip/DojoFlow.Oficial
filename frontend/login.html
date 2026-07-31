@@ -6,91 +6,77 @@
     <title>DojoFlow - Acceso Coach</title>
     <!-- Incluimos SweetAlert2 para las alertas -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         /* Tema claro (por defecto) */
         :root {
-            --bg-body: #f4f7f6;
-            --bg-card: #ffffff;
-            --text-main: #2b2d42;
+            --bg-card: rgba(255, 255, 255, 0.94);
+            --text-main: #1c1e26;
             --text-muted: #6b7280;
-            --input-bg: #f9fafb;
-            --input-border: #e0e0e0;
+            --input-bg: rgba(0, 0, 0, 0.035);
+            --input-border: rgba(0, 0, 0, 0.12);
             --primary: #d90429;
             --primary-hover: #ef233c;
-            --shadow: rgba(0, 0, 0, 0.08);
+            --shadow: rgba(0, 0, 0, 0.35);
+            --card-border: rgba(255, 255, 255, 0.4);
         }
 
         /* Tema oscuro */
         :root[data-theme="dark"] {
-            --bg-body: #121212;
-            --bg-card: #1e1e1e;
-            --text-main: #ffffff;
-            --text-muted: #999999;
-            --input-bg: #2c2c2c;
-            --input-border: #333333;
-            --primary: #e53935;
-            --primary-hover: #c62828;
-            --shadow: rgba(0, 0, 0, 0.8);
+            --bg-card: rgba(18, 18, 20, 0.72);
+            --text-main: #f5f5f5;
+            --text-muted: #a3a3a3;
+            --input-bg: rgba(255, 255, 255, 0.06);
+            --input-border: rgba(255, 255, 255, 0.14);
+            --primary: #ef233c;
+            --primary-hover: #ff4d5e;
+            --shadow: rgba(0, 0, 0, 0.6);
+            --card-border: rgba(255, 255, 255, 0.1);
         }
 
-        /* Fondo fijo tipo atardecer, detrás del contenedor (no cambia con el tema) */
+        * { box-sizing: border-box; }
+
+        /* Fondo: foto real del gimnasio + oscurecido para contraste (no cambia con el tema) */
         body {
-            background: linear-gradient(180deg, #ffb066 0%, #ff8845 12%, #e5573d 28%, #b8352f 46%, #7a1f24 64%, #3d1015 82%, #120608 100%);
+            background-image:
+                linear-gradient(160deg, rgba(8,8,10,0.55) 0%, rgba(8,8,10,0.78) 45%, rgba(8,8,10,0.92) 100%),
+                url('img/fondo-login.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
             position: relative;
-            overflow: hidden;
-        }
-
-        /* Silueta real del peleador (recortada de tu video), detrás de la tarjeta */
-        .silueta-fondo {
-            position: fixed;
-            bottom: 0;
-            right: 4%;
-            height: 92vh;
-            max-height: 720px;
-            width: auto;
-            opacity: 0.55;
-            z-index: 0;
-            pointer-events: none;
-            filter: drop-shadow(0 0 40px rgba(0,0,0,0.3));
-        }
-
-        /* Viñeta sutil para que la tarjeta resalte sobre el fondo */
-        .overlay-vineta {
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(ellipse at 30% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 75%);
-            z-index: 0;
-            pointer-events: none;
         }
 
         .theme-toggle {
             position: fixed;
-            top: 1.2rem;
-            right: 1.2rem;
+            top: 1.5rem;
+            right: 1.5rem;
             width: 44px;
             height: 44px;
             border-radius: 50%;
             border: 1px solid rgba(255,255,255,0.25);
-            background-color: rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(6px);
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
             color: #ffffff;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
             z-index: 2;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.2s;
         }
         .theme-toggle:hover {
-            background-color: rgba(255, 255, 255, 0.22);
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
         }
         .theme-toggle svg {
             width: 20px;
@@ -100,14 +86,32 @@
         .theme-toggle .icono-sol { display: none; }
         :root[data-theme="dark"] .theme-toggle .icono-luna { display: none; }
         :root[data-theme="dark"] .theme-toggle .icono-sol { display: block; }
+
+        .marca {
+            position: fixed;
+            top: 1.8rem;
+            left: 2rem;
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+            z-index: 2;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+        }
+        .marca span { color: var(--primary); }
+
         .auth-container {
             background-color: var(--bg-card);
-            padding: 2.5rem;
-            border-radius: 8px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            padding: 3rem 2.6rem;
+            border-radius: 18px;
+            box-shadow: 0 25px 60px var(--shadow);
             width: 100%;
-            max-width: 380px;
-            border-top: 4px solid var(--primary);
+            max-width: 400px;
+            border: 1px solid var(--card-border);
+            border-top: 3px solid var(--primary);
             transition: background-color 0.3s;
             position: relative;
             z-index: 1;
@@ -115,64 +119,77 @@
         h2 {
             text-align: center;
             margin-top: 0;
-            margin-bottom: 1.5rem;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            margin-bottom: 0.4rem;
+            color: var(--text-main);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: 0.5px;
         }
         p.subtitulo {
             text-align: center;
             color: var(--text-muted);
             font-size: 0.85rem;
-            margin-top: -1rem;
-            margin-bottom: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 1.8rem;
         }
         .form-group {
-            margin-bottom: 1.2rem;
+            margin-bottom: 1.3rem;
         }
         label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.45rem;
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         input {
             width: 100%;
-            padding: 0.8rem;
+            padding: 0.85rem 1rem;
             border: 1px solid var(--input-border);
             background-color: var(--input-bg);
             color: var(--text-main);
-            border-radius: 4px;
+            border-radius: 10px;
             box-sizing: border-box;
-            transition: border-color 0.3s;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
+        input::placeholder { color: var(--text-muted); opacity: 0.7; }
         input:focus {
             outline: none;
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(217, 4, 41, 0.15);
         }
         .btn {
             width: 100%;
-            padding: 0.8rem;
+            padding: 0.9rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
-            margin-top: 1rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            transition: background-color 0.3s;
+            font-size: 0.85rem;
+            transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
         }
         .btn-primary {
             background-color: var(--primary);
             color: white;
+            box-shadow: 0 8px 20px rgba(217, 4, 41, 0.35);
         }
         .btn-primary:hover {
             background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(217, 4, 41, 0.45);
         }
         .toggle-text {
             text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.9rem;
+            margin-top: 1.7rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
             cursor: pointer;
             transition: color 0.3s;
@@ -183,11 +200,12 @@
         }
         .link-olvide {
             text-align: right;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: var(--text-muted);
             cursor: pointer;
-            margin-top: -0.5rem;
-            margin-bottom: 1rem;
+            margin-top: -0.6rem;
+            margin-bottom: 1.1rem;
+            font-weight: 500;
         }
         .link-olvide:hover {
             color: var(--primary);
@@ -239,8 +257,7 @@
 </head>
 <body>
 
-    <div class="overlay-vineta"></div>
-    <img src="img/silueta-boxeador.png" alt="" class="silueta-fondo">
+    <div class="marca">Dojo<span>Flow</span></div>
 
     <button class="theme-toggle" id="btnTema" title="Cambiar tema" type="button">
         <svg class="icono-luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -263,6 +280,7 @@
         <!-- FORMULARIO DE INICIO DE SESIÓN -->
         <div id="loginSection">
             <h2>Acceso Coach</h2>
+            <p class="subtitulo">Inicia sesión para administrar tu academia</p>
             <form id="loginForm">
                 <div class="form-group">
                     <label for="loginEmail">Correo</label>
@@ -281,6 +299,7 @@
         <!-- FORMULARIO DE REGISTRO (Oculto por defecto) -->
         <div id="signupSection" class="oculto">
             <h2>Registrar Coach</h2>
+            <p class="subtitulo">Crea tu cuenta para empezar a administrar</p>
             <form id="signupForm">
                 <div class="form-group">
                     <label for="signupNombre">Nombre</label>
