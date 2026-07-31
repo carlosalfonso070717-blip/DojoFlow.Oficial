@@ -12,11 +12,31 @@ namespace DojoFlow.Domain.Entities
         public DateTime FechaVencimiento { get; set; }
         public DateTime? FechaPago { get; set; }
 
-        // Propiedad de solo lectura para mandar al Frontend y la BD
-        public string EstadoActual { get; set; } = string.Empty;
+        private string _estadoActual = string.Empty;
+
+        // Propiedad para mandar al Frontend y persistir en la BD.
+        // El setter también reconstruye el motor de Patrón State (_estado), porque
+        // EF Core rehidrata las entidades asignando propiedades directamente (sin pasar
+        // por CambiarEstado), y sin esto _estado quedaba null tras leer de la BD.
+        public string EstadoActual
+        {
+            get => _estadoActual;
+            set
+            {
+                _estadoActual = value;
+                _estado = CrearEstadoDesde(value);
+            }
+        }
 
         // El motor del Patrón State
         private IEstadoMensualidad _estado;
+
+        private static IEstadoMensualidad CrearEstadoDesde(string nombreEstado) => nombreEstado switch
+        {
+            "Pagado" => new EstadoPagado(),
+            "Vencido" => new EstadoVencido(),
+            _ => new EstadoPendiente()
+        };
 
         public Mensualidad() { }
 
@@ -36,7 +56,7 @@ namespace DojoFlow.Domain.Entities
         public void CambiarEstado(IEstadoMensualidad nuevoEstado)
         {
             _estado = nuevoEstado;
-            EstadoActual = nuevoEstado.NombreEstado;
+            _estadoActual = nuevoEstado.NombreEstado;
         }
 
         // --- MÉTODOS DEL NEGOCIO ---

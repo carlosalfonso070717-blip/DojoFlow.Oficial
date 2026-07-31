@@ -233,9 +233,14 @@ function registrarPago(id) {
         title: 'Registrar Cobro', text: '¿Confirmas la recepción del pago?', icon: 'question', showCancelButton: true, confirmButtonColor: '#198754', confirmButtonText: 'Sí, cobrar'
     }).then(async (result) => {
         if (result.isConfirmed) {
-            await fetch(`${API_URL}/Mensualidades/${id}/pagar`, { method: "POST", headers: obtenerHeaders() }); // <-- Token agregado
-            Toast.fire({ icon: 'success', title: 'Pago registrado exitosamente' });
-            cargarMensualidades();
+            const response = await fetch(`${API_URL}/Mensualidades/${id}/pagar`, { method: "POST", headers: obtenerHeaders() }); // <-- Token agregado
+            if (response.ok) {
+                Toast.fire({ icon: 'success', title: 'Pago registrado exitosamente' });
+                cargarMensualidades();
+            } else {
+                const data = await response.json().catch(() => ({}));
+                Swal.fire('Error', data.error || 'No se pudo registrar el pago.', 'error');
+            }
         }
     });
 }
