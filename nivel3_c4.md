@@ -19,7 +19,7 @@ flowchart TD
         Controllers[Controladores REST\n*Alumnos, Finanzas, Inventario, Mensualidades, Auth*]
         Auth[AuthController\n*JWT, verificación por PIN, código de invitación*]
         UseCases[Casos de Uso / Application\n*Reglas de orquestación e interfaces de repositorio*]
-        Domain[Dominio\n*Entidades principales y Patrones (State, Observer, Builder, Strategy)*]
+        Domain["Dominio\n*Entidades principales y Patrones (State, Observer, Builder, Strategy)*"]
         Repos["Infraestructura / Repositorios EF Core\n*Ef*Repository (Alumno, Mensualidad, Producto, RegistroFinanciero, UsuarioCoach, VerificacionEmail)*"]
         DbContext[DojoFlowDbContext\n*Mapeo entidad-tabla, seeding, migraciones*]
     end
