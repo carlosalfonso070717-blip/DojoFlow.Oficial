@@ -9,16 +9,35 @@ Este documento describe el diseño técnico del sistema de gestión para el club
 **Nota:** * **Para quién es:** Arquitectos de software y líderes técnicos.
 * **Qué responde:** ¿Cuáles son las piezas de software de alto nivel que componen el sistema (aplicaciones web, APIs, bases de datos) y cómo se comunican entre sí?
 
+Este diagrama refleja la arquitectura de despliegue híbrida final (ver ADR-08 y ADR-09): el frontend y la API viven contenerizados en AWS, mientras que la base de datos permanece on-premise, conectados mediante una VPN de malla.
+
 ```mermaid
 flowchart TD
     Admin([Administrador del Dojo])
-    
-    subgraph DojoFlow System
-        UI[Frontend Web\n*HTML, CSS, JS*\nInterfaz visual del sistema]
-        API[DojoFlow API\n*.NET 10 ASP.NET Core*\nMotor central y lógica de negocio]
-        Almacenamiento[(Archivos JSON\n*System.IO*\nPersistencia de datos plana)]
+    Correo([Gmail SMTP\n*Servicio externo*])
+
+    subgraph Cloudflare
+        CF[Cloudflare\n*DNS + Proxy HTTPS*\ndojoflow.club]
     end
-    
-    Admin -- "Usa" --> UI
+
+    subgraph "AWS EC2 - Contenedor Docker"
+        UI[Frontend Web\n*HTML, CSS, JS*\nServido como archivos estáticos por la API]
+        API[DojoFlow API\n*.NET 10 ASP.NET Core*\nMotor central, lógica de negocio y JWT Auth]
+    end
+
+    ECR[(Amazon ECR\n*Registro de imágenes Docker*)]
+    GHA[GitHub Actions\n*Pipeline CI/CD*]
+
+    subgraph "PC local de la academia"
+        BD[(PostgreSQL\n*EF Core / Npgsql*\nPersistencia relacional)]
+    end
+
+    Admin -- "HTTPS" --> CF
+    CF -- "Proxy HTTP" --> UI
     UI -- "Consume endpoints REST" --> API
-    API -- "Lee y Escribe" --> Almacenamiento
+    API -- "Lee y Escribe (túnel Tailscale)" --> BD
+    API -- "Envía PIN de verificación / recuperación" --> Correo
+
+    GHA -- "Build & push de la imagen" --> ECR
+    GHA -- "Despliega por SSH" --> API
+    ECR -- "docker pull" --> API
