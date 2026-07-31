@@ -329,6 +329,10 @@
                     <label for="signupPassword">Contraseña de acceso</label>
                     <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres" required autocomplete="new-password" minlength="6">
                 </div>
+                <div class="form-group">
+                    <label for="signupCodigoInvitacion">Código de invitación</label>
+                    <input type="text" id="signupCodigoInvitacion" placeholder="Proporcionado por el administrador" required autocomplete="off">
+                </div>
                 <button type="submit" class="btn btn-primary">Crear Cuenta</button>
             </form>
             <div class="toggle-text" onclick="mostrarSeccion('loginSection')">Ya tengo cuenta. Volver al Login</div>
@@ -537,6 +541,7 @@
             const nombre = document.getElementById('signupNombre').value;
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
+            const codigoInvitacion = document.getElementById('signupCodigoInvitacion').value;
 
             if (!correoVerificado || email.trim().toLowerCase() !== correoVerificadoValor) {
                 return mostrarError('Primero debes verificar tu correo con el botón "Verificar".');
@@ -546,7 +551,7 @@
                 const response = await fetch(`${API_URL}/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre, email, password })
+                    body: JSON.stringify({ nombre, email, password, codigoInvitacion })
                 });
 
                 const data = await response.json();

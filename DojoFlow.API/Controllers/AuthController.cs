@@ -113,6 +113,12 @@ namespace DojoFlow.API.Controllers
                 return BadRequest(new { Error = "La contraseña debe tener al menos 6 caracteres." });
             }
 
+            string codigoEsperado = _config["Registro:CodigoInvitacion"] ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(codigoEsperado) || request.CodigoInvitacion != codigoEsperado)
+            {
+                return BadRequest(new { Error = "El código de invitación es inválido." });
+            }
+
             string email = request.Email.Trim().ToLowerInvariant();
 
             if (await _usuarioRepository.ObtenerPorEmailAsync(email) != null)
@@ -269,6 +275,7 @@ namespace DojoFlow.API.Controllers
         public string Nombre { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public string CodigoInvitacion { get; set; } = string.Empty;
     }
 
     public class LoginRequest
