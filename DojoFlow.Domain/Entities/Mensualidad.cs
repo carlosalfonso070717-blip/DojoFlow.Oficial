@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DojoFlow.Domain.States;
 
 namespace DojoFlow.Domain.Entities
@@ -12,31 +12,8 @@ namespace DojoFlow.Domain.Entities
         public DateTime FechaVencimiento { get; set; }
         public DateTime? FechaPago { get; set; }
 
-        private string _estadoActual = string.Empty;
-
-        // Propiedad para mandar al Frontend y persistir en la BD.
-        // El setter también reconstruye el motor de Patrón State (_estado), porque
-        // EF Core rehidrata las entidades asignando propiedades directamente (sin pasar
-        // por CambiarEstado), y sin esto _estado quedaba null tras leer de la BD.
-        public string EstadoActual
-        {
-            get => _estadoActual;
-            set
-            {
-                _estadoActual = value;
-                _estado = CrearEstadoDesde(value);
-            }
-        }
-
-        // El motor del Patrón State
-        private IEstadoMensualidad _estado;
-
-        private static IEstadoMensualidad CrearEstadoDesde(string nombreEstado) => nombreEstado switch
-        {
-            "Pagado" => new EstadoPagado(),
-            "Vencido" => new EstadoVencido(),
-            _ => new EstadoPendiente()
-        };
+        // Propiedad de solo lectura para mandar al Frontend y la BD
+        public string EstadoActual { get; set; } = string.Empty;
 
         public Mensualidad() { }
 
@@ -55,22 +32,31 @@ namespace DojoFlow.Domain.Entities
         // Método interno que usan las clases State para transicionar
         public void CambiarEstado(IEstadoMensualidad nuevoEstado)
         {
-            _estado = nuevoEstado;
-            _estadoActual = nuevoEstado.NombreEstado;
+            EstadoActual = nuevoEstado.NombreEstado;
         }
 
         // --- MÉTODOS DEL NEGOCIO ---
 
         public void Pagar()
         {
-            // Delegamos la validación lógica al Estado Actual
-            _estado.ProcesarPago(this);
+            // Delegamos la validación lógica al Estado Actual.
+            // El estado se reconstruye siempre desde EstadoActual (en vez de cachearse
+            // en un campo aparte) porque EF Core, al leer de la BD, escribe directo al
+            // campo privado por convención y no pasa por ningún setter con lógica.
+            ObtenerEstado().ProcesarPago(this);
             FechaPago = DateTime.UtcNow;
         }
 
         public void MarcarComoVencida()
         {
-            _estado.Vencer(this);
+            ObtenerEstado().Vencer(this);
         }
+
+        private IEstadoMensualidad ObtenerEstado() => EstadoActual switch
+        {
+            "Pagado" => new EstadoPagado(),
+            "Vencido" => new EstadoVencido(),
+            _ => new EstadoPendiente()
+        };
     }
 }
