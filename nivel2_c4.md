@@ -21,8 +21,10 @@ flowchart TD
     end
 
     subgraph "AWS EC2 - Contenedor Docker"
-        UI[Frontend Web\n*HTML, CSS, JS*\nServido como archivos estáticos por la API]
-        API[DojoFlow API\n*.NET 10 ASP.NET Core*\nMotor central, lógica de negocio y JWT Auth]
+        UI[Frontend Web\n*HTML, CSS, JS*\nServido como archivos
+            estáticos por la API]
+        API[DojoFlow API\n*.NET 10 ASP.NET Core*\nMotor central, lógica de
+            negocio y JWT Auth]
     end
 
     ECR[(Amazon ECR\n*Registro de imágenes Docker*)]
