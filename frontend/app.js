@@ -47,6 +47,7 @@ if (btnTema) {
         const actual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
         const nuevo = actual === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', nuevo);
+        document.documentElement.setAttribute('data-bs-theme', nuevo);
         localStorage.setItem('dojoflow-theme', nuevo);
     });
 }
