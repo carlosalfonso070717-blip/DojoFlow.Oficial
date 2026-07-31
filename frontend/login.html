@@ -48,10 +48,11 @@
             color: var(--text-main);
             font-family: 'Inter', 'Segoe UI', sans-serif;
             display: flex;
-            justify-content: center;
+            justify-content: flex-end;
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding-right: 8%;
             position: relative;
         }
 
@@ -246,6 +247,12 @@
 
         /* Clase para ocultar formularios dinámicamente */
         .oculto { display: none; }
+
+        /* En pantallas chicas, centramos la tarjeta en vez de pegarla al lado */
+        @media (max-width: 768px) {
+            body { justify-content: center; padding-right: 0; padding: 1rem; }
+            .marca { top: 1rem; left: 1rem; font-size: 1.1rem; }
+        }
     </style>
     <script>
         // Aplica el tema guardado ANTES de pintar la página (evita parpadeo)
