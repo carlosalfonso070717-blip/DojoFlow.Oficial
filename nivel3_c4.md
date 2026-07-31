@@ -9,7 +9,7 @@ Este documento describe el diseño técnico del sistema de gestión para el club
 **Nota:** * **Para quién es:** Desarrolladores de software del equipo.
 * **Qué responde:** ¿Cómo está estructurado el código por dentro de la pieza principal (la API)? Detalla los bloques de construcción, responsabilidades y la implementación de Clean Architecture.
 
-La capa de Infraestructura ya no serializa/deserializa JSON (ver ADR-08): ahora implementa las interfaces de repositorio contra PostgreSQL vía Entity Framework Core. Se agregó además el `AuthController` con su propio flujo de verificación (ver ADR-10).
+La capa de Infraestructura ya no serializa/deserializa JSON (ver ADR-08): ahora implementa las interfaces de repositorio contra PostgreSQL vía Entity Framework Core. Se agregó además el `AuthController` con su propio flujo de verificación (ver ADR-08).
 
 ```mermaid
 flowchart TD

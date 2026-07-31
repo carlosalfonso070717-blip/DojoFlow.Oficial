@@ -12,7 +12,7 @@ Los atributos de calidad considerados para esta evaluación son: **Disponibilida
 
 ### Riesgo identificado: Dependencia de infraestructura fuera del control del proveedor cloud
 
-**Decisión relacionada:** [ADR-09](./ADRs/ADR-09-Carlos-Llanes.md) — Despliegue híbrido en AWS + Tailscale, manteniendo PostgreSQL on-premise.
+**Decisión relacionada:** [ADR-08](./ADRs/ADR-08-Carlos-Llanes.md) — Despliegue híbrido en AWS + Tailscale, manteniendo PostgreSQL on-premise.
 
 **Descripción:** La disponibilidad completa del sistema (login, alumnos, mensualidades, finanzas) depende de que la PC local de la academia esté encendida y con el cliente de Tailscale conectado correctamente. Si la PC se apaga, pierde energía, o el servicio de Tailscale falla, la API en AWS pierde por completo el acceso a la base de datos.
 
@@ -30,7 +30,7 @@ Los atributos de calidad considerados para esta evaluación son: **Disponibilida
 
 ### Trade-off identificado: Costo vs. Disponibilidad
 
-**Decisión relacionada:** [ADR-09](./ADRs/ADR-09-Carlos-Llanes.md) — Mantener PostgreSQL local en vez de contratar Amazon RDS.
+**Decisión relacionada:** [ADR-08](./ADRs/ADR-08-Carlos-Llanes.md) — Mantener PostgreSQL local en vez de contratar Amazon RDS.
 
 | Atributo de calidad | Efecto |
 | :--- | :--- |
@@ -47,7 +47,7 @@ Los atributos de calidad considerados para esta evaluación son: **Disponibilida
 
 ### Punto de sensibilidad identificado: Presencia (o ausencia) de una IP pública fija en la instancia EC2
 
-**Decisión relacionada:** [ADR-09](./ADRs/ADR-09-Carlos-Llanes.md), sección de consecuencias.
+**Decisión relacionada:** [ADR-08](./ADRs/ADR-08-Carlos-Llanes.md), sección de consecuencias.
 
 **Descripción:** La **Disponibilidad percibida por el usuario final** (poder abrir `https://dojoflow.club` y que cargue) es altamente sensible a un único parámetro de configuración: si la instancia EC2 tiene o no una **Elastic IP** asignada.
 

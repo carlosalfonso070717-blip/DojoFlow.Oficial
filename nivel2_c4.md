@@ -9,7 +9,7 @@ Este documento describe el diseño técnico del sistema de gestión para el club
 **Nota:** * **Para quién es:** Arquitectos de software y líderes técnicos.
 * **Qué responde:** ¿Cuáles son las piezas de software de alto nivel que componen el sistema (aplicaciones web, APIs, bases de datos) y cómo se comunican entre sí?
 
-Este diagrama refleja la arquitectura de despliegue híbrida final (ver ADR-08 y ADR-09): el frontend y la API viven contenerizados en AWS, mientras que la base de datos permanece on-premise, conectados mediante una VPN de malla.
+Este diagrama refleja la arquitectura de despliegue híbrida final (ver ADR-08): el frontend y la API viven contenerizados en AWS, mientras que la base de datos permanece on-premise, conectados mediante una VPN de malla.
 
 ```mermaid
 flowchart TD

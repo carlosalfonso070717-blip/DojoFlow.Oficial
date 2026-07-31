@@ -16,7 +16,7 @@ El proyecto está construido bajo los principios de la **Arquitectura Hexagonal 
 La documentación de arquitectura completa (modelo C4, decisiones de diseño y evaluación ATAM) está en:
 
 * [`arquitectura.md`](./arquitectura.md) — Punto de entrada al modelo C4 (Niveles 1 a 3).
-* [`ADRs/`](./ADRs) — Registro de decisiones de arquitectura (ADR-01 a ADR-10).
+* [`ADRs/`](./ADRs) — Registro de decisiones de arquitectura (ADR-01 a ADR-08).
 * [`ATAM.md`](./ATAM.md) — Evaluación ATAM (riesgo, trade-off y punto de sensibilidad).
 
 ## 🚀 Funcionalidades principales
@@ -24,8 +24,8 @@ La documentación de arquitectura completa (modelo C4, decisiones de diseño y e
 1. **Gestión de alumnos, mensualidades, inventario y finanzas**, con persistencia en PostgreSQL vía Entity Framework Core (ver [ADR-08](./ADRs/ADR-08-Carlos-Llanes.md)).
 2. **Patrón Builder (Creacional):** integrado en la entidad `Alumno` para garantizar que ningún alumno se registre sin sus datos obligatorios.
 3. **Patrón Strategy (De Comportamiento):** motor de estrategias (`CalculadoraMensualidad`) para el esquema de cobros multidisciplina, eliminando sentencias `if / else` anidadas.
-4. **Autenticación JWT** con registro controlado: verificación de correo por PIN y código de invitación para evitar altas no autorizadas de coaches (ver [ADR-10](./ADRs/ADR-10-Carlos-Llanes.md)).
-5. **Despliegue automatizado** vía GitHub Actions hacia AWS (Docker + ECR + EC2), con pruebas unitarias (xUnit) corriendo en cada push (ver [ADR-07](./ADRs/ADR-07-Carlos-Llanes.md) y [ADR-09](./ADRs/ADR-09-Carlos-Llanes.md)).
+4. **Autenticación JWT** con registro controlado: verificación de correo por PIN y código de invitación para evitar altas no autorizadas de coaches (ver [ADR-08](./ADRs/ADR-08-Carlos-Llanes.md)).
+5. **Despliegue automatizado** vía GitHub Actions hacia AWS (Docker + ECR + EC2), con pruebas unitarias (xUnit) corriendo en cada push (ver [ADR-07](./ADRs/ADR-07-Carlos-Llanes.md) y [ADR-08](./ADRs/ADR-08-Carlos-Llanes.md)).
 
 ## 📄 Documentación y Swagger
 
