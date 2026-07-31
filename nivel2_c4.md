@@ -27,7 +27,8 @@ flowchart TD
             negocio y JWT Auth]
     end
 
-    ECR[(Amazon ECR\n*Registro de imágenes Docker*)]
+    ECR[(Amazon ECR\n*Registro de imágenes
+        Docker*)]
     GHA[GitHub Actions\n*Pipeline CI/CD*]
 
     subgraph "PC local de la academia"
@@ -38,7 +39,8 @@ flowchart TD
     CF -- "Proxy HTTP" --> UI
     UI -- "Consume endpoints REST" --> API
     API -- "Lee y Escribe (túnel Tailscale)" --> BD
-    API -- "Envía PIN de verificación / recuperación" --> Correo
+    API -- "Envía PIN de verificación
+        / recuperación" --> Correo
 
     GHA -- "Build & push de la imagen" --> ECR
     GHA -- "Despliega por SSH" --> API
