@@ -13,11 +13,11 @@ Desde la versión final del proyecto, DojoFlow es accesible públicamente por in
 
 ```mermaid
 flowchart TD
-    Admin([Administrador del Dojo\n*Accede desde cualquier lugar vía internet*])
-    Correo([Servicio de Correo\n*Gmail SMTP*])
+    Admin(["Administrador del Dojo\n*Accede desde cualquier\nlugar vía internet*"])
+    Correo(["Servicio de Correo\n*Gmail SMTP*"])
 
-    System(DojoFlow System\n*Gestión integral del club*)
+    System(["DojoFlow System\n*Gestión integral del club*"])
 
-    Admin -- "Gestiona alumnos, inventario, mensualidades y finanzas" --> System
-    System -- "Envía PIN de verificación y recuperación de contraseña" --> Correo
-    Correo -- "Entrega el correo al Administrador" --> Admin
+    Admin -- "Gestiona alumnos,\ninventario, mensualidades\ny finanzas" --> System
+    System -- "Envía PIN de verificación\ny recuperación de\ncontraseña" --> Correo
+    Correo -- "Entrega el correo\nal Administrador" --> Admin

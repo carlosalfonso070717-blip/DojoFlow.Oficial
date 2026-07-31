@@ -16,24 +16,19 @@ flowchart TD
     UI[Frontend Web]
 
     subgraph "DojoFlow API - Clean Architecture"
-        Controllers[Controladores REST\n*Alumnos,
-             Finanzas, Inventario, Mensualidades, Auth*]
-        Auth[AuthController\n*JWT, verificación por PIN,
-             código de invitación*]
-        UseCases[Casos de Uso / Application\n*Reglas de orquestación
-             e interfaces de repositorio*]
-        Domain["Dominio\n*Entidades principales y Patrones (State,
-             Observer, Builder, Strategy)*"]
-        Repos["Infraestructura / Repositorios EF Core\n*Ef*Repository (Alumno, Mensualidad,
-            Producto, RegistroFinanciero, UsuarioCoach, VerificacionEmail)*"]
-        DbContext[DojoFlowDbContext\n*Mapeo entidad-tabla, seeding, migraciones*]
+        Controllers["Controladores REST\n*Alumnos, Finanzas,\nInventario, Mensualidades,\nAuth*"]
+        Auth["AuthController\n*JWT, verificación por PIN,\ncódigo de invitación*"]
+        UseCases["Casos de Uso / Application\n*Reglas de orquestación e\ninterfaces de repositorio*"]
+        Domain["Dominio\n*Entidades principales y\nPatrones (State, Observer,\nBuilder, Strategy)*"]
+        Repos["Infraestructura / Repositorios\nEF Core\n*Ef Repository (Alumno,\nMensualidad, Producto,\nRegistroFinanciero,\nUsuarioCoach,\nVerificacionEmail)*"]
+        DbContext["DojoFlowDbContext\n*Mapeo entidad-tabla,\nseeding, migraciones*"]
     end
 
     BD[(PostgreSQL\n*Npgsql*)]
     Correo[[Gmail SMTP]]
 
     UI -- "Peticiones HTTP" --> Controllers
-    UI -- "Login / Registro / Recuperación" --> Auth
+    UI -- "Login / Registro /\nRecuperación" --> Auth
     Controllers -- "Delega ejecución a" --> UseCases
     Auth -- "Genera y valida" --> UseCases
     UseCases -- "Aplica reglas sobre" --> Domain
