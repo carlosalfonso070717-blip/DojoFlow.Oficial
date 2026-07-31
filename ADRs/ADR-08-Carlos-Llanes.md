@@ -1,4 +1,4 @@
-# ADR-08: Evolución de DojoFlow a un sistema en producción — Persistencia, Despliegue Híbrido en la Nube y Seguridad de Registro
+# ADR-08: Evolución de DojoFlow a un sistema en producción con Persistencia, Despliegue Híbrido en la Nube y Seguridad de Registro
 
 | Campo  | Valor |
 |--------|-------|
@@ -10,7 +10,7 @@
 
 ### 🔗 Contexto
 
-Hasta este punto, DojoFlow era un proyecto que corría únicamente en local, persistiendo su información en archivos JSON planos y sin ningún mecanismo real de control de acceso al registro de coaches. Para que DojoFlow deje de ser solo una entrega académica y se convierta en el sistema que mi academia va a usar de verdad, necesitaba resolver tres problemas al mismo tiempo: (1) un motor de persistencia que soportara integridad y concurrencia real, (2) una forma de exponer el sistema en internet sin poder pagar infraestructura administrada, y (3) evitar que cualquier desconocido en internet pudiera crearse una cuenta de coach con acceso administrativo completo. Documento las tres decisiones juntas en este ADR porque se tomaron en la misma etapa del proyecto y están fuertemente relacionadas entre sí: ninguna tiene sentido sin las otras dos.
+Hasta este punto, DojoFlow era un proyecto que corría únicamente en local, persistiendo su información en archivos JSON planos y sin ningún mecanismo real de control de acceso al registro de coaches. Para que DojoFlow deje de ser solo una entrega académica y se convierta en el sistema que mi academia va a usar de verdad, necesitaba resolver tres problemas al mismo tiempo: un motor de persistencia que soportara integridad y concurrencia real, una forma de exponer el sistema en internet sin poder pagar infraestructura administrada, y evitar que cualquier desconocido en internet pudiera crearse una cuenta de coach con acceso administrativo completo. Documento las tres decisiones juntas en este ADR porque se tomaron en la misma etapa del proyecto y están fuertemente relacionadas entre sí: ninguna tiene sentido sin las otras dos.
 
 ### Decisión
 
@@ -33,7 +33,7 @@ Hasta este punto, DojoFlow era un proyecto que corría únicamente en local, per
 | **SQLite** | Válido como motor embebido, pero inviable para un despliegue donde la API corre en un contenedor separado y necesita acceso remoto/concurrente a los datos. |
 | **Amazon RDS (PostgreSQL administrado)** | Es la opción más robusta, pero tiene un costo mensual fijo que no puedo cubrir en esta etapa; ya tengo el hardware disponible en la academia. |
 | **Exponer PostgreSQL directamente a internet (puerto 5432 público)** | Técnicamente más simple, pero un riesgo de seguridad inaceptable: expondría la base de datos completa a escaneos y ataques de fuerza bruta desde cualquier parte del mundo. |
-| **Desplegar todo (API + BD) en la misma EC2** | Elimina la necesidad de una VPN, pero me obliga a pagar/mantener almacenamiento y backups en la nube, perdiendo la ventaja de costo $0 de usar mi propio hardware. |
+| **Desplegar todo (API + BD) en la misma EC2** | Elimina la necesidad de una VPN, pero me obliga a pagar o mantener almacenamiento y backups en la nube, perdiendo la ventaja de costo $0 de usar mi propio hardware. |
 | **Verificación por enlace enviado al correo** | En pruebas reales, abrir el enlace desde el celular no siempre redirigía correctamente de vuelta al formulario en el navegador donde se inició el registro. |
 | **Registro abierto sin restricción adicional** | Inaceptable para un sistema administrativo: cualquier persona en internet podría auto-otorgarse acceso completo a los datos financieros y de alumnos. |
 | **Aprobación manual de cada cuenta por el administrador** | Más segura aún que el código de invitación, pero agrega fricción y trabajo manual innecesario para una academia con muy pocos coaches. |
@@ -43,13 +43,13 @@ Hasta este punto, DojoFlow era un proyecto que corría únicamente en local, per
 ### Consecuencias
 
 **Lo que gano:**
-* **Consecuencia técnica:** Integridad real de los datos (claves foráneas, restricciones únicas), un sistema accesible desde cualquier parte del mundo sin exponer jamás la base de datos a una IP pública, y ninguna cuenta de coach puede crearse sin correo verificado + autorización explícita del administrador.
+* **Consecuencia técnica:** Integridad real de los datos con claves foráneas, restricciones únicas, un sistema accesible desde cualquier parte del mundo sin exponer jamás la base de datos a una IP pública, y ninguna cuenta de coach puede crearse sin correo verificado + autorización explícita del administrador.
 * **Consecuencia sobre el proceso:** Costo de infraestructura prácticamente $0 (EC2 en capa gratuita, base de datos en hardware propio), cada cambio de esquema queda versionado como migración, y puedo dar de alta nuevos coaches solo compartiéndoles el código de invitación.
 
 **Lo que sacrifico o asumo:**
 * **Limitación técnica:** El sistema completo depende de que mi PC local esté encendida y con Tailscale conectado; si se apaga o pierde conexión, el frontend carga pero el login y los datos dejan de funcionar. Esto es un riesgo de disponibilidad aceptado conscientemente a cambio de costo $0 (ver evaluación en [`ATAM.md`](../ATAM.md)).
-* **Deuda o riesgo:** Al no usar una IP elástica en la EC2, la IP pública cambia cada vez que detengo/inicio la instancia, obligándome a actualizar manualmente Cloudflare y el secreto `EC2_HOST`. Si el código de invitación se filtra, cualquiera que lo tenga puede registrarse, aunque puedo rotarlo en cualquier momento. El envío de correos depende de Gmail SMTP como servicio externo.
+* **Deuda o riesgo:** Al no usar una IP elástica en la EC2, la IP pública cambia cada vez que detengo e inicio la instancia, obligándome a actualizar manualmente Cloudflare y el secreto `EC2_HOST`. Si el código de invitación se filtra, cualquiera que lo tenga puede registrarse, aunque puedo rotarlo en cualquier momento. El envío de correos depende de Gmail SMTP como servicio externo.
 
 ### Declaración de Uso de IA
 
-Utilicé IA como apoyo para redactar el código de los repositorios EF Core, el `Dockerfile`, el workflow de GitHub Actions, el envío de correos por SMTP y la lógica de expiración del PIN, así como para diagnosticar errores de conexión (contraseña de Postgres, `PendingModelChangesWarning`, `pg_hba.conf`, procesos de Tailscale bloqueados). Las decisiones de arquitectura en sí —migrar a PostgreSQL con Migrations, mantener la base de datos local en vez de pagar un servicio administrado, usar una VPN de malla en vez de exponer el puerto directamente, y resolver el registro con PIN + código de invitación en vez de un enlace o aprobación manual— fueron mías, evaluadas contra mi presupuesto real, mis prioridades de seguridad y la experiencia real de uso desde mi celular.
+Utilicé IA como apoyo para redactar el código de los repositorios EF Core, el `Dockerfile`, el workflow de GitHub Actions, el envío de correos por SMTP y la lógica de expiración del PIN, así como para diagnosticar errores de conexión (contraseña de Postgres, `PendingModelChangesWarning`, `pg_hba.conf`, procesos de Tailscale bloqueados). Las decisiones de arquitectura en sí migrar a PostgreSQL con Migrations, mantener la base de datos local en vez de pagar un servicio administrado, usar una VPN de malla en vez de exponer el puerto directamente, y resolver el registro con PIN + código de invitación en vez de un enlace o aprobación manual fueron mías, evaluadas contra mi presupuesto real, mis prioridades de seguridad y la experiencia real de uso desde mi celular.
