@@ -73,11 +73,8 @@ jobs:
               -e Jwt__Key="${{ secrets.JWT_KEY }}" \
               -e Jwt__Issuer="DojoFlowAPI" \
               -e Jwt__Audience="DojoFlowFrontend" \
-              -e Smtp__Host="smtp.gmail.com" \
-              -e Smtp__Port="587" \
-              -e Smtp__User="${{ secrets.SMTP_USER }}" \
-              -e Smtp__Password="${{ secrets.SMTP_PASSWORD }}" \
-              -e Smtp__From="${{ secrets.SMTP_USER }}" \
+              -e Brevo__ApiKey="${{ secrets.BREVO_API_KEY }}" \
+              -e Brevo__SenderEmail="${{ secrets.BREVO_SENDER_EMAIL }}" \
               -e Registro__CodigoInvitacion="${{ secrets.REGISTRO_CODIGO_INVITACION }}" \
               ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
             docker image prune -f

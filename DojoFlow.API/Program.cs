@@ -34,7 +34,7 @@ builder.Services.AddScoped<IProductoRepository, EfProductoRepository>();
 builder.Services.AddScoped<IRegistroFinancieroRepository, EfRegistroFinancieroRepository>();
 builder.Services.AddScoped<IUsuarioCoachRepository, EfUsuarioCoachRepository>();
 builder.Services.AddScoped<IVerificacionEmailRepository, EfVerificacionEmailRepository>();
-builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+builder.Services.AddHttpClient<IEmailSender, BrevoEmailSender>();
 builder.Services.AddScoped<RegistrarAlumnoUseCase>();
 
 // RECUPERAMOS LA POLÍTICA DE CORS AQUÍ
