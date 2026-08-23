@@ -151,7 +151,12 @@
 
         /* --- ADAPTACIÓN RESPONSIVA --- */
         .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1040; }
-        
+
+        /* Sin esto, las tablas con min-width de adentro empujan el ancho de toda la
+           columna (item flex) más allá de la pantalla, y el navegador móvil termina
+           alejando (zoom-out) la página completa para que quepa. */
+        .col-md-10 { min-width: 0; }
+
         @media (max-width: 768px) {
             .sidebar { position: fixed; left: -280px; width: 280px; }
             .sidebar.show { left: 0; }
