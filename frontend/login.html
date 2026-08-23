@@ -211,6 +211,26 @@
             color: var(--primary);
             text-decoration: underline;
         }
+        .campo-password { position: relative; }
+        .campo-password input { padding-right: 2.75rem; }
+        .btn-ojo {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.35rem;
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+        }
+        .btn-ojo:hover { color: var(--text-main); }
+        .btn-ojo svg { width: 19px; height: 19px; }
+        .btn-ojo .icono-ojo-cerrado { display: none; }
+        .btn-ojo.mostrando .icono-ojo-abierto { display: none; }
+        .btn-ojo.mostrando .icono-ojo-cerrado { display: block; }
         .fila-con-boton {
             display: flex;
             gap: 0.5rem;
@@ -293,7 +313,13 @@
                 </div>
                 <div class="form-group">
                     <label for="loginPassword">Contraseña</label>
-                    <input type="password" id="loginPassword" placeholder="Tu contraseña" required autocomplete="current-password">
+                    <div class="campo-password">
+                        <input type="password" id="loginPassword" placeholder="Tu contraseña" required autocomplete="current-password">
+                        <button type="button" class="btn-ojo" data-target="loginPassword" aria-label="Mostrar contraseña">
+                            <svg class="icono-ojo-abierto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg class="icono-ojo-cerrado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="link-olvide" onclick="mostrarSeccion('forgotSection')">¿Olvidaste tu contraseña?</div>
                 <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
@@ -327,7 +353,13 @@
                 <div class="aviso-verificado oculto" id="avisoVerificado">✓ Correo verificado</div>
                 <div class="form-group">
                     <label for="signupPassword">Contraseña de acceso</label>
-                    <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres" required autocomplete="new-password" minlength="6">
+                    <div class="campo-password">
+                        <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres" required autocomplete="new-password" minlength="6">
+                        <button type="button" class="btn-ojo" data-target="signupPassword" aria-label="Mostrar contraseña">
+                            <svg class="icono-ojo-abierto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg class="icono-ojo-cerrado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="signupCodigoInvitacion">Código de invitación</label>
@@ -358,7 +390,13 @@
                 </div>
                 <div class="form-group">
                     <label for="resetPassword">Nueva contraseña</label>
-                    <input type="password" id="resetPassword" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
+                    <div class="campo-password">
+                        <input type="password" id="resetPassword" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="btn-ojo" data-target="resetPassword" aria-label="Mostrar contraseña">
+                            <svg class="icono-ojo-abierto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg class="icono-ojo-cerrado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        </button>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Restablecer contraseña</button>
             </form>
@@ -378,6 +416,17 @@
             const nuevo = actual === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', nuevo);
             localStorage.setItem('dojoflow-theme', nuevo);
+        });
+
+        // Botón de "ojito" para mostrar/ocultar contraseña en los campos de password
+        document.querySelectorAll('.btn-ojo').forEach(boton => {
+            boton.addEventListener('click', () => {
+                const input = document.getElementById(boton.dataset.target);
+                const mostrando = input.type === 'text';
+                input.type = mostrando ? 'password' : 'text';
+                boton.classList.toggle('mostrando', !mostrando);
+                boton.setAttribute('aria-label', mostrando ? 'Mostrar contraseña' : 'Ocultar contraseña');
+            });
         });
 
         function coloresSwal() {
