@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { Plus, SearchX, Users, WifiOff } from 'lucide-react-native';
-import { IconoEliminar } from '@/components/iconos/Iconly';
+import { SearchX, Users, WifiOff } from 'lucide-react-native';
+import { IconoAgregarAlumno, IconoEliminar } from '@/components/iconos/Iconly';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -74,7 +74,7 @@ export default function AlumnosScreen() {
                 <BotonIcono
                   destacado
                   etiqueta={`Inscribir ${termino.toLowerCase()}`}
-                  icono={<Plus size={22} color={color.sobreMarca} strokeWidth={2.4} />}
+                  icono={<IconoAgregarAlumno size={22} color={color.sobreMarca} />}
                   onPress={() => router.push('/registrar')}
                 />
               }

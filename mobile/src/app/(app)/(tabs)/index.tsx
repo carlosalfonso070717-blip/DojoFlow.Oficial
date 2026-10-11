@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { CircleCheck, LogOut, Tablet, TriangleAlert, UserPlus, Wallet } from 'lucide-react-native';
-import { IconoAjustes } from '@/components/iconos/Iconly';
+import { CircleCheck, Tablet, TriangleAlert, Wallet } from 'lucide-react-native';
+import { IconoAgregarAlumno, IconoAjustes, IconoCerrarSesion } from '@/components/iconos/Iconly';
 import { useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -143,7 +143,7 @@ export default function InicioScreen() {
         </Grupo>
 
         <View style={estilos.acciones}>
-          <Boton titulo={`Inscribir ${termino.toLowerCase()}`} icono={UserPlus} onPress={() => router.push('/registrar')} />
+          <Boton titulo={`Inscribir ${termino.toLowerCase()}`} icono={IconoAgregarAlumno} onPress={() => router.push('/registrar')} />
           <Boton titulo="Abrir kiosco" icono={Tablet} variante="tonal" onPress={abrirKiosco} />
         </View>
       </ScrollView>
@@ -161,7 +161,7 @@ export default function InicioScreen() {
           />
           <Fila
             titulo="Cerrar sesión"
-            izquierda={<LogOut size={22} color={color.peligro} />}
+            izquierda={<IconoCerrarSesion size={22} color={color.peligro} />}
             onPress={() => {
               setOpciones(false);
               cerrarSesion();

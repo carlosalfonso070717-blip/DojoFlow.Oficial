@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSesion } from '@/auth/session';
+import { IconoIniciarSesion } from '@/components/iconos/Iconly';
 import { Boton, Campo, Texto } from '@/components/ui';
 import { useTema } from '@/theme';
 
@@ -85,7 +86,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={{ gap: 10 }}>
-            <Boton titulo="Iniciar sesión" onPress={entrar} cargando={cargando} />
+            <Boton titulo="Iniciar sesión" icono={IconoIniciarSesion} onPress={entrar} cargando={cargando} />
             <Boton titulo="Crear cuenta" variante="contorno" onPress={() => router.push('/registro')} />
           </View>
 

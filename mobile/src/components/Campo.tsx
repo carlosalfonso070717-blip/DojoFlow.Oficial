@@ -1,7 +1,8 @@
-import { Eye, EyeOff, type LucideIcon } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
 import { forwardRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { useTema } from '@/theme';
+import { OjoAnimado } from './iconos/OjoAnimado';
 import { Texto } from './Texto';
 
 type Props = TextInputProps & {
@@ -63,7 +64,7 @@ export const Campo = forwardRef<TextInput, Props>(function Campo(
             accessibilityRole="button"
             accessibilityLabel={oculto ? 'Mostrar contraseña' : 'Ocultar contraseña'}
           >
-            {oculto ? <Eye size={19} color={color.textoSuave} /> : <EyeOff size={19} color={color.textoSuave} />}
+            <OjoAnimado abierto={!oculto} size={22} color={oculto ? color.textoSuave : color.marcaTexto} />
           </Pressable>
         )}
       </View>

@@ -1,6 +1,7 @@
-import type { LucideIcon } from 'lucide-react-native';
+import type { ComponentType } from 'react';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTema } from '@/theme';
+import type { PropsIcono } from './iconos/Iconly';
 import { Presionable } from './Presionable';
 import { Texto } from './Texto';
 
@@ -11,7 +12,7 @@ type Props = {
   onPress: () => void;
   variante?: Variante;
   tamano?: 'normal' | 'compacto';
-  icono?: LucideIcon;
+  icono?: ComponentType<PropsIcono>;
   cargando?: boolean;
   deshabilitado?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -55,7 +56,7 @@ export function Boton({ titulo, onPress, variante = 'primario', tamano = 'normal
         <ActivityIndicator color={v.texto} />
       ) : (
         <View style={estilos.contenido}>
-          {Icono && <Icono size={compacto ? 17 : 19} color={v.texto} strokeWidth={2.2} />}
+          {Icono && <Icono size={compacto ? 18 : 20} color={v.texto} strokeWidth={2} />}
           <Texto variante={compacto ? 'detalle' : 'cuerpoFuerte'} style={{ color: v.texto }} numberOfLines={1}>
             {titulo}
           </Texto>
