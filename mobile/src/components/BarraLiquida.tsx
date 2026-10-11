@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState, type ComponentType } from 'react';
+import { useEffect, type ComponentType } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   interpolate,
@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
+import { useDiseno } from '@/hooks/useDiseno';
 import { asegurarContraste, mezclar } from '@/theme/color';
 import { useTema } from '@/theme';
 import type { PropsIcono } from './iconos/Iconly';
@@ -53,6 +54,9 @@ type Props = {
 // Espacio que deben dejar abajo las pantallas para que su contenido no quede debajo de la barra
 export function useEspacioBarra() {
   const insets = useSafeAreaInsets();
+  const { esEscritorio } = useDiseno();
+  // En escritorio no hay barra inferior: solo aire al final de la página
+  if (esEscritorio) return 48;
   return ALTO + Math.max(insets.bottom, 12) + 28;
 }
 
@@ -107,6 +111,7 @@ export function BarraLiquida({ pestanas, activa, onCambiar, refContenedor }: Pro
     // El borde se encoge al soltarse y rebota al llegar: efecto de líquido
     gota.value = withSequence(withTiming(5, { duration: 110 }), withSpring(ALTO_GOTA, { damping: 9, stiffness: 160 }));
     // cx/gota/indice son valores compartidos estables; centro() depende de ancho
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activa, ancho, sinMovimiento]);
 
   const marca = color.marca;
@@ -207,8 +212,7 @@ function Pestana({ pestana, i, indice, activa, colorActivo, textoActivo, onPress
   });
 
   // El color del ícono cambia en el render (lucide no anima colores); el movimiento sí es animado
-  const [colorIcono, setColorIcono] = useState(activa ? colorActivo : 'rgba(255,255,255,0.55)');
-  useEffect(() => setColorIcono(activa ? colorActivo : 'rgba(255,255,255,0.55)'), [activa, colorActivo]);
+  const colorIcono = activa ? colorActivo : 'rgba(255,255,255,0.55)';
 
   return (
     <Pressable

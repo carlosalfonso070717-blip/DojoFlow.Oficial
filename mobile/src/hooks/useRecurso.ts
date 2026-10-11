@@ -18,6 +18,7 @@ export function useRecurso<T>(cargador: () => Promise<T>, inicial: T) {
       setCargando(false);
     }
     // cargador siempre es una función de @/api/endpoints (estable), por eso no va en las dependencias
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useFocusEffect(

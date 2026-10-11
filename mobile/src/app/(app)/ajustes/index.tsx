@@ -1,16 +1,26 @@
 import { router } from 'expo-router';
-import { BookOpen, Compass, Palette, Tablet } from 'lucide-react-native';
+import { BookOpen, Compass, Palette, SunMoon, Tablet } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
-import { obtenerClases, obtenerConfiguracion, quitarLogo, subirLogo, type Clase, type ConfiguracionAcademia } from '@/api/endpoints';
+import {
+  obtenerClases,
+  obtenerConfiguracion,
+  quitarFotoPerfil,
+  quitarLogo,
+  subirFotoPerfil,
+  subirLogo,
+  type Clase,
+  type ConfiguracionAcademia,
+} from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { IconoCerrarSesion, IconoPagos } from '@/components/iconos/Iconly';
 import { PantallaSecundaria } from '@/components/PantallaSecundaria';
+import { Segmentos } from '@/components/Segmentos';
 import { Avatar, Boton, confirmar, Fila, Grupo, Hoja, Texto } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
-import { useTema } from '@/theme';
+import { cambiarPreferenciaTema, usePreferenciaTema, useTema, type PreferenciaTema } from '@/theme';
 import { useTour } from '@/tour/Tour';
-import { elegirLogo } from '@/utils/logo';
+import { elegirLogo, type ArchivoLogo } from '@/utils/logo';
 import { plural } from '@/utils/texto';
 import { alerta } from '@/utils/alerta';
 
@@ -21,12 +31,18 @@ const cargar = async (): Promise<Datos> => {
   return { config, clases };
 };
 
+// La misma hoja sirve para el logo de la academia y para la foto de perfil;
+// el tipo se conserva al cerrar para que el título no cambie durante la animación
+type TipoFoto = 'logo' | 'perfil';
+
 export default function AjustesScreen() {
   const { color } = useTema();
+  const preferencia = usePreferenciaTema();
   const { perfil, recargarPerfil, cerrarSesion, vincularKiosco } = useSesion();
   const { iniciar: iniciarTour } = useTour();
   const { datos } = useRecurso(cargar, { config: null, clases: [] } as Datos);
-  const [hojaLogo, setHojaLogo] = useState(false);
+  const [tipoFoto, setTipoFoto] = useState<TipoFoto>('logo');
+  const [hojaAbierta, setHojaAbierta] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
 
   if (!perfil) return null;
@@ -35,28 +51,42 @@ export default function AjustesScreen() {
   const cobro = datos.config?.cobro;
   const activas = datos.clases.filter((c) => c.activa).length;
 
-  async function cambiarLogo() {
+  const esLogo = tipoFoto === 'logo';
+  const abrirHoja = (tipo: TipoFoto) => {
+    setTipoFoto(tipo);
+    setHojaAbierta(true);
+  };
+  const fotoActual = esLogo ? academia.logoUrl : usuario.fotoUrl;
+
+  async function cambiarFoto() {
     setSubiendo(true);
     try {
-      const logo = await elegirLogo();
-      if (logo) {
-        await subirLogo(logo);
+      const archivo: ArchivoLogo | null = await elegirLogo();
+      if (archivo) {
+        if (esLogo) await subirLogo(archivo);
+        else await subirFotoPerfil(archivo);
         await recargarPerfil();
+        setHojaAbierta(false);
       }
-      setHojaLogo(false);
     } catch (e) {
-      alerta('No se pudo subir el logo', (e as Error).message);
+      alerta(esLogo ? 'No se pudo subir el logo' : 'No se pudo subir la foto', (e as Error).message);
     } finally {
       setSubiendo(false);
     }
   }
 
-  function borrarLogo() {
-    confirmar('¿Quitar el logo?', 'Se mostrarán las iniciales de la academia.', 'Quitar', async () => {
-      await quitarLogo();
-      await recargarPerfil();
-      setHojaLogo(false);
-    });
+  function borrarFoto() {
+    confirmar(
+      esLogo ? '¿Quitar el logo?' : '¿Quitar tu foto?',
+      esLogo ? 'Se mostrarán las iniciales de la academia.' : 'Se mostrarán tus iniciales.',
+      'Quitar',
+      async () => {
+        if (esLogo) await quitarLogo();
+        else await quitarFotoPerfil();
+        await recargarPerfil();
+        setHojaAbierta(false);
+      },
+    );
   }
 
   async function abrirKiosco() {
@@ -69,13 +99,13 @@ export default function AjustesScreen() {
   }
 
   return (
-    <PantallaSecundaria titulo="Ajustes">
+    <PantallaSecundaria titulo="Ajustes" principal>
       <Grupo titulo="Tu academia">
         <Fila
           titulo={academia.nombre}
           detalle={esDueno ? 'Toca para cambiar el logo' : academia.tipoNegocio}
           izquierda={<Avatar nombre={academia.nombre} logoUrl={academia.logoUrl} tamano={52} />}
-          onPress={esDueno ? () => setHojaLogo(true) : undefined}
+          onPress={esDueno ? () => abrirHoja('logo') : undefined}
         />
         {esDueno && (
           <Fila
@@ -118,13 +148,38 @@ export default function AjustesScreen() {
         />
       </Grupo>
 
+      <View style={{ gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 4 }}>
+          <SunMoon size={16} color={color.textoSuave} />
+          <Texto variante="detalle" tono="suave">
+            Apariencia
+          </Texto>
+        </View>
+        <Segmentos<PreferenciaTema>
+          valor={preferencia}
+          onCambio={cambiarPreferenciaTema}
+          opciones={[
+            { valor: 'sistema', etiqueta: 'Automática' },
+            { valor: 'claro', etiqueta: 'Clara' },
+            { valor: 'oscuro', etiqueta: 'Oscura' },
+          ]}
+        />
+      </View>
+
       <Grupo titulo="Tu cuenta">
-        <Fila titulo={usuario.nombre} detalle={usuario.email} izquierda={<Avatar nombre={usuario.nombre} tamano={40} />} />
+        <Fila
+          titulo={usuario.nombre}
+          detalle={usuario.fotoUrl ? usuario.email : 'Toca para poner tu foto de perfil'}
+          izquierda={<Avatar nombre={usuario.nombre} logoUrl={usuario.fotoUrl} tamano={44} />}
+          onPress={() => abrirHoja('perfil')}
+        />
         <Fila
           titulo="Ver el recorrido de nuevo"
           izquierda={<Compass size={22} color={color.texto} />}
           onPress={() => {
-            router.back();
+            // Si se llegó directo a /ajustes (p. ej. desde la barra lateral o la URL) no hay a dónde regresar
+            if (router.canGoBack()) router.back();
+            else router.navigate('/');
             setTimeout(iniciarTour, 450);
           }}
         />
@@ -135,12 +190,17 @@ export default function AjustesScreen() {
         />
       </Grupo>
 
-      <Hoja visible={hojaLogo} titulo="Logo de la academia" descripcion="Funciona mejor una imagen cuadrada." onCerrar={() => setHojaLogo(false)}>
+      <Hoja
+        visible={hojaAbierta}
+        titulo={esLogo ? 'Logo de la academia' : 'Tu foto de perfil'}
+        descripcion="Funciona mejor una imagen cuadrada."
+        onCerrar={() => setHojaAbierta(false)}
+      >
         <View style={{ alignItems: 'center', paddingVertical: 8 }}>
-          <Avatar nombre={academia.nombre} logoUrl={academia.logoUrl} tamano={120} />
+          <Avatar nombre={esLogo ? academia.nombre : usuario.nombre} logoUrl={fotoActual} tamano={120} />
         </View>
-        <Boton titulo={academia.logoUrl ? 'Elegir otra imagen' : 'Elegir de mi galería'} onPress={cambiarLogo} cargando={subiendo} />
-        {academia.logoUrl && <Boton titulo="Quitar logo" variante="peligro" onPress={borrarLogo} />}
+        <Boton titulo={fotoActual ? 'Elegir otra imagen' : 'Elegir imagen'} onPress={cambiarFoto} cargando={subiendo} />
+        {fotoActual && <Boton titulo={esLogo ? 'Quitar logo' : 'Quitar foto'} variante="peligro" onPress={borrarFoto} />}
       </Hoja>
     </PantallaSecundaria>
   );

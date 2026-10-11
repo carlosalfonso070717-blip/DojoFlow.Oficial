@@ -56,7 +56,7 @@ function SinVincular() {
         Este kiosco no está vinculado
       </Texto>
       <Texto variante="cuerpo" tono="suave" style={{ textAlign: 'center', maxWidth: 360 }}>
-        Inicia sesión como coach en esta tablet y toca "Abrir kiosco" en Inicio.
+        Inicia sesión como coach en esta tablet y toca “Abrir kiosco” en Inicio.
       </Texto>
       <Boton titulo="Volver" variante="contorno" onPress={salir} style={{ marginTop: 8, minWidth: 200 }} />
     </SafeAreaView>

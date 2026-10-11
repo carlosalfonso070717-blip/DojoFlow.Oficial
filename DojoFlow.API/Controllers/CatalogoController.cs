@@ -90,11 +90,18 @@ namespace DojoFlow.API.Controllers
             foreach (var p in productos)
             {
                 bool disponible = p.StockActual > 0;
+                string? foto = UrlImagen(p.ImagenUrl);
+                string miniatura = foto != null
+                    ? $"<img class=\"foto\" src=\"{Html(foto)}\" alt=\"\" loading=\"lazy\">"
+                    : "<span class=\"foto vacia\" aria-hidden=\"true\"></span>";
                 tarjetas.Append($@"
       <li class=""producto"">
-        <span class=""nombre"">{Html(p.Nombre)}</span>
+        {miniatura}
+        <div class=""info"">
+          <span class=""nombre"">{Html(p.Nombre)}</span>
+          <span class=""estado {(disponible ? "si" : "no")}"">{(disponible ? "Disponible" : "Agotado")}</span>
+        </div>
         <span class=""precio{(p.Precio > 0 ? "" : " sin")}"">{(p.Precio > 0 ? Html(p.Precio.ToString("C2", Mx)) : "Pregunta en recepción")}</span>
-        <span class=""estado {(disponible ? "si" : "no")}"">{(disponible ? "Disponible" : "Agotado")}</span>
       </li>");
             }
 
@@ -107,6 +114,14 @@ namespace DojoFlow.API.Controllers
 
         private string? LogoUrl(Academia a) =>
             a.Logo == null ? null : $"{UrlBase()}/api/Academia/{a.Id}/logo?v={a.LogoVersion}";
+
+        // Fotos subidas a la API (ruta relativa) o enlaces externos guardados por la web anterior
+        private string? UrlImagen(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return null;
+            if (url.StartsWith('/')) return UrlBase() + url;
+            return url.StartsWith("https://") || url.StartsWith("http://") ? url : null;
+        }
 
         private string UrlCatalogo(string codigo) => $"{UrlBase()}/catalogo/{codigo}";
 
@@ -155,7 +170,10 @@ namespace DojoFlow.API.Controllers
     h1 {{ font-size: 26px; line-height: 1.15; letter-spacing: -0.5px; }}
     .sub {{ color: var(--suave); font-size: 15px; }}
     .lista {{ list-style: none; padding: 0; background: var(--superficie); border: 1px solid var(--borde); border-radius: 18px; overflow: hidden; }}
-    .producto {{ display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 16px 18px; border-top: 1px solid var(--borde); }}
+    .producto {{ display: grid; grid-template-columns: 56px 1fr auto; align-items: center; gap: 14px; padding: 14px 18px; border-top: 1px solid var(--borde); }}
+    .foto {{ width: 56px; height: 56px; border-radius: 12px; object-fit: cover; background: var(--fondo); display: block; }}
+    .foto.vacia {{ background: linear-gradient(135deg, var(--fondo), var(--borde)); }}
+    .info {{ display: grid; gap: 2px; min-width: 0; }}
     .producto:first-child {{ border-top: 0; }}
     .nombre {{ font-weight: 600; }}
     .precio {{ font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }}

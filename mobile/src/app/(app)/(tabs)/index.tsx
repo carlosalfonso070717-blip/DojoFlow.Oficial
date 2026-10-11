@@ -43,7 +43,7 @@ const VACIO = { alumnos: 0, vencidos: { n: 0, monto: 0 }, pendientes: { n: 0, mo
 
 export default function InicioScreen() {
   const { color } = useTema();
-  const { margen, esTableta } = useDiseno();
+  const { margen, esTableta, esEscritorio, arriba } = useDiseno();
   const espacioBarra = useEspacioBarra();
   const { perfil, vincularKiosco } = useSesion();
   const { iniciar: iniciarTour } = useTour();
@@ -129,7 +129,7 @@ export default function InicioScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
       <ScrollView
-        contentContainerStyle={[estilos.contenido, { paddingHorizontal: margen, paddingBottom: espacioBarra, maxWidth: esTableta ? 1000 : 560 }]}
+        contentContainerStyle={[estilos.contenido, { paddingHorizontal: margen, paddingTop: 8 + arriba, paddingBottom: espacioBarra, maxWidth: esEscritorio ? 1240 : esTableta ? 1000 : 560 }]}
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
       >
         <View style={estilos.saludo}>
@@ -137,11 +137,14 @@ export default function InicioScreen() {
             <Texto variante="detalle" tono="suave">
               {saludo()},
             </Texto>
-            <Texto variante="encabezado">{usuario.nombre.split(' ')[0]}</Texto>
+            <Texto variante={esEscritorio ? 'titulo' : 'encabezado'}>{usuario.nombre.split(' ')[0]}</Texto>
           </View>
-          <View ref={refAjustes} collapsable={false}>
-            <BotonIcono icono={<IconoAjustes size={22} color={color.texto} />} etiqueta="Ajustes" onPress={() => router.push('/ajustes')} />
-          </View>
+          {/* En escritorio Ajustes vive en la barra lateral */}
+          {!esEscritorio && (
+            <View ref={refAjustes} collapsable={false}>
+              <BotonIcono icono={<IconoAjustes size={22} color={color.texto} />} etiqueta="Ajustes" onPress={() => router.push('/ajustes')} />
+            </View>
+          )}
         </View>
 
         {/* En tableta: credencial a la izquierda, pendientes y acciones a la derecha */}
@@ -163,7 +166,7 @@ export default function InicioScreen() {
 }
 
 const estilos = StyleSheet.create({
-  contenido: { gap: 28, paddingTop: 8, width: '100%', alignSelf: 'center' },
+  contenido: { gap: 28, width: '100%', alignSelf: 'center' },
   saludo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   columnas: { flexDirection: 'row', gap: 24, alignItems: 'flex-start' },
 });

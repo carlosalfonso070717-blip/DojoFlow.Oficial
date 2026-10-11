@@ -20,6 +20,7 @@ export default function PasoAlumnos() {
   const opciones = useMemo(
     () => [...new Set([borrador.terminoAlumno, ...(POR_TIPO[borrador.tipoNegocio] ?? []), ...COMUNES])].filter(Boolean),
     // Las opciones dependen solo del giro: así no se reordenan al elegir una
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [borrador.tipoNegocio],
   );
   const [otro, setOtro] = useState(opciones.includes(borrador.terminoAlumno) ? '' : borrador.terminoAlumno);

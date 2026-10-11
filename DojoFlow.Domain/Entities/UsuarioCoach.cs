@@ -15,6 +15,8 @@ namespace DojoFlow.Domain.Entities
         public string Rol { get; set; } = Roles.Dueno;
         // Si ya vio el tour de bienvenida de la app
         public bool TourCompletado { get; set; }
+        // Foto de perfil (ruta de /api/Imagenes); null = se muestran sus iniciales
+        public string? FotoUrl { get; set; }
 
         // Recuperación de contraseña vía PIN enviado por correo
         public string? ResetPinHash { get; set; }

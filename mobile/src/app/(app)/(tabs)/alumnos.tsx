@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { SearchX, Users, WifiOff } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
@@ -12,6 +12,7 @@ import {
   Boton,
   BotonIcono,
   Buscador,
+  CeldaLista,
   confirmar,
   Encabezado,
   EstadoVacio,
@@ -20,10 +21,10 @@ import {
   Grupo,
   Hoja,
   Insignia,
-  ItemGrupo,
   ParDato,
   Superficie,
   Texto,
+  useRejilla,
 } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -34,12 +35,21 @@ import { plural } from '@/utils/texto';
 export default function AlumnosScreen() {
   const refTour = useObjetivoTour('alumnos');
   const { color } = useTema();
-  const { margen, maximo } = useDiseno();
+  const { margen, anchoSeccion, arriba } = useDiseno();
+  const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { perfil } = useSesion();
   const termino = perfil?.academia.terminoAlumno || 'Alumno';
   const { datos: alumnos, setDatos, cargando, error, recargar } = useRecurso(obtenerAlumnos, [] as Alumno[]);
   const [busqueda, setBusqueda] = useState('');
+
+  // La búsqueda de la barra lateral (web) llega como /alumnos?q=...; cada búsqueda nueva reemplaza la actual
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  const [qAplicada, setQAplicada] = useState<string | undefined>(undefined);
+  if (q !== qAplicada) {
+    setQAplicada(q);
+    if (q !== undefined) setBusqueda(q);
+  }
   const [seleccionado, setSeleccionado] = useState<Alumno | null>(null);
 
   const filtrados = useMemo(() => {
@@ -74,9 +84,11 @@ export default function AlumnosScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
       <FlatList
+        key={rejilla.clave}
+        {...rejilla.props}
         data={filtrados}
         keyExtractor={(a) => a.id}
-        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingBottom: espacioBarra, maxWidth: maximo + margen * 2 }]}
+        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
@@ -98,14 +110,14 @@ export default function AlumnosScreen() {
         }
         ListEmptyComponent={vacio}
         renderItem={({ item, index }) => (
-          <ItemGrupo indice={index} total={filtrados.length}>
+          <CeldaLista indice={index} total={filtrados.length} columnas={rejilla.columnas}>
             <Fila
               titulo={item.nombre}
               detalle={`PIN ${item.claveKiosco}`}
               izquierda={<Avatar nombre={item.nombre} />}
               onPress={() => setSeleccionado(item)}
             />
-          </ItemGrupo>
+          </CeldaLista>
         )}
       />
 

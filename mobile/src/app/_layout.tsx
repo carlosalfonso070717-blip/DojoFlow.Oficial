@@ -18,7 +18,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootNavigator() {
   const { token, cargando } = useSesion();
-  const { color, oscuro, tipografia } = useTema();
+  const { color, oscuro } = useTema();
   const [fuentesListas, errorFuentes] = useFonts({
     BricolageGrotesque_600SemiBold,
     BricolageGrotesque_700Bold,

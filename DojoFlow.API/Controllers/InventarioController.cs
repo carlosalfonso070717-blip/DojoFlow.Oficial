@@ -34,15 +34,18 @@ namespace DojoFlow.API.Controllers
     {
         private readonly IProductoRepository _productoRepository;
         private readonly IRegistroFinancieroRepository _registroFinancieroRepository;
+        private readonly IImagenRepository _imagenRepository;
         private readonly ITenantContext _tenant;
 
         public InventarioController(
             IProductoRepository productoRepository,
             IRegistroFinancieroRepository registroFinancieroRepository,
+            IImagenRepository imagenRepository,
             ITenantContext tenant)
         {
             _productoRepository = productoRepository;
             _registroFinancieroRepository = registroFinancieroRepository;
+            _imagenRepository = imagenRepository;
             _tenant = tenant;
         }
 
@@ -98,7 +101,9 @@ namespace DojoFlow.API.Controllers
 
             producto.StockActual = request.NuevoStockActual;
             producto.StockMinimo = request.NuevoStockMinimo;
-            producto.ImagenUrl = request.ImagenUrl;
+            // Una foto subida solo cambia con PUT/DELETE {id}/imagen, así no queda huérfana
+            if (Imagen.IdDesdeUrl(producto.ImagenUrl) == null)
+                producto.ImagenUrl = request.ImagenUrl;
             if (request.Precio is < 0)
                 return BadRequest(new { Error = "El precio no puede ser negativo." });
             if (request.Precio.HasValue) producto.Precio = request.Precio.Value;
@@ -121,10 +126,47 @@ namespace DojoFlow.API.Controllers
                 return NotFound(new { Error = "Artículo no encontrado." });
 
             await _productoRepository.EliminarAsync(producto);
+            await _imagenRepository.EliminarPorUrlAsync(producto.ImagenUrl);
 
             AlertaStockObserver.QuitarAlertasDe(producto.AcademiaId, producto.Nombre);
 
             return Ok(new { Mensaje = $"El artículo '{producto.Nombre}' fue removido con éxito." });
+        }
+
+        // Foto del producto (se ve en la app y en el catálogo); reemplaza a la anterior
+        [HttpPut("{id}/imagen")]
+        [RequestSizeLimit(ImagenesController.TamanoMaximo + 64 * 1024)]
+        public async Task<IActionResult> SubirImagen(Guid id, IFormFile archivo)
+        {
+            var producto = await _productoRepository.ObtenerPorIdAsync(id);
+            if (producto == null)
+                return NotFound(new { Error = "Artículo no encontrado." });
+
+            var (imagen, error) = await ImagenesController.LeerAsync(archivo);
+            if (imagen == null) return BadRequest(new { Error = error });
+
+            await _imagenRepository.AgregarAsync(imagen);
+            var anterior = producto.ImagenUrl;
+            producto.ImagenUrl = imagen.Url;
+            await _productoRepository.ActualizarAsync(producto);
+            await _imagenRepository.EliminarPorUrlAsync(anterior);
+
+            return Ok(producto);
+        }
+
+        [HttpDelete("{id}/imagen")]
+        public async Task<IActionResult> QuitarImagen(Guid id)
+        {
+            var producto = await _productoRepository.ObtenerPorIdAsync(id);
+            if (producto == null)
+                return NotFound(new { Error = "Artículo no encontrado." });
+
+            var anterior = producto.ImagenUrl;
+            producto.ImagenUrl = string.Empty;
+            await _productoRepository.ActualizarAsync(producto);
+            await _imagenRepository.EliminarPorUrlAsync(anterior);
+
+            return Ok(producto);
         }
 
         [HttpPost("{id}/salida")]

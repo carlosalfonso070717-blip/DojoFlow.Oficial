@@ -3,6 +3,7 @@ import { Package, Users } from 'lucide-react-native';
 import type { ComponentProps } from 'react';
 import { useSesion } from '@/auth/session';
 import { BarraLiquida, type PestanaLiquida } from '@/components/BarraLiquida';
+import { useDiseno } from '@/hooks/useDiseno';
 import { IconoFinanzas, IconoInicio, IconoPagos } from '@/components/iconos/Iconly';
 import { useObjetivoTour } from '@/tour/Tour';
 import { plural } from '@/utils/texto';
@@ -41,9 +42,11 @@ function Barra({ state, descriptors, navigation }: BottomTabBarProps) {
 
 export default function TabsLayout() {
   const { perfil } = useSesion();
+  const { esEscritorio } = useDiseno();
   const termino = perfil?.academia.terminoAlumno || 'Alumno';
   return (
-    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <Barra {...props} />}>
+    // En escritorio se navega con la barra lateral (en el layout de (app))
+    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => (esEscritorio ? null : <Barra {...props} />)}>
       <Tabs.Screen name="index" options={{ title: 'Inicio' }} />
       <Tabs.Screen name="alumnos" options={{ title: plural(termino) }} />
       <Tabs.Screen name="mensualidades" options={{ title: 'Cobros' }} />

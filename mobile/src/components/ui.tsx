@@ -4,7 +4,7 @@ export { Boton } from './Boton';
 export { Campo } from './Campo';
 export { Credencial, DatoCredencial } from './Credencial';
 export { Avatar, Chip, EstadoVacio, Insignia, Superficie, urlAbsoluta, type TonoInsignia } from './Elementos';
-export { Fila, Grupo, ItemGrupo, ParDato } from './Grupo';
+export { CeldaLista, Fila, Grupo, ItemGrupo, ParDato, useRejilla } from './Grupo';
 export { Hoja } from './Hoja';
 export { BotonIcono, Buscador, Encabezado } from './Pantalla';
 export { Presionable } from './Presionable';

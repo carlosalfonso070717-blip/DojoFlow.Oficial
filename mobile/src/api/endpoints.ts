@@ -48,7 +48,7 @@ export type MarcaAcademia = {
 };
 
 export type Perfil = {
-  usuario: { id: string; nombre: string; email: string; rol: 'Dueno' | 'Coach'; tourCompletado: boolean };
+  usuario: { id: string; nombre: string; email: string; rol: 'Dueno' | 'Coach'; tourCompletado: boolean; fotoUrl: string | null };
   academia: MarcaAcademia;
 };
 
@@ -172,6 +172,12 @@ export const editarProducto = (
 
 export const eliminarProducto = (id: string) => api<Mensaje>(`/Inventario/${id}`, { method: 'DELETE' });
 
+// La foto se guarda en la API y el producto queda con su URL en imagenUrl
+export const subirImagenProducto = async (id: string, archivo: ArchivoLogo) =>
+  api<Producto>(`/Inventario/${id}/imagen`, { method: 'PUT', body: await aFormData(archivo) });
+
+export const quitarImagenProducto = (id: string) => api<Producto>(`/Inventario/${id}/imagen`, { method: 'DELETE' });
+
 export const venderProducto = (id: string, precioVenta: number, cantidad = 1) =>
   post<Mensaje & { stockActual: number }>(
     `/Inventario/${id}/salida?cantidad=${cantidad}&precioVenta=${precioVenta}`,
@@ -215,6 +221,12 @@ export const editarClase = (id: string, datos: { nombre: string; precio: number;
   api<Clase>(`/Clases/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
 
 export const eliminarClase = (id: string) => api<Mensaje>(`/Clases/${id}`, { method: 'DELETE' });
+
+// Foto de perfil de quien tiene la sesión
+export const subirFotoPerfil = async (archivo: ArchivoLogo) =>
+  api<{ fotoUrl: string | null }>('/Auth/foto', { method: 'PUT', body: await aFormData(archivo) });
+
+export const quitarFotoPerfil = () => api<{ fotoUrl: string | null }>('/Auth/foto', { method: 'DELETE' });
 
 export const marcarTourCompletado = () => post<Mensaje>('/Auth/tour-completado');
 

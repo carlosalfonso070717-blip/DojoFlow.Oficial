@@ -13,18 +13,20 @@ type Props = {
   // Acción fija al pie (p. ej. "Guardar cambios")
   pie?: ReactNode;
   acciones?: ReactNode;
+  // Pantallas a las que también se llega desde la barra lateral (escritorio): sin botón de regresar
+  principal?: boolean;
 };
 
 // Plantilla de pantallas dentro de Ajustes: regresar, título grande y contenido con ancho de lectura
-export function PantallaSecundaria({ titulo, descripcion, children, pie, acciones }: Props) {
+export function PantallaSecundaria({ titulo, descripcion, children, pie, acciones, principal }: Props) {
   const { color } = useTema();
-  const { margen, maximo } = useDiseno();
+  const { margen, maximo, arriba, esEscritorio } = useDiseno();
   const ancho = { maxWidth: maximo, width: '100%' as const, alignSelf: 'center' as const };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: color.fondo }} edges={['top', 'bottom']}>
-      <View style={[estilos.barra, { paddingHorizontal: margen }, ancho]}>
-        <BotonAtras alterno="/" />
+      <View style={[estilos.barra, { paddingHorizontal: margen, paddingTop: 8 + arriba }, ancho]}>
+        {principal && esEscritorio ? <View /> : <BotonAtras alterno="/" />}
         {acciones}
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

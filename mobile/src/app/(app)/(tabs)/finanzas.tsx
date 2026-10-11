@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { eliminarMesFinanzas, obtenerFinanzas, type RegistroFinanciero } from '@/api/endpoints';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoDescargar, IconoEliminar, IconoFinanzas } from '@/components/iconos/Iconly';
-import { Boton, BotonIcono, confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, Grupo, Hoja, ItemGrupo, ParDato, Superficie, Texto } from '@/components/ui';
+import { Boton, BotonIcono, confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, CeldaLista, Grupo, Hoja, ParDato, Superficie, Texto, useRejilla } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useSesion } from '@/auth/session';
@@ -26,7 +26,8 @@ function nombreMes(mesAnio: string) {
 export default function FinanzasScreen() {
   const refTour = useObjetivoTour('finanzas');
   const { color, radio } = useTema();
-  const { margen, maximo } = useDiseno();
+  const { margen, anchoSeccion, arriba } = useDiseno();
+  const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { datos, cargando, error, recargar } = useRecurso(obtenerFinanzas, [] as RegistroFinanciero[]);
   const [seleccionado, setSeleccionado] = useState<RegistroFinanciero | null>(null);
@@ -59,9 +60,11 @@ export default function FinanzasScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
       <FlatList
+        key={rejilla.clave}
+        {...rejilla.props}
         data={datos}
         keyExtractor={(f) => f.mesAnio}
-        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingBottom: espacioBarra, maxWidth: maximo + margen * 2 }]}
+        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
           <View style={estilos.cabecera} ref={refTour} collapsable={false}>
@@ -116,7 +119,7 @@ export default function FinanzasScreen() {
           )
         }
         renderItem={({ item, index }) => (
-          <ItemGrupo indice={index} total={datos.length}>
+          <CeldaLista indice={index} total={datos.length} columnas={rejilla.columnas}>
             <Fila
               titulo={nombreMes(item.mesAnio)}
               detalle={`${item.ventasRealizadas} ${item.ventasRealizadas === 1 ? 'venta' : 'ventas'}`}
@@ -127,7 +130,7 @@ export default function FinanzasScreen() {
               }
               onPress={() => setSeleccionado(item)}
             />
-          </ItemGrupo>
+          </CeldaLista>
         )}
       />
 

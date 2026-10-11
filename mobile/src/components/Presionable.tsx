@@ -24,11 +24,11 @@ export function Presionable({ escala = 0.97, vibracion = 'ligera', onPressIn, on
       disabled={disabled}
       accessibilityState={{ disabled: !!disabled }}
       onPressIn={(e) => {
-        presion.value = withTiming(escala, { duration: 90 });
+        presion.set(withTiming(escala, { duration: 90 }));
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        presion.value = withSpring(1, { damping: 14, stiffness: 260 });
+        presion.set(withSpring(1, { damping: 14, stiffness: 260 }));
         onPressOut?.(e);
       }}
       onPress={(e) => {

@@ -8,6 +8,7 @@ import { IconoFiltro, IconoPagos } from '@/components/iconos/Iconly';
 import { Segmentos } from '@/components/Segmentos';
 import {
   Buscador,
+  CeldaLista,
   Encabezado,
   EstadoVacio,
   Fila,
@@ -15,10 +16,10 @@ import {
   Grupo,
   Hoja,
   Insignia,
-  ItemGrupo,
   ParDato,
   Superficie,
   Texto,
+  useRejilla,
   type TonoInsignia,
 } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
@@ -47,7 +48,8 @@ function coloresEstado(tono: TonoInsignia, color: Tema['color']) {
 export default function CobrosScreen() {
   const refTour = useObjetivoTour('cobros');
   const { color } = useTema();
-  const { margen, maximo } = useDiseno();
+  const { margen, anchoSeccion, arriba, esEscritorio } = useDiseno();
+  const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { datos, cargando, error, recargar } = useRecurso(obtenerMensualidades, [] as Mensualidad[]);
   const [busqueda, setBusqueda] = useState('');
@@ -96,26 +98,37 @@ export default function CobrosScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
       <FlatList
+        key={rejilla.clave}
+        {...rejilla.props}
         data={filtrados}
         keyExtractor={(m) => m.id}
-        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingBottom: espacioBarra, maxWidth: maximo + margen * 2 }]}
+        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
           <View style={estilos.cabecera} ref={refTour} collapsable={false}>
             <Encabezado titulo="Cobros" detalle={porCobrar > 0 ? `${formatoMoneda(porCobrar)} por cobrar` : 'Todo cobrado'} />
-            <Segmentos<Filtro>
-              icono={IconoFiltro}
-              valor={filtro}
-              onCambio={setFiltro}
-              opciones={[
-                { valor: 'todos', etiqueta: 'Todos' },
-                { valor: 'Vencido', etiqueta: 'Vencidos' },
-                { valor: 'Pendiente', etiqueta: 'Pendientes' },
-                { valor: 'Pagado', etiqueta: 'Pagados' },
-              ]}
-            />
-            {datos.length > 0 && <Buscador value={busqueda} onChangeText={setBusqueda} placeholder="Buscar por nombre o PIN" />}
+            {/* En escritorio, filtros y búsqueda comparten una fila */}
+            <View style={esEscritorio ? estilos.filtrosEscritorio : estilos.filtros}>
+              <View style={esEscritorio ? { flex: 1.2 } : undefined}>
+                <Segmentos<Filtro>
+                  icono={IconoFiltro}
+                  valor={filtro}
+                  onCambio={setFiltro}
+                  opciones={[
+                    { valor: 'todos', etiqueta: 'Todos' },
+                    { valor: 'Vencido', etiqueta: 'Vencidos' },
+                    { valor: 'Pendiente', etiqueta: 'Pendientes' },
+                    { valor: 'Pagado', etiqueta: 'Pagados' },
+                  ]}
+                />
+              </View>
+              {datos.length > 0 && (
+                <View style={esEscritorio ? { flex: 1 } : undefined}>
+                  <Buscador value={busqueda} onChangeText={setBusqueda} placeholder="Buscar por nombre o PIN" />
+                </View>
+              )}
+            </View>
           </View>
         }
         ListEmptyComponent={vacio}
@@ -124,7 +137,7 @@ export default function CobrosScreen() {
           const [fondo, frente] = coloresEstado(estado.tono, color);
           const Icono = estado.icono;
           return (
-            <ItemGrupo indice={index} total={filtrados.length}>
+            <CeldaLista indice={index} total={filtrados.length} columnas={rejilla.columnas}>
               <Fila
                 titulo={item.nombreAlumno}
                 detalle={item.estado === 'Pagado' ? `Pagado el ${fechaCorta(item.fechaPago)}` : `Vence el ${fechaCorta(item.fechaVencimiento)}`}
@@ -140,7 +153,7 @@ export default function CobrosScreen() {
                 }
                 onPress={() => setSeleccionado(item)}
               />
-            </ItemGrupo>
+            </CeldaLista>
           );
         }}
       />
@@ -184,5 +197,7 @@ export default function CobrosScreen() {
 const estilos = StyleSheet.create({
   lista: { width: '100%', alignSelf: 'center' },
   cabecera: { gap: 14, marginBottom: 16 },
+  filtros: { gap: 14 },
+  filtrosEscritorio: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   estado: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

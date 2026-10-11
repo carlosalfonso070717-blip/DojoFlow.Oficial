@@ -20,6 +20,7 @@ namespace DojoFlow.API.Controllers
         private readonly IEmailSender _emailSender;
         private readonly RegistrarAcademiaUseCase _registrarAcademia;
         private readonly GeneradorTokens _tokens;
+        private readonly IImagenRepository _imagenRepository;
 
         public AuthController(
             IUsuarioCoachRepository usuarioRepository,
@@ -27,8 +28,10 @@ namespace DojoFlow.API.Controllers
             IAcademiaRepository academiaRepository,
             IEmailSender emailSender,
             RegistrarAcademiaUseCase registrarAcademia,
-            GeneradorTokens tokens)
+            GeneradorTokens tokens,
+            IImagenRepository imagenRepository)
         {
+            _imagenRepository = imagenRepository;
             _usuarioRepository = usuarioRepository;
             _verificacionRepository = verificacionRepository;
             _academiaRepository = academiaRepository;
@@ -189,7 +192,7 @@ namespace DojoFlow.API.Controllers
 
             return Ok(new
             {
-                Usuario = new { usuario.Id, usuario.Nombre, usuario.Email, usuario.Rol, usuario.TourCompletado },
+                Usuario = new { usuario.Id, usuario.Nombre, usuario.Email, usuario.Rol, usuario.TourCompletado, usuario.FotoUrl },
                 Academia = AcademiaController.AMarca(academia)
             });
         }
@@ -204,6 +207,42 @@ namespace DojoFlow.API.Controllers
             usuario.TourCompletado = true;
             await _usuarioRepository.ActualizarAsync(usuario);
             return Ok(new { Mensaje = "Tour completado." });
+        }
+
+        // Foto de perfil del usuario que tiene la sesión
+        [Authorize]
+        [HttpPut("foto")]
+        [RequestSizeLimit(ImagenesController.TamanoMaximo + 64 * 1024)]
+        public async Task<IActionResult> SubirFoto(IFormFile archivo)
+        {
+            var usuario = await ObtenerUsuarioActualAsync();
+            if (usuario == null) return Unauthorized();
+
+            var (imagen, error) = await ImagenesController.LeerAsync(archivo);
+            if (imagen == null) return BadRequest(new { Error = error });
+
+            await _imagenRepository.AgregarAsync(imagen);
+            var anterior = usuario.FotoUrl;
+            usuario.FotoUrl = imagen.Url;
+            await _usuarioRepository.ActualizarAsync(usuario);
+            await _imagenRepository.EliminarPorUrlAsync(anterior);
+
+            return Ok(new { usuario.FotoUrl });
+        }
+
+        [Authorize]
+        [HttpDelete("foto")]
+        public async Task<IActionResult> QuitarFoto()
+        {
+            var usuario = await ObtenerUsuarioActualAsync();
+            if (usuario == null) return Unauthorized();
+
+            var anterior = usuario.FotoUrl;
+            usuario.FotoUrl = null;
+            await _usuarioRepository.ActualizarAsync(usuario);
+            await _imagenRepository.EliminarPorUrlAsync(anterior);
+
+            return Ok(new { usuario.FotoUrl });
         }
 
         private async Task<UsuarioCoach?> ObtenerUsuarioActualAsync()

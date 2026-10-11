@@ -1,12 +1,13 @@
 import * as Haptics from 'expo-haptics';
 import { router, type Href } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, FadeIn, useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Defs, Mask, Rect } from 'react-native-svg';
 import { marcarTourCompletado } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { Boton, Texto } from '@/components/ui';
+import { useDiseno } from '@/hooks/useDiseno';
 import { useTema } from '@/theme';
 import { plural } from '@/utils/texto';
 
@@ -36,8 +37,11 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
   const objetivos = useRef(new Map<IdObjetivo, Medible>());
   const [activo, setActivo] = useState(false);
   const [indice, setIndice] = useState(0);
-  const [medida, setMedida] = useState<Medida | null>(null);
+  const [medicion, setMedicion] = useState<{ indice: number; medida: Medida } | null>(null);
+  // Una medida de otro paso no sirve: mientras se mide el nuevo, no se dibuja nada
+  const medida = medicion?.indice === indice ? medicion.medida : null;
 
+  const { esEscritorio } = useDiseno();
   const termino = perfil?.academia.terminoAlumno || 'Alumno';
   const pasos: Paso[] = [
     {
@@ -51,7 +55,14 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
       titulo: `Inscribe a tu primer ${termino.toLowerCase()}`,
       texto: 'Cada inscripción genera un PIN para el kiosco y su primer recibo.',
     },
-    { id: 'barra', titulo: 'Todo a un toque', texto: 'Desde esta barra cambias de sección. Vamos a recorrerlas.' },
+    {
+      id: 'barra',
+      titulo: 'Todo a un toque',
+      texto:
+        Platform.OS === 'web' && esEscritorio
+          ? 'Desde esta barra cambias de sección. Pasa el mouse encima para ver los nombres, buscar y cambiar a modo oscuro.'
+          : 'Desde esta barra cambias de sección. Vamos a recorrerlas.',
+    },
     {
       id: 'alumnos',
       ruta: '/alumnos',
@@ -76,7 +87,7 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
       titulo: 'Finanzas',
       texto: 'Cuánto entra cada mes, separado entre cuotas y ventas, con el historial completo.',
     },
-    { id: 'ajustes', ruta: '/', titulo: 'Hazla tuya', texto: 'En Ajustes cambias colores, logo, clases, precios y la forma de cobro.' },
+    { id: 'ajustes', ruta: '/', titulo: 'Hazla tuya', texto: 'En Ajustes cambias colores, logo, tu foto, clases, precios y la forma de cobro.' },
   ];
   const paso = pasos[indice];
 
@@ -85,23 +96,23 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
     else objetivos.current.delete(id);
   }, []);
 
-  const medir = useCallback((id: IdObjetivo) => {
+  const medir = useCallback((id: IdObjetivo, i: number) => {
     const nodo = objetivos.current.get(id);
-    if (!nodo) return setMedida({ x: 0, y: 0, w: 0, h: 0 });
-    nodo.measureInWindow((x, y, w, h) => setMedida({ x, y, w, h }));
+    if (!nodo) return setMedicion({ indice: i, medida: { x: 0, y: 0, w: 0, h: 0 } });
+    nodo.measureInWindow((x, y, w, h) => setMedicion({ indice: i, medida: { x, y, w, h } }));
   }, []);
 
   useEffect(() => {
     if (!activo || !paso) return;
     // Si el paso está en otra sección, primero se navega y se espera a que la pantalla se pinte
     if (paso.ruta) {
-      setMedida(null);
       router.navigate(paso.ruta);
-      const t = setTimeout(() => medir(paso.id), 550);
+      const t = setTimeout(() => medir(paso.id, indice), 550);
       return () => clearTimeout(t);
     }
-    medir(paso.id);
+    medir(paso.id, indice);
     // `paso` y `medir` dependen solo de `indice`, que ya está en la lista
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activo, indice]);
 
   const iniciar = useCallback(() => {
@@ -189,11 +200,16 @@ function Capa({
   const sinObjetivo = medida.w === 0;
   const abajoDelObjetivo = medida.y + medida.h + HOLGURA + 220 < height;
   const anchoTarjeta = Math.min(width - 32, 420);
+  // Objetivos altos pegados a un lado (la barra lateral de escritorio): la tarjeta va a su derecha
+  const alLado = !sinObjetivo && medida.h > height * 0.5 && medida.x + medida.w + HOLGURA + 24 + anchoTarjeta < width;
   const posicion = sinObjetivo
     ? { top: height / 2 - 110 }
-    : abajoDelObjetivo
-      ? { top: medida.y + medida.h + HOLGURA + 14 }
-      : { bottom: height - medida.y + HOLGURA + 14 };
+    : alLado
+      ? { top: Math.max(24, Math.min(medida.y + 40, height - 260)) }
+      : abajoDelObjetivo
+        ? { top: Math.min(medida.y + medida.h + HOLGURA + 14, height - 240) }
+        : { bottom: Math.min(height - medida.y + HOLGURA + 14, height - 240) };
+  const izquierda = alLado ? medida.x + medida.w + HOLGURA + 24 : (width - anchoTarjeta) / 2;
   const velo = 'rgba(6,7,10,0.72)';
 
   return (
@@ -217,7 +233,7 @@ function Capa({
         style={[
           estilos.tarjeta,
           posicion,
-          { width: anchoTarjeta, left: (width - anchoTarjeta) / 2, backgroundColor: color.superficieElevada, borderRadius: radio.xl },
+          { width: anchoTarjeta, left: izquierda, backgroundColor: color.superficieElevada, borderRadius: radio.xl },
         ]}
         accessibilityViewIsModal
       >

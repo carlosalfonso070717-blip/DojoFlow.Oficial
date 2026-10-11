@@ -254,6 +254,34 @@ namespace DojoFlow.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Imagen", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcademiaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<byte[]>("Datos")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcademiaId");
+
+                    b.ToTable("Imagenes");
+                });
+
             modelBuilder.Entity("DojoFlow.Domain.Entities.Mensualidad", b =>
                 {
                     b.Property<Guid>("Id")
@@ -510,6 +538,10 @@ namespace DojoFlow.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("FotoUrl")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("text");
@@ -579,6 +611,15 @@ namespace DojoFlow.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("DojoFlow.Domain.Entities.Clase", b =>
+                {
+                    b.HasOne("DojoFlow.Domain.Entities.Academia", null)
+                        .WithMany()
+                        .HasForeignKey("AcademiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Imagen", b =>
                 {
                     b.HasOne("DojoFlow.Domain.Entities.Academia", null)
                         .WithMany()

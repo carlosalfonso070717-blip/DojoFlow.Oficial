@@ -29,6 +29,7 @@ namespace DojoFlow.Infrastructure.Persistence
         public DbSet<UsuarioCoach> UsuariosCoach => Set<UsuarioCoach>();
         public DbSet<VerificacionEmail> VerificacionesEmail => Set<VerificacionEmail>();
         public DbSet<Transaccion> Transacciones => Set<Transaccion>();
+        public DbSet<Imagen> Imagenes => Set<Imagen>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -99,6 +100,9 @@ namespace DojoFlow.Infrastructure.Persistence
             ConfigurarMultiAcademia<Producto>(modelBuilder);
             ConfigurarMultiAcademia<RegistroFinanciero>(modelBuilder);
             ConfigurarMultiAcademia<Transaccion>(modelBuilder);
+            ConfigurarMultiAcademia<Imagen>(modelBuilder);
+            modelBuilder.Entity<Imagen>().Property(i => i.ContentType).HasMaxLength(40);
+            modelBuilder.Entity<UsuarioCoach>().Property(u => u.FotoUrl).HasMaxLength(200);
 
             SeedData(modelBuilder);
         }

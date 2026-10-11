@@ -1,6 +1,7 @@
 import { ChevronRight } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useDiseno } from '@/hooks/useDiseno';
 import { useTema } from '@/theme';
 import { Presionable } from './Presionable';
 import { Texto } from './Texto';
@@ -98,7 +99,49 @@ export function ItemGrupo({ indice, total, children }: { indice: number; total: 
   );
 }
 
+const ESPACIO_REJILLA = 14;
+
+// Listas responsivas: una columna agrupada en el celular, rejilla de tarjetas en escritorio.
+// Uso: <FlatList key={rejilla.clave} {...rejilla.props} renderItem={() => <CeldaLista ...>} />
+export function useRejilla() {
+  const { columnas } = useDiseno();
+  return {
+    columnas,
+    // FlatList no permite cambiar numColumns en caliente: con otra key se vuelve a montar
+    clave: `columnas-${columnas}`,
+    props: {
+      numColumns: columnas,
+      columnWrapperStyle: columnas > 1 ? { gap: ESPACIO_REJILLA } : undefined,
+      ItemSeparatorComponent: columnas > 1 ? SeparadorRejilla : undefined,
+    },
+  };
+}
+
+function SeparadorRejilla() {
+  return <View style={{ height: ESPACIO_REJILLA }} />;
+}
+
+// Celda de una lista: parte de un grupo continuo (celular) o tarjeta suelta (escritorio)
+export function CeldaLista({ indice, total, columnas, children }: { indice: number; total: number; columnas: number; children: ReactNode }) {
+  const { color, radio } = useTema();
+  if (columnas <= 1) return <ItemGrupo indice={indice} total={total}>{children}</ItemGrupo>;
+
+  // Todas las tarjetas miden lo mismo aunque la última fila quede incompleta
+  const ancho = `calc(${100 / columnas}% - ${(ESPACIO_REJILLA * (columnas - 1)) / columnas}px)`;
+  return (
+    <View
+      style={[
+        estilos.tarjeta,
+        { backgroundColor: color.superficie, borderColor: color.borde, borderRadius: radio.l, maxWidth: ancho as unknown as number },
+      ]}
+    >
+      {children}
+    </View>
+  );
+}
+
 const estilos = StyleSheet.create({
+  tarjeta: { flex: 1, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   par: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingHorizontal: 16, paddingVertical: 14, minHeight: 52 },
   superficie: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   separador: { height: StyleSheet.hairlineWidth, marginLeft: 16 },

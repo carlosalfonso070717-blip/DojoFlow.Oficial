@@ -1,4 +1,4 @@
-import { Package, PackagePlus, SearchX, ShoppingCart, TriangleAlert, WifiOff } from 'lucide-react-native';
+import { Copy, ExternalLink, Package, PackagePlus, SearchX, ShoppingCart, TriangleAlert, WifiOff } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,28 +9,33 @@ import {
   obtenerAlertasInventario,
   obtenerEnlaceCatalogo,
   obtenerInventario,
+  quitarImagenProducto,
   renovarEnlaceCatalogo,
+  subirImagenProducto,
   venderProducto,
   type Producto,
 } from '@/api/endpoints';
 import { useEspacioBarra } from '@/components/BarraLiquida';
+import { FotoProducto, SelectorFoto } from '@/components/Foto';
 import { IconoCompartir, IconoEditar, IconoEliminar } from '@/components/iconos/Iconly';
 import {
   Boton,
   BotonIcono,
   Buscador,
   Campo,
+  CeldaLista,
   confirmar,
   Encabezado,
   EstadoVacio,
   Fila,
   Grupo,
   Hoja,
-  ItemGrupo,
   formatoMoneda,
   ParDato,
+  Presionable,
   Superficie,
   Texto,
+  useRejilla,
 } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -39,7 +44,8 @@ import { useTema } from '@/theme';
 import { useObjetivoTour } from '@/tour/Tour';
 import { cantidad } from '@/utils/texto';
 import { alerta } from '@/utils/alerta';
-import { compartirEnlace } from '@/utils/compartir';
+import { abrirEnlace, compartirEnlace, copiarEnlace, puedeCompartir } from '@/utils/compartir';
+import type { ArchivoLogo } from '@/utils/logo';
 
 type DatosInventario = { productos: Producto[]; alertas: string[] };
 
@@ -48,12 +54,23 @@ const cargarInventario = async (): Promise<DatosInventario> => {
   return { productos, alertas };
 };
 
+// Campos de alta y edición; la foto nueva se sube después de guardar el producto
+type Formulario = {
+  nombre: string;
+  cantidad: string;
+  minimo: string;
+  precio: string;
+  enCatalogo: boolean;
+  foto: ArchivoLogo | null;
+  quitarFoto: boolean;
+};
+
 // La hoja pasa por estos modos sin cerrarse: detalle → vender / editar
 type Modo =
   | { tipo: 'detalle'; producto: Producto }
   | { tipo: 'vender'; producto: Producto; precio: string }
-  | { tipo: 'editar'; producto: Producto; nombre: string; cantidad: string; minimo: string; precio: string; enCatalogo: boolean }
-  | { tipo: 'nuevo'; nombre: string; cantidad: string; minimo: string; precio: string; enCatalogo: boolean }
+  | ({ tipo: 'editar'; producto: Producto } & Formulario)
+  | ({ tipo: 'nuevo' } & Formulario)
   | { tipo: 'compartir'; url: string | null };
 
 const aEntero = (s: string) => {
@@ -64,7 +81,8 @@ const aEntero = (s: string) => {
 export default function InventarioScreen() {
   const refTour = useObjetivoTour('inventario');
   const { color } = useTema();
-  const { margen, maximo } = useDiseno();
+  const { margen, anchoSeccion, arriba } = useDiseno();
+  const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { datos, cargando, error, recargar } = useRecurso(cargarInventario, { productos: [], alertas: [] });
   const [busqueda, setBusqueda] = useState('');
@@ -86,7 +104,11 @@ export default function InventarioScreen() {
 
   async function compartir(url: string) {
     const nombre = perfil?.academia.nombre ?? 'la academia';
-    await compartirEnlace(`Mira el catálogo de ${nombre}: ${url}`, url);
+    try {
+      await compartirEnlace(`Mira el catálogo de ${nombre}:`, url);
+    } catch (e) {
+      alerta('No se pudo compartir', (e as Error).message);
+    }
   }
 
   function renovar() {
@@ -108,8 +130,12 @@ export default function InventarioScreen() {
 
   const bajos = datos.productos.filter((p) => p.stockActual <= p.stockMinimo).length;
 
-  function actualizar(campo: string, valor: string | boolean) {
-    setModo((m) => (m ? ({ ...m, [campo]: valor } as Modo) : m));
+  function actualizar<K extends keyof Formulario>(campo: K, valor: Formulario[K]) {
+    setModo((m) => (m && (m.tipo === 'editar' || m.tipo === 'nuevo') ? { ...m, [campo]: valor } : m));
+  }
+
+  function actualizarPrecioVenta(precio: string) {
+    setModo((m) => (m?.tipo === 'vender' ? { ...m, precio } : m));
   }
 
   async function guardar() {
@@ -122,16 +148,19 @@ export default function InventarioScreen() {
         await venderProducto(modo.producto.id, precio);
       } else {
         if (!modo.nombre.trim()) throw new Error('El producto necesita un nombre.');
+        let id: string;
         if (modo.tipo === 'nuevo') {
-          await agregarProducto({
+          const creado = await agregarProducto({
             nombre: modo.nombre.trim(),
             cantidad: aEntero(modo.cantidad),
             stockMinimo: aEntero(modo.minimo),
             precio: parseFloat(modo.precio) || 0,
             enCatalogo: modo.enCatalogo,
           });
+          id = creado.id;
         } else {
-          await editarProducto(modo.producto.id, {
+          id = modo.producto.id;
+          await editarProducto(id, {
             nombre: modo.nombre.trim(),
             nuevoStockActual: aEntero(modo.cantidad),
             nuevoStockMinimo: aEntero(modo.minimo),
@@ -139,6 +168,13 @@ export default function InventarioScreen() {
             precio: parseFloat(modo.precio) || 0,
             enCatalogo: modo.enCatalogo,
           });
+        }
+        // El producto ya quedó guardado; si la foto falla se avisa aparte
+        try {
+          if (modo.foto) await subirImagenProducto(id, modo.foto);
+          else if (modo.quitarFoto && modo.tipo === 'editar' && modo.producto.imagenUrl) await quitarImagenProducto(id);
+        } catch (e) {
+          alerta('El producto se guardó, pero la foto no', (e as Error).message);
         }
       }
       setModo(null);
@@ -158,7 +194,8 @@ export default function InventarioScreen() {
     });
   }
 
-  const nuevo = () => setModo({ tipo: 'nuevo', nombre: '', cantidad: '10', minimo: '3', precio: '', enCatalogo: true });
+  const nuevo = () =>
+    setModo({ tipo: 'nuevo', nombre: '', cantidad: '10', minimo: '3', precio: '', enCatalogo: true, foto: null, quitarFoto: false });
 
   const vacio = error ? (
     <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudo cargar el inventario" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
@@ -184,9 +221,11 @@ export default function InventarioScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
       <FlatList
+        key={rejilla.clave}
+        {...rejilla.props}
         data={filtrados}
         keyExtractor={(p) => p.id}
-        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingBottom: espacioBarra, maxWidth: maximo + margen * 2 }]}
+        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
@@ -216,22 +255,29 @@ export default function InventarioScreen() {
         }
         ListEmptyComponent={vacio}
         renderItem={({ item, index }) => {
+          const abrir = () => setModo({ tipo: 'detalle', producto: item });
+          // Escritorio: tarjeta con la foto grande
+          if (rejilla.columnas > 1) return <TarjetaProducto producto={item} columnas={rejilla.columnas} onPress={abrir} />;
+
           const bajo = item.stockActual <= item.stockMinimo;
+          const stock = (
+            <View style={[estilos.stock, { backgroundColor: bajo ? color.peligroSuave : color.fondo }]}>
+              <Texto variante="subtitulo" cifras style={{ color: bajo ? color.peligro : color.texto }}>
+                {item.stockActual}
+              </Texto>
+            </View>
+          );
           return (
-            <ItemGrupo indice={index} total={filtrados.length}>
+            <CeldaLista indice={index} total={filtrados.length} columnas={1}>
               <Fila
                 titulo={item.nombre}
                 detalle={bajo ? `Por resurtir, mínimo ${item.stockMinimo}` : item.precio > 0 ? formatoMoneda(item.precio) : `Mínimo ${item.stockMinimo}`}
-                izquierda={
-                  <View style={[estilos.stock, { backgroundColor: bajo ? color.peligroSuave : color.fondo }]}>
-                    <Texto variante="subtitulo" cifras style={{ color: bajo ? color.peligro : color.texto }}>
-                      {item.stockActual}
-                    </Texto>
-                  </View>
-                }
-                onPress={() => setModo({ tipo: 'detalle', producto: item })}
+                // Con foto, la existencia pasa a la derecha
+                izquierda={item.imagenUrl ? <FotoProducto url={item.imagenUrl} tamano={44} /> : stock}
+                derecha={item.imagenUrl ? stock : undefined}
+                onPress={abrir}
               />
-            </ItemGrupo>
+            </CeldaLista>
           );
         }}
       />
@@ -255,6 +301,7 @@ export default function InventarioScreen() {
       >
         {modo?.tipo === 'detalle' && (
           <>
+            {!!modo.producto.imagenUrl && <FotoProducto url={modo.producto.imagenUrl} style={estilos.fotoGrande} />}
             <Superficie style={{ alignItems: 'center', gap: 4, paddingVertical: 20 }}>
               <Texto variante="detalle" tono="suave">
                 En existencia
@@ -291,6 +338,8 @@ export default function InventarioScreen() {
                     minimo: String(modo.producto.stockMinimo),
                     precio: modo.producto.precio > 0 ? String(modo.producto.precio) : '',
                     enCatalogo: modo.producto.enCatalogo,
+                    foto: null,
+                    quitarFoto: false,
                   })
                 }
               />
@@ -303,7 +352,7 @@ export default function InventarioScreen() {
           <Campo
             etiqueta="Precio de venta"
             value={modo.precio}
-            onChangeText={(v) => actualizar('precio', v)}
+            onChangeText={actualizarPrecioVenta}
             keyboardType="decimal-pad"
             placeholder="0.00"
             autoFocus
@@ -312,6 +361,19 @@ export default function InventarioScreen() {
 
         {(modo?.tipo === 'editar' || modo?.tipo === 'nuevo') && (
           <>
+            <SelectorFoto
+              actual={modo.tipo === 'editar' ? modo.producto.imagenUrl : null}
+              nueva={modo.foto}
+              quitada={modo.quitarFoto}
+              onElegir={(archivo) => {
+                actualizar('foto', archivo);
+                actualizar('quitarFoto', false);
+              }}
+              onQuitar={() => {
+                actualizar('foto', null);
+                actualizar('quitarFoto', true);
+              }}
+            />
             <Campo etiqueta="Nombre" value={modo.nombre} onChangeText={(v) => actualizar('nombre', v)} placeholder="Ej. Guantes de 14 oz" />
             <View style={estilos.acciones}>
               <View style={{ flex: 1 }}>
@@ -341,6 +403,8 @@ export default function InventarioScreen() {
                   onValueChange={(v) => actualizar('enCatalogo', v)}
                   trackColor={{ true: color.marca, false: color.bordeFuerte }}
                   thumbColor="#ffffff"
+                  // react-native-web pinta el círculo encendido de verde azulado si no se indica
+                  {...({ activeThumbColor: '#ffffff' } as object)}
                   accessibilityLabel="Mostrar en el catálogo"
                 />
               </ParDato>
@@ -358,7 +422,13 @@ export default function InventarioScreen() {
                 {modo.url ?? 'Generando enlace...'}
               </Texto>
             </Superficie>
-            <Boton titulo="Compartir enlace" icono={IconoCompartir} deshabilitado={!modo.url} onPress={() => modo.url && compartir(modo.url)} />
+            {/* Celular: menú de compartir. Computadora: copiar, porque ahí el menú del sistema no sirve */}
+            {puedeCompartir() ? (
+              <Boton titulo="Compartir enlace" icono={IconoCompartir} deshabilitado={!modo.url} onPress={() => modo.url && compartir(modo.url)} />
+            ) : (
+              <Boton titulo="Copiar enlace" icono={Copy} deshabilitado={!modo.url} onPress={() => modo.url && copiarEnlace(modo.url)} />
+            )}
+            <Boton titulo="Ver catálogo" icono={ExternalLink} variante="contorno" deshabilitado={!modo.url} onPress={() => modo.url && abrirEnlace(modo.url)} />
             {perfil?.usuario.rol === 'Dueno' && (
               <Boton titulo="Cambiar enlace" variante="fantasma" tamano="compacto" deshabilitado={!modo.url} onPress={renovar} />
             )}
@@ -369,10 +439,43 @@ export default function InventarioScreen() {
   );
 }
 
+// Tarjeta de producto para la rejilla de escritorio
+function TarjetaProducto({ producto, columnas, onPress }: { producto: Producto; columnas: number; onPress: () => void }) {
+  const { color, radio } = useTema();
+  const bajo = producto.stockActual <= producto.stockMinimo;
+  return (
+    <CeldaLista indice={0} total={1} columnas={columnas}>
+      <Presionable onPress={onPress} escala={0.985} accessibilityRole="button" accessibilityLabel={producto.nombre} style={estilos.tarjeta}>
+        <FotoProducto url={producto.imagenUrl} style={[estilos.fotoGrande, { borderRadius: radio.m }]} />
+        <View style={estilos.pieTarjeta}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Texto variante="cuerpoFuerte" numberOfLines={1}>
+              {producto.nombre}
+            </Texto>
+            <Texto variante="detalle" tono="suave" numberOfLines={1}>
+              {producto.precio > 0 ? formatoMoneda(producto.precio) : 'Sin precio'}
+              {producto.enCatalogo ? '' : ' · Oculto en el catálogo'}
+            </Texto>
+          </View>
+          <View style={[estilos.pastilla, { backgroundColor: bajo ? color.peligroSuave : color.fondo }]}>
+            <Texto variante="pequeno" cifras style={{ color: bajo ? color.peligro : color.textoSuave, fontFamily: 'Figtree_700Bold' }}>
+              {bajo ? `Quedan ${producto.stockActual}` : `${producto.stockActual} en existencia`}
+            </Texto>
+          </View>
+        </View>
+      </Presionable>
+    </CeldaLista>
+  );
+}
+
 const estilos = StyleSheet.create({
   lista: { width: '100%', alignSelf: 'center' },
   cabecera: { gap: 14, marginBottom: 16 },
   alerta: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 14 },
   stock: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   acciones: { flexDirection: 'row', gap: 10 },
+  tarjeta: { padding: 12, gap: 12 },
+  fotoGrande: { width: '100%', aspectRatio: 16 / 10 },
+  pieTarjeta: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4, paddingBottom: 2 },
+  pastilla: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
 });

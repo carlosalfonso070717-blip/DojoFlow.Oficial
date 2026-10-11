@@ -5,6 +5,8 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { obtenerClases, registrarAlumno, type AlumnoRegistrado, type Clase } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
+import { BotonAtras } from '@/components/BotonAtras';
+import { useDiseno } from '@/hooks/useDiseno';
 import { Boton, Campo, Chip, EstadoVacio, Superficie, Texto } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
@@ -12,6 +14,7 @@ import { alerta } from '@/utils/alerta';
 
 export default function InscribirScreen() {
   const { color, espacio, radio } = useTema();
+  const { margen, arriba } = useDiseno();
   const { perfil } = useSesion();
   const termino = (perfil?.academia.terminoAlumno || 'Alumno').toLowerCase();
   const { datos: clases, cargando: cargandoClases } = useRecurso(obtenerClases, [] as Clase[]);
@@ -95,7 +98,18 @@ export default function InscribirScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {titulo}
-      <ScrollView contentContainerStyle={[estilos.contenido, { padding: espacio.l }]} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[estilos.contenido, Platform.OS === 'web' ? { paddingHorizontal: margen, paddingTop: 8 + arriba } : { padding: espacio.l }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {Platform.OS === 'web' && (
+          <View style={{ gap: 16 }}>
+            <BotonAtras alterno="/" />
+            <Texto variante="titulo" accessibilityRole="header">
+              Inscribir {termino}
+            </Texto>
+          </View>
+        )}
         <View style={{ gap: 14 }}>
           <View style={estilos.fila}>
             <View style={{ flex: 1 }}>
@@ -135,7 +149,8 @@ export default function InscribirScreen() {
 }
 
 const estilos = StyleSheet.create({
-  contenido: { gap: 28, paddingBottom: 40 },
+  // En pantallas anchas el formulario conserva un ancho de lectura
+  contenido: { gap: 28, paddingBottom: 40, width: '100%', maxWidth: 640, alignSelf: 'center' },
   fila: { flexDirection: 'row', gap: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   exito: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20 },

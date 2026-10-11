@@ -104,6 +104,8 @@ export default function ClasesScreen() {
                       onValueChange={(v) => setEdicion({ ...edicion, activa: v })}
                       trackColor={{ true: color.marca, false: color.bordeFuerte }}
                       thumbColor="#ffffff"
+                      // react-native-web pinta el círculo encendido de verde azulado si no se indica
+                      {...({ activeThumbColor: '#ffffff' } as object)}
                       accessibilityLabel="Clase activa"
                     />
                   </ParDato>
