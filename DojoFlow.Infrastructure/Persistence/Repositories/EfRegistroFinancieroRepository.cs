@@ -25,9 +25,10 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
             return await _context.RegistrosFinancieros.FirstOrDefaultAsync(r => r.MesAnio == mesAnio);
         }
 
-        public async Task RegistrarIngresoAsync(decimal monto, bool esVenta)
+        public async Task RegistrarIngresoAsync(decimal monto, bool esVenta, string concepto, int cantidad = 1)
         {
-            string mesActual = DateTime.Now.ToString("MM-yyyy");
+            var ahora = DateTime.Now;
+            string mesActual = ahora.ToString("MM-yyyy");
             var registro = await _context.RegistrosFinancieros.FirstOrDefaultAsync(r => r.MesAnio == mesActual);
 
             if (registro == null)
@@ -39,18 +40,41 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
             if (esVenta)
             {
                 registro.IngresosVentas += monto;
-                registro.VentasRealizadas++;
+                registro.VentasRealizadas += cantidad;
             }
             else
             {
                 registro.IngresosMensualidades += monto;
             }
 
+            _context.Transacciones.Add(new Transaccion
+            {
+                Id = Guid.NewGuid(),
+                Fecha = ahora,
+                MesAnio = mesActual,
+                Tipo = esVenta ? TipoTransaccion.Venta : TipoTransaccion.Cuota,
+                Concepto = concepto,
+                Cantidad = cantidad,
+                Monto = monto
+            });
+
+            // Total y detalle en una sola transacción
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Transaccion>> ObtenerTransaccionesAsync(string mesAnio)
+        {
+            return await _context.Transacciones.AsNoTracking()
+                .Where(t => t.MesAnio == mesAnio)
+                .OrderBy(t => t.Fecha)
+                .ToListAsync();
         }
 
         public async Task EliminarAsync(RegistroFinanciero registro)
         {
+            // Al borrar el mes también se borra su detalle
+            var movimientos = await _context.Transacciones.Where(t => t.MesAnio == registro.MesAnio).ToListAsync();
+            _context.Transacciones.RemoveRange(movimientos);
             _context.RegistrosFinancieros.Remove(registro);
             await _context.SaveChangesAsync();
         }

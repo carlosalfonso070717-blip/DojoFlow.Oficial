@@ -1,14 +1,16 @@
 import { WifiOff } from 'lucide-react-native';
 import { useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { eliminarMesFinanzas, obtenerFinanzas, type RegistroFinanciero } from '@/api/endpoints';
 import { useEspacioBarra } from '@/components/BarraLiquida';
-import { IconoEliminar, IconoFinanzas } from '@/components/iconos/Iconly';
-import { Boton, confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, Grupo, Hoja, ItemGrupo, ParDato, Superficie, Texto } from '@/components/ui';
+import { IconoDescargar, IconoEliminar, IconoFinanzas } from '@/components/iconos/Iconly';
+import { Boton, BotonIcono, confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, Grupo, Hoja, ItemGrupo, ParDato, Superficie, Texto } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
+import { useSesion } from '@/auth/session';
 import { useTema } from '@/theme';
+import { descargarReporte, type FormatoReporte } from '@/utils/descargas';
 import { useObjetivoTour } from '@/tour/Tour';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -27,6 +29,19 @@ export default function FinanzasScreen() {
   const espacioBarra = useEspacioBarra();
   const { datos, cargando, error, recargar } = useRecurso(obtenerFinanzas, [] as RegistroFinanciero[]);
   const [seleccionado, setSeleccionado] = useState<RegistroFinanciero | null>(null);
+  const [descargando, setDescargando] = useState<FormatoReporte | null>(null);
+  const { perfil } = useSesion();
+
+  async function descargar(registro: RegistroFinanciero, formato: FormatoReporte) {
+    setDescargando(formato);
+    try {
+      await descargarReporte(registro.mesAnio, formato, `${perfil?.academia.nombre ?? 'DojoFlow'} ${nombreMes(registro.mesAnio)}`);
+    } catch (e) {
+      Alert.alert('No se pudo descargar el reporte', (e as Error).message);
+    } finally {
+      setDescargando(null);
+    }
+  }
   // El primer registro del historial es el mes más reciente con movimientos
   const actual = datos[0];
   const total = actual?.total ?? 0;
@@ -49,7 +64,18 @@ export default function FinanzasScreen() {
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
           <View style={estilos.cabecera} ref={refTour} collapsable={false}>
-            <Encabezado titulo="Finanzas" />
+            <Encabezado
+              titulo="Finanzas"
+              acciones={
+                actual ? (
+                  <BotonIcono
+                    etiqueta={`Descargar reporte de ${nombreMes(actual.mesAnio)}`}
+                    icono={<IconoDescargar size={22} color={color.texto} />}
+                    onPress={() => setSeleccionado(actual)}
+                  />
+                ) : undefined
+              }
+            />
 
             {actual && (
               <Superficie style={{ gap: 20, padding: 20 }}>
@@ -112,7 +138,32 @@ export default function FinanzasScreen() {
               <ParDato etiqueta={`Ventas (${seleccionado.ventasRealizadas})`} valor={formatoMoneda(seleccionado.ingresosVentas)} />
               <ParDato etiqueta="Total" valor={formatoMoneda(seleccionado.total)} />
             </Grupo>
-            <Boton titulo="Borrar este mes" icono={IconoEliminar} variante="peligro" onPress={() => borrarMes(seleccionado.mesAnio)} />
+            <View style={{ gap: 10 }}>
+              <Texto variante="subtitulo">Descargar reporte</Texto>
+              <View style={estilos.descargas}>
+                <Boton
+                  titulo="PDF"
+                  icono={IconoDescargar}
+                  style={{ flex: 1 }}
+                  cargando={descargando === 'pdf'}
+                  deshabilitado={descargando !== null}
+                  onPress={() => descargar(seleccionado, 'pdf')}
+                />
+                <Boton
+                  titulo="Excel"
+                  icono={IconoDescargar}
+                  variante="contorno"
+                  style={{ flex: 1 }}
+                  cargando={descargando === 'excel'}
+                  deshabilitado={descargando !== null}
+                  onPress={() => descargar(seleccionado, 'excel')}
+                />
+              </View>
+              <Texto variante="pequeno" tono="tenue">
+                Incluye el resumen del mes y cada cobro y venta registrados.
+              </Texto>
+            </View>
+            <Boton titulo="Borrar este mes" icono={IconoEliminar} variante="fantasma" tamano="compacto" onPress={() => borrarMes(seleccionado.mesAnio)} />
           </>
         )}
       </Hoja>
@@ -141,4 +192,5 @@ const estilos = StyleSheet.create({
   cabecera: { gap: 14, marginBottom: 8 },
   barra: { height: 10, flexDirection: 'row', overflow: 'hidden' },
   desglose: { flexDirection: 'row', gap: 16 },
+  descargas: { flexDirection: 'row', gap: 10 },
 });

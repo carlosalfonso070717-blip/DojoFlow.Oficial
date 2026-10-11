@@ -131,7 +131,7 @@ namespace DojoFlow.API.Controllers
             if (precioVenta > 0)
             {
                 decimal totalVenta = precioVenta * cantidad;
-                await _registroFinancieroRepository.RegistrarIngresoAsync(totalVenta, esVenta: true);
+                await _registroFinancieroRepository.RegistrarIngresoAsync(totalVenta, esVenta: true, producto.Nombre, cantidad);
             }
 
             return Ok(new

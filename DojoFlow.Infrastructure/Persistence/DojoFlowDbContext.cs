@@ -28,6 +28,7 @@ namespace DojoFlow.Infrastructure.Persistence
         public DbSet<RegistroFinanciero> RegistrosFinancieros => Set<RegistroFinanciero>();
         public DbSet<UsuarioCoach> UsuariosCoach => Set<UsuarioCoach>();
         public DbSet<VerificacionEmail> VerificacionesEmail => Set<VerificacionEmail>();
+        public DbSet<Transaccion> Transacciones => Set<Transaccion>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -62,6 +63,14 @@ namespace DojoFlow.Infrastructure.Persistence
             modelBuilder.Entity<Alumno>()
                 .HasIndex(a => new { a.AcademiaId, a.ClaveKiosco });
 
+            modelBuilder.Entity<Transaccion>(t =>
+            {
+                t.Property(x => x.MesAnio).HasMaxLength(7);
+                t.Property(x => x.Concepto).HasMaxLength(160);
+                t.Property(x => x.Tipo).HasConversion<string>().HasMaxLength(10);
+                t.HasIndex(x => new { x.AcademiaId, x.MesAnio });
+            });
+
             modelBuilder.Entity<VerificacionEmail>()
                 .HasIndex(v => v.Email)
                 .IsUnique();
@@ -87,6 +96,7 @@ namespace DojoFlow.Infrastructure.Persistence
             ConfigurarMultiAcademia<Mensualidad>(modelBuilder);
             ConfigurarMultiAcademia<Producto>(modelBuilder);
             ConfigurarMultiAcademia<RegistroFinanciero>(modelBuilder);
+            ConfigurarMultiAcademia<Transaccion>(modelBuilder);
 
             SeedData(modelBuilder);
         }

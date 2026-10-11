@@ -71,7 +71,11 @@ namespace DojoFlow.API.Controllers
                 mensualidad.Pagar();
 
                 await _mensualidadRepository.ActualizarAsync(mensualidad);
-                await _registroFinancieroRepository.RegistrarIngresoAsync(mensualidad.Monto, false);
+                var alumno = await _alumnoRepository.ObtenerPorIdAsync(mensualidad.AlumnoId);
+                string concepto = alumno != null
+                    ? $"Cuota de {alumno.Nombre} {alumno.Apellido} (vence {mensualidad.FechaVencimiento:dd/MM/yyyy})"
+                    : "Cuota mensual";
+                await _registroFinancieroRepository.RegistrarIngresoAsync(mensualidad.Monto, false, concepto);
                 // Si se pagó tarde, el recibo del mes siguiente puede tocar ya
                 await _actualizarMensualidades.EjecutarParaAlumnoAsync(mensualidad.AlumnoId, DateTime.UtcNow);
 

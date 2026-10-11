@@ -432,6 +432,46 @@ namespace DojoFlow.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Transaccion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcademiaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Concepto")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("MesAnio")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<decimal>("Monto")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcademiaId", "MesAnio");
+
+                    b.ToTable("Transacciones");
+                });
+
             modelBuilder.Entity("DojoFlow.Domain.Entities.UsuarioCoach", b =>
                 {
                     b.Property<Guid>("Id")
@@ -541,6 +581,15 @@ namespace DojoFlow.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("DojoFlow.Domain.Entities.RegistroFinanciero", b =>
+                {
+                    b.HasOne("DojoFlow.Domain.Entities.Academia", null)
+                        .WithMany()
+                        .HasForeignKey("AcademiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Transaccion", b =>
                 {
                     b.HasOne("DojoFlow.Domain.Entities.Academia", null)
                         .WithMany()

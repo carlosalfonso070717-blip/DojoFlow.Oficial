@@ -6,7 +6,9 @@ namespace DojoFlow.Application.Interfaces
     {
         Task<List<RegistroFinanciero>> ObtenerTodosAsync();
         Task<RegistroFinanciero?> ObtenerPorMesAsync(string mesAnio);
-        Task RegistrarIngresoAsync(decimal monto, bool esVenta);
+        // Suma al total del mes y guarda el movimiento individual para los reportes
+        Task RegistrarIngresoAsync(decimal monto, bool esVenta, string concepto, int cantidad = 1);
+        Task<List<Transaccion>> ObtenerTransaccionesAsync(string mesAnio);
         Task EliminarAsync(RegistroFinanciero registro);
     }
 }

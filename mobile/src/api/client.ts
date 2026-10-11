@@ -14,6 +14,8 @@ export function setToken(nuevo: string | null) {
   token = nuevo;
 }
 
+export const obtenerToken = () => token;
+
 // La sesión registra aquí qué hacer cuando la API responde 401
 export function onSesionExpirada(callback: () => void) {
   alExpirarSesion = callback;
