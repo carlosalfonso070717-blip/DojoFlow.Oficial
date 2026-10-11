@@ -43,13 +43,17 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
 
   const { esEscritorio } = useDiseno();
   const termino = perfil?.academia.terminoAlumno || 'Alumno';
-  const pasos: Paso[] = [
+  const todosLosPasos: Paso[] = [
     {
       id: 'credencial',
       titulo: 'Tus ingresos del mes',
       texto: `Cuánto ha entrado este mes, separado entre cuotas y ventas. Debajo ves tus ${plural(termino).toLowerCase()}, lo que falta por cobrar y lo que hay que resurtir.`,
     },
-    { id: 'pendiente', titulo: 'Lo que requiere atención', texto: 'Recibos vencidos, cobros pendientes y productos por resurtir aparecen aquí.' },
+    {
+      id: 'pendiente',
+      titulo: 'Tu resumen',
+      texto: `${plural(termino)}, lo que falta por cobrar, los recibos vencidos y lo que hay que resurtir. Toca una tarjeta para ir a su sección.`,
+    },
     {
       id: 'inscribir',
       titulo: `Inscribe a tu primer ${termino.toLowerCase()}`,
@@ -67,7 +71,7 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
       id: 'alumnos',
       ruta: '/alumnos',
       titulo: plural(termino),
-      texto: `Aquí está la lista de tus ${plural(termino).toLowerCase()}. Busca por nombre o PIN y toca a alguien para ver su ficha, su cuota o darle de baja.`,
+      texto: `Aquí está la lista de tus ${plural(termino).toLowerCase()}. Con el botón + inscribes a alguien nuevo; busca por nombre o PIN y toca a alguien para ver su ficha.`,
     },
     {
       id: 'cobros',
@@ -89,6 +93,8 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
     },
     { id: 'ajustes', ruta: '/', titulo: 'Hazla tuya', texto: 'En Ajustes cambias colores, logo, tu foto, clases, precios y la forma de cobro.' },
   ];
+  // En el celular se inscribe desde la sección de alumnos: ese paso solo existe en escritorio
+  const pasos = todosLosPasos.filter((p) => p.id !== 'inscribir' || esEscritorio);
   const paso = pasos[indice];
 
   const registrar = useCallback((id: IdObjetivo, nodo: Medible | null) => {

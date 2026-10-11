@@ -11,6 +11,7 @@ import { Texto } from './Texto';
 // separadas por líneas finas (en lugar de una tarjeta por cada elemento)
 export function Grupo({ titulo, children, style }: { titulo?: string; children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const { color, radio } = useTema();
+  const sombra = useSombra();
   const hijos = Children.toArray(children).filter(isValidElement);
 
   return (
@@ -20,7 +21,7 @@ export function Grupo({ titulo, children, style }: { titulo?: string; children: 
           {titulo}
         </Texto>
       )}
-      <View style={[estilos.superficie, { backgroundColor: color.superficie, borderRadius: radio.l, borderColor: color.borde }]}>
+      <View style={[estilos.superficie, { backgroundColor: color.superficie, borderRadius: radio.l, borderColor: color.borde }, sombra]}>
         {hijos.map((hijo, i) => (
           <Fragment key={hijo.key ?? i}>
             {i > 0 && <View style={[estilos.separador, { backgroundColor: color.borde }]} />}

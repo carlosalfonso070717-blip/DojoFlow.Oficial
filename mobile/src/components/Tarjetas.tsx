@@ -1,4 +1,3 @@
-import { ChevronRight } from 'lucide-react-native';
 import { Children, isValidElement, type ComponentType, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTema } from '@/theme';
@@ -66,13 +65,9 @@ type PropsIndicador = {
 
 // Cifra clave del negocio en su propia tarjeta (alumnos, por cobrar, vencidos...)
 export function Indicador({ icono, etiqueta, valor, detalle, tono = 'marca', onPress }: PropsIndicador) {
-  const { color } = useTema();
   return (
     <Tarjeta onPress={onPress} etiqueta={`${etiqueta}: ${valor}`} style={estilos.indicador}>
-      <View style={estilos.filaIndicador}>
-        <IconoTonal icono={icono} tono={tono} tamano={38} />
-        {onPress && <ChevronRight size={18} color={color.textoTenue} />}
-      </View>
+      <IconoTonal icono={icono} tono={tono} tamano={38} />
       <View style={{ gap: 2 }}>
         <Texto variante="cifra" cifras numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 26, lineHeight: 30 }}>
           {valor}
@@ -177,7 +172,6 @@ export function TituloSeccion({ titulo, accion }: { titulo: string; accion?: Rea
 const estilos = StyleSheet.create({
   tarjeta: { borderWidth: StyleSheet.hairlineWidth, padding: 18 },
   indicador: { gap: 14, padding: 16, flex: 1 },
-  filaIndicador: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   accion: { borderWidth: StyleSheet.hairlineWidth, padding: 16, gap: 14, flex: 1, minHeight: 128 },
   iconoAccion: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
   tituloSeccion: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },

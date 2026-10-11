@@ -5,27 +5,41 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { obtenerAlertasInventario, obtenerAlumnos, obtenerFinanzas, obtenerMensualidades, type MarcaAcademia } from '@/api/endpoints';
+import { obtenerAlertasInventario, obtenerAlumnos, obtenerFinanzas, obtenerMensualidades, type MarcaAcademia, type RegistroFinanciero } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
+import { GraficaIngresos, type MesGrafica } from '@/components/GraficaIngresos';
 import { IconoAgregarAlumno, IconoAjustes, IconoPagos } from '@/components/iconos/Iconly';
 import { IconoTonal, Indicador, Rejilla, Tarjeta, TarjetaAccion, TituloSeccion, useSombra } from '@/components/Tarjetas';
-import { Avatar, Boton, BotonIcono, Fila, formatoCorto, formatoMoneda, Grupo, Texto } from '@/components/ui';
+import { Avatar, Boton, Fila, formatoCorto, formatoMoneda, Grupo, Presionable, Texto } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { conAlfa, mezclar, textoSobre } from '@/theme/color';
 import { useTema } from '@/theme';
 import { useObjetivoTour, useTour } from '@/tour/Tour';
-import { cantidad, plural, saludo } from '@/utils/texto';
+import { cantidad, plural } from '@/utils/texto';
 import { alerta } from '@/utils/alerta';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const MESES_GRAFICA = 6;
 
 // Mismo formato que guarda la API: "10-2026"
-const mesActual = () => {
+const claveMes = (fecha: Date) => `${String(fecha.getMonth() + 1).padStart(2, '0')}-${fecha.getFullYear()}`;
+
+// Los últimos meses, del más viejo al actual; los meses sin movimientos valen 0
+function mesesRecientes(finanzas: RegistroFinanciero[]): MesGrafica[] {
   const hoy = new Date();
-  return `${String(hoy.getMonth() + 1).padStart(2, '0')}-${hoy.getFullYear()}`;
-};
+  return Array.from({ length: MESES_GRAFICA }, (_, i) => {
+    const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - (MESES_GRAFICA - 1 - i), 1);
+    const nombre = MESES[fecha.getMonth()];
+    return {
+      clave: claveMes(fecha),
+      corto: nombre.slice(0, 3),
+      largo: nombre[0].toUpperCase() + nombre.slice(1),
+      valor: finanzas.find((f) => f.mesAnio === claveMes(fecha))?.total ?? 0,
+    };
+  });
+}
 
 const cargarResumen = async () => {
   const [alumnos, recibos, finanzas, alertas] = await Promise.all([
@@ -36,12 +50,13 @@ const cargarResumen = async () => {
   ]);
   const vencidos = recibos.filter((r) => r.estado === 'Vencido');
   const pendientes = recibos.filter((r) => r.estado === 'Pendiente');
-  const mes = finanzas.find((f) => f.mesAnio === mesActual());
+  const mes = finanzas.find((f) => f.mesAnio === claveMes(new Date()));
   return {
     alumnos: alumnos.length,
     vencidos: { n: vencidos.length, monto: vencidos.reduce((s, r) => s + r.monto, 0) },
     pendientes: { n: pendientes.length, monto: pendientes.reduce((s, r) => s + r.monto, 0) },
     ingresos: { total: mes?.total ?? 0, cuotas: mes?.ingresosMensualidades ?? 0, ventas: mes?.ingresosVentas ?? 0, nVentas: mes?.ventasRealizadas ?? 0 },
+    meses: mesesRecientes(finanzas),
     alertasStock: alertas.length,
   };
 };
@@ -53,11 +68,12 @@ const VACIO: Resumen = {
   vencidos: { n: 0, monto: 0 },
   pendientes: { n: 0, monto: 0 },
   ingresos: { total: 0, cuotas: 0, ventas: 0, nVentas: 0 },
+  meses: [],
   alertasStock: 0,
 };
 
 // Alto de la cabecera flotante del celular (sin el área segura)
-const ALTO_CABECERA = 64;
+const ALTO_CABECERA = 60;
 
 export default function InicioScreen() {
   const { color } = useTema();
@@ -83,7 +99,7 @@ export default function InicioScreen() {
   }, [perfil, iniciarTour]);
 
   if (!perfil) return null;
-  const { academia, usuario } = perfil;
+  const { academia } = perfil;
   const termino = academia.terminoAlumno || 'Alumno';
   const todoAlDia = datos.vencidos.n === 0 && datos.pendientes.n === 0 && datos.alertasStock === 0;
   const porCobrar = datos.vencidos.monto + datos.pendientes.monto;
@@ -103,59 +119,208 @@ export default function InicioScreen() {
     </View>
   );
 
-  const indicadores = (
-    <Rejilla columnas={esEscritorio || esTableta ? 4 : 2}>
-      <Indicador icono={Users} etiqueta={plural(termino)} valor={String(datos.alumnos)} detalle="Inscritos" onPress={() => router.navigate('/alumnos')} />
-      <Indicador
-        icono={IconoPagos}
-        tono="aviso"
-        etiqueta="Por cobrar"
-        valor={formatoCorto(porCobrar)}
-        detalle={cantidad(datos.pendientes.n + datos.vencidos.n, 'recibo', 'recibos')}
-        onPress={() => router.navigate('/mensualidades')}
-      />
-      <Indicador
-        icono={TriangleAlert}
-        tono={datos.vencidos.n > 0 ? 'peligro' : 'exito'}
-        etiqueta="Vencidos"
-        valor={String(datos.vencidos.n)}
-        detalle={datos.vencidos.n > 0 ? `${formatoMoneda(datos.vencidos.monto)} sin pagar` : 'Nadie atrasado'}
-        onPress={() => router.navigate('/mensualidades')}
-      />
-      <Indicador
-        icono={Package}
-        tono={datos.alertasStock > 0 ? 'aviso' : 'neutro'}
-        etiqueta="Por resurtir"
-        valor={String(datos.alertasStock)}
-        detalle={datos.alertasStock > 0 ? 'Llegaron a su mínimo' : 'Inventario completo'}
-        onPress={() => router.navigate('/inventario')}
-      />
-    </Rejilla>
+  const grafica = datos.meses.length > 0 && (
+    <Animated.View entering={FadeInDown.duration(420).delay(120)}>
+      <GraficaIngresos meses={datos.meses} />
+    </Animated.View>
   );
 
-  const pendiente = (
-    <View ref={refPendiente} collapsable={false} style={{ gap: 10 }}>
-      <TituloSeccion titulo="Requiere atención" />
-      {error ? (
-        <Tarjeta>
-          <View style={estilos.estadoTarjeta}>
-            <IconoTonal icono={TriangleAlert} tono="peligro" />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Texto variante="cuerpoFuerte">No se pudo cargar el resumen</Texto>
-              <Texto variante="detalle" tono="suave">
-                Desliza hacia abajo para intentar de nuevo.
-              </Texto>
-            </View>
+  // Resumen del negocio: lo que importa de un vistazo, cada tarjeta lleva a su sección
+  const indicadores = (
+    <View ref={refPendiente} collapsable={false} style={{ gap: 12 }}>
+      {!esEscritorio && <TituloSeccion titulo="Resumen" />}
+      <Rejilla columnas={esEscritorio || esTableta ? 4 : 2}>
+        <Indicador icono={Users} etiqueta={plural(termino)} valor={String(datos.alumnos)} detalle="Inscritos" onPress={() => router.navigate('/alumnos')} />
+        <Indicador
+          icono={IconoPagos}
+          tono="aviso"
+          etiqueta="Por cobrar"
+          valor={formatoCorto(porCobrar)}
+          detalle={cantidad(datos.pendientes.n + datos.vencidos.n, 'recibo', 'recibos')}
+          onPress={() => router.navigate('/mensualidades')}
+        />
+        <Indicador
+          icono={TriangleAlert}
+          tono={datos.vencidos.n > 0 ? 'peligro' : 'exito'}
+          etiqueta="Vencidos"
+          valor={String(datos.vencidos.n)}
+          detalle={datos.vencidos.n > 0 ? `${formatoCorto(datos.vencidos.monto)} sin pagar` : 'Nadie atrasado'}
+          onPress={() => router.navigate('/mensualidades')}
+        />
+        <Indicador
+          icono={Package}
+          tono={datos.alertasStock > 0 ? 'aviso' : 'neutro'}
+          etiqueta="Por resurtir"
+          valor={String(datos.alertasStock)}
+          detalle={datos.alertasStock > 0 ? 'Llegaron a su mínimo' : 'Todo surtido'}
+          onPress={() => router.navigate('/inventario')}
+        />
+      </Rejilla>
+    </View>
+  );
+
+  // ===== Escritorio: tablero en dos columnas =====
+  if (esEscritorio) {
+    return (
+      <ScrollView
+        style={{ flex: 1, backgroundColor: color.fondo }}
+        contentContainerStyle={[estilos.contenido, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: 1240 }]}
+      >
+        <View style={estilos.cabeceraEscritorio}>
+          <LogoAcademia academia={academia} tamano={56} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Texto variante="titulo" numberOfLines={1}>
+              {academia.nombre}
+            </Texto>
+            <Texto variante="detalle" tono="suave">
+              {academia.tipoNegocio}
+            </Texto>
           </View>
-        </Tarjeta>
-      ) : todoAlDia ? (
+          <Boton titulo="Abrir kiosco" icono={Tablet} variante="contorno" tamano="compacto" onPress={abrirKiosco} />
+          <View ref={refInscribir} collapsable={false}>
+            <Boton titulo={`Inscribir ${termino.toLowerCase()}`} icono={IconoAgregarAlumno} tamano="compacto" onPress={() => router.push('/registrar')} />
+          </View>
+        </View>
+
+        {indicadores}
+
+        <View style={estilos.columnas}>
+          <View style={{ flex: 1.35, gap: 24 }}>
+            {ingresos}
+            {grafica}
+          </View>
+          <View style={{ flex: 1, gap: 24 }}>
+            <View style={{ gap: 10 }}>
+              <TituloSeccion titulo="Acciones rápidas" />
+              <Rejilla columnas={2}>
+                <TarjetaAccion icono={IconoPagos} titulo="Cobrar" detalle="Registra un pago pendiente" onPress={() => router.navigate('/mensualidades')} />
+                <TarjetaAccion icono={ShoppingCart} titulo="Vender" detalle="Descuenta una pieza del inventario" onPress={() => router.navigate('/inventario')} />
+              </Rejilla>
+            </View>
+            <Pendientes datos={datos} error={!!error} todoAlDia={todoAlDia} />
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  // ===== Celular y tableta: la academia flota arriba; debajo, solo las tarjetas que importan =====
+  const arribaContenido = insets.top + ALTO_CABECERA + 22;
+  return (
+    <View style={{ flex: 1, backgroundColor: color.fondo }}>
+      <ScrollView
+        contentContainerStyle={[
+          estilos.contenido,
+          { paddingHorizontal: margen, paddingTop: arribaContenido, paddingBottom: espacioBarra, maxWidth: esTableta ? 760 : 560 },
+        ]}
+        scrollIndicatorInsets={{ top: arribaContenido - insets.top }}
+        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} progressViewOffset={arribaContenido} />}
+      >
+        {ingresos}
+        {grafica}
+        {indicadores}
+      </ScrollView>
+
+      <CabeceraFlotante
+        academia={academia}
+        alto={insets.top + ALTO_CABECERA}
+        top={insets.top}
+        margen={margen}
+        ancho={esTableta ? 760 : 560}
+        accion={
+          <View ref={refAjustes} collapsable={false}>
+            <BotonFlotante etiqueta="Ajustes" onPress={() => router.push('/ajustes')}>
+              <IconoAjustes size={22} color={color.texto} />
+            </BotonFlotante>
+          </View>
+        }
+      />
+    </View>
+  );
+}
+
+// Logo con un aro fino del color de la academia
+function LogoAcademia({ academia, tamano }: { academia: MarcaAcademia; tamano: number }) {
+  return (
+    <View style={[estilos.aro, { borderColor: academia.colorPrimario, borderRadius: tamano }]}>
+      <Avatar nombre={academia.nombre} logoUrl={academia.logoUrl} tamano={tamano} />
+    </View>
+  );
+}
+
+// Logo, nombre y categoría flotando sobre el contenido, sin barra: solo un degradado
+// del fondo detrás para que el texto se lea cuando las tarjetas pasan por debajo
+function CabeceraFlotante({
+  academia,
+  alto,
+  top,
+  margen,
+  ancho,
+  accion,
+}: {
+  academia: MarcaAcademia;
+  alto: number;
+  top: number;
+  margen: number;
+  ancho: number;
+  accion: ReactNode;
+}) {
+  const { color } = useTema();
+  return (
+    <View pointerEvents="box-none" style={[estilos.capaCabecera, { height: alto + 28 }]}>
+      <LinearGradient
+        pointerEvents="none"
+        colors={[color.fondo, conAlfa(color.fondo, 0.92), conAlfa(color.fondo, 0)]}
+        locations={[0, 0.62, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <Animated.View
+        entering={FadeInDown.duration(420).springify().damping(18)}
+        style={[estilos.cabecera, { marginTop: top, paddingHorizontal: margen, maxWidth: ancho + margen * 2 }]}
+      >
+        <LogoAcademia academia={academia} tamano={46} />
+        <View style={{ flex: 1, gap: 1 }}>
+          <Texto variante="encabezado" numberOfLines={1} style={{ fontSize: 20, lineHeight: 24 }}>
+            {academia.nombre}
+          </Texto>
+          <Texto variante="detalle" tono="suave" numberOfLines={1}>
+            {academia.tipoNegocio}
+          </Texto>
+        </View>
+        {accion}
+      </Animated.View>
+    </View>
+  );
+}
+
+// Botón redondo que flota sobre el fondo (superficie con sombra suave)
+function BotonFlotante({ etiqueta, onPress, children }: { etiqueta: string; onPress: () => void; children: ReactNode }) {
+  const { color } = useTema();
+  const sombra = useSombra();
+  return (
+    <Presionable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={etiqueta}
+      style={[estilos.botonFlotante, { backgroundColor: color.superficie, borderColor: color.borde }, sombra]}
+    >
+      {children}
+    </Presionable>
+  );
+}
+
+function Pendientes({ datos, error, todoAlDia }: { datos: Resumen; error: boolean; todoAlDia: boolean }) {
+  return (
+    <View style={{ gap: 10 }}>
+      <TituloSeccion titulo="Requiere atención" />
+      {error || todoAlDia ? (
         <Tarjeta>
           <View style={estilos.estadoTarjeta}>
-            <IconoTonal icono={CircleCheck} tono="exito" />
+            <IconoTonal icono={error ? TriangleAlert : CircleCheck} tono={error ? 'peligro' : 'exito'} />
             <View style={{ flex: 1, gap: 2 }}>
-              <Texto variante="cuerpoFuerte">Todo al día</Texto>
+              <Texto variante="cuerpoFuerte">{error ? 'No se pudo cargar el resumen' : 'Todo al día'}</Texto>
               <Texto variante="detalle" tono="suave">
-                Sin recibos por cobrar ni productos por resurtir.
+                {error ? 'Vuelve a abrir Inicio para intentar de nuevo.' : 'Sin recibos por cobrar ni productos por resurtir.'}
               </Texto>
             </View>
           </View>
@@ -188,137 +353,6 @@ export default function InicioScreen() {
           )}
         </Grupo>
       )}
-    </View>
-  );
-
-  const acciones = (
-    <View style={{ gap: 10 }}>
-      <TituloSeccion titulo="Acciones rápidas" />
-      <Rejilla columnas={2}>
-        <View ref={refInscribir} collapsable={false} style={{ flex: 1 }}>
-          <TarjetaAccion
-            destacada
-            icono={IconoAgregarAlumno}
-            titulo={`Inscribir ${termino.toLowerCase()}`}
-            detalle="Genera su PIN y su primer recibo"
-            onPress={() => router.push('/registrar')}
-          />
-        </View>
-        <TarjetaAccion icono={Tablet} titulo="Abrir kiosco" detalle="Asistencia con PIN en recepción" onPress={abrirKiosco} />
-        <TarjetaAccion icono={IconoPagos} titulo="Cobrar" detalle="Registra un pago pendiente" onPress={() => router.navigate('/mensualidades')} />
-        <TarjetaAccion icono={ShoppingCart} titulo="Vender" detalle="Descuenta una pieza del inventario" onPress={() => router.navigate('/inventario')} />
-      </Rejilla>
-    </View>
-  );
-
-  const nombre = usuario.nombre.split(' ')[0];
-
-  // ===== Escritorio: tablero en dos columnas =====
-  if (esEscritorio) {
-    return (
-      <ScrollView
-        style={{ flex: 1, backgroundColor: color.fondo }}
-        contentContainerStyle={[estilos.contenido, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: 1240 }]}
-      >
-        <View style={estilos.cabeceraEscritorio}>
-          <Avatar nombre={academia.nombre} logoUrl={academia.logoUrl} tamano={60} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <Texto variante="titulo" numberOfLines={1}>
-              {academia.nombre}
-            </Texto>
-            <Texto variante="detalle" tono="suave">
-              {academia.tipoNegocio} · {saludo()}, {nombre}
-            </Texto>
-          </View>
-          <Boton titulo="Abrir kiosco" icono={Tablet} variante="contorno" tamano="compacto" onPress={abrirKiosco} />
-          <Boton titulo={`Inscribir ${termino.toLowerCase()}`} icono={IconoAgregarAlumno} tamano="compacto" onPress={() => router.push('/registrar')} />
-        </View>
-
-        {indicadores}
-
-        <View style={estilos.columnas}>
-          <View style={{ flex: 1.35, gap: 28 }}>
-            {ingresos}
-            {pendiente}
-          </View>
-          <View style={{ flex: 1 }}>{acciones}</View>
-        </View>
-      </ScrollView>
-    );
-  }
-
-  // ===== Celular y tableta: cabecera flotante con la academia y tarjetas debajo =====
-  const arribaContenido = insets.top + 12 + ALTO_CABECERA + 20;
-  return (
-    <View style={{ flex: 1, backgroundColor: color.fondo }}>
-      <ScrollView
-        contentContainerStyle={[
-          estilos.contenido,
-          { paddingHorizontal: margen, paddingTop: arribaContenido, paddingBottom: espacioBarra, maxWidth: esTableta ? 760 : 560 },
-        ]}
-        scrollIndicatorInsets={{ top: arribaContenido - insets.top }}
-        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} progressViewOffset={arribaContenido} />}
-      >
-        <Animated.View entering={FadeInDown.duration(380)} style={{ gap: 2 }}>
-          <Texto variante="detalle" tono="suave">
-            {saludo()},
-          </Texto>
-          <Texto variante="titulo">{nombre}</Texto>
-        </Animated.View>
-
-        {ingresos}
-        {indicadores}
-        {pendiente}
-        {acciones}
-      </ScrollView>
-
-      {/* El área de la barra de estado se tiñe del fondo para que el contenido no se lea detrás */}
-      <View pointerEvents="none" style={[estilos.velo, { height: insets.top + 6, backgroundColor: color.fondo }]} />
-      <CabeceraFlotante
-        academia={academia}
-        top={insets.top + 8}
-        margen={Math.max(margen - 6, 12)}
-        ancho={esTableta ? 760 : 560}
-        accion={
-          <View ref={refAjustes} collapsable={false}>
-            <BotonIcono icono={<IconoAjustes size={22} color={color.texto} />} etiqueta="Ajustes" onPress={() => router.push('/ajustes')} />
-          </View>
-        }
-      />
-    </View>
-  );
-}
-
-// Cápsula fija arriba con el logo, el nombre del negocio y su categoría
-function CabeceraFlotante({ academia, top, margen, ancho, accion }: { academia: MarcaAcademia; top: number; margen: number; ancho: number; accion: ReactNode }) {
-  const { color, radio, oscuro } = useTema();
-  const sombra = useSombra('alta');
-  return (
-    <View pointerEvents="box-none" style={[estilos.capaCabecera, { top, paddingHorizontal: margen }]}>
-      <Animated.View
-        entering={FadeInDown.duration(420).springify().damping(18)}
-        style={[
-          estilos.cabecera,
-          {
-            maxWidth: ancho,
-            borderRadius: radio.xl,
-            backgroundColor: oscuro ? color.superficieElevada : color.superficie,
-            borderColor: color.borde,
-          },
-          sombra,
-        ]}
-      >
-        <Avatar nombre={academia.nombre} logoUrl={academia.logoUrl} tamano={44} />
-        <View style={{ flex: 1, gap: 1 }}>
-          <Texto variante="cuerpoFuerte" numberOfLines={1} style={{ fontSize: 17 }}>
-            {academia.nombre}
-          </Texto>
-          <Texto variante="pequeno" tono="suave" numberOfLines={1}>
-            {academia.tipoNegocio}
-          </Texto>
-        </View>
-        {accion}
-      </Animated.View>
     </View>
   );
 }
@@ -394,18 +428,10 @@ const estilos = StyleSheet.create({
   contenido: { gap: 24, width: '100%', alignSelf: 'center' },
   columnas: { flexDirection: 'row', gap: 24, alignItems: 'flex-start' },
   cabeceraEscritorio: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  capaCabecera: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  cabecera: {
-    width: '100%',
-    height: ALTO_CABECERA,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingLeft: 10,
-    paddingRight: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  velo: { position: 'absolute', left: 0, right: 0, top: 0 },
+  capaCabecera: { position: 'absolute', left: 0, right: 0, top: 0 },
+  cabecera: { width: '100%', height: ALTO_CABECERA, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 12 },
+  aro: { borderWidth: 2, padding: 2 },
+  botonFlotante: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },
   ingresos: { padding: 22, gap: 18, overflow: 'hidden' },
   barra: { height: 8, borderRadius: 999, flexDirection: 'row', overflow: 'hidden' },
   estadoTarjeta: { flexDirection: 'row', alignItems: 'center', gap: 14 },

@@ -26,10 +26,12 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 // Geometría de la barra
 const ALTO = 64; // alto de la barra
-const HOLGURA = 34; // espacio arriba del SVG para la gota y el ícono que sobresale
+const HOLGURA = 24; // espacio arriba del SVG para la gota y el ícono que sobresale
 const RADIO = 26; // esquinas de la barra
 const MEDIA_GOTA = 50; // medio ancho de la gota del borde
-const ALTO_GOTA = 22; // cuánto sube el borde sobre la pestaña activa
+const ALTO_GOTA = 13; // cuánto sube el borde sobre la pestaña activa
+// La burbuja activa queda centrada apenas sobre el borde: sobresale poco, sin despegarse de la barra
+const AJUSTE_BURBUJA = ALTO_GOTA + 5;
 const BURBUJA = 52;
 const MARGEN = 14; // separación de la barra con los lados de la pantalla
 const RELLENO = 10; // separación de las pestañas con el borde interno de la barra
@@ -121,7 +123,7 @@ export function BarraLiquida({ pestanas, activa, onCambiar, refContenedor }: Pro
   const propsContorno = useAnimatedProps(() => ({ d: contorno(ancho, cx.value, gota.value) }));
   const propsResplandor = useAnimatedProps(() => ({ cx: cx.value }));
   const estiloBurbuja = useAnimatedStyle(() => ({
-    transform: [{ translateX: cx.value - BURBUJA / 2 }, { translateY: HOLGURA - gota.value - BURBUJA / 2 + 14 }],
+    transform: [{ translateX: cx.value - BURBUJA / 2 }, { translateY: HOLGURA - gota.value - BURBUJA / 2 + AJUSTE_BURBUJA }],
   }));
 
   const altoTotal = HOLGURA + ALTO;
@@ -201,7 +203,7 @@ function Pestana({ pestana, i, indice, activa, colorActivo, textoActivo, onPress
     const cercania = Math.max(0, 1 - Math.abs(indice.value - i));
     return {
       transform: [
-        { translateY: interpolate(cercania, [0, 1], [0, -(ALTO / 2 + ALTO_GOTA - 14)]) },
+        { translateY: interpolate(cercania, [0, 1], [0, -(ALTO / 2 + ALTO_GOTA - AJUSTE_BURBUJA)]) },
         { scale: interpolate(cercania, [0, 1], [1, 1.08]) },
       ],
     };

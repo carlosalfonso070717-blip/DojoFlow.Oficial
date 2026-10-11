@@ -91,6 +91,7 @@ export function BarraLateral() {
     '--lb-marca': color.marca,
     '--lb-sobre-marca': color.sobreMarca,
     '--lb-campo': color.fondo,
+    '--lb-peligro': color.peligro,
     '--lb-sombra': oscuro ? 'rgba(0,0,0,0.55)' : 'rgba(16,18,24,0.14)',
   } as CSSProperties;
 
@@ -170,49 +171,55 @@ export function BarraLateral() {
           </button>
         </nav>
 
+        {/* Acciones en columna, igual que la navegación: cada ícono se queda en su lugar
+            y al expandirse solo aparece su nombre a la derecha */}
         <div className="lb-acciones">
           <button
             type="button"
-            className="lb-accion lb-tema"
+            className="lb-item lb-tema"
             title={oscuro ? 'Modo claro' : 'Modo oscuro'}
             aria-label={oscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
             onClick={() => cambiarPreferenciaTema(oscuro ? 'claro' : 'oscuro')}
           >
-            <span className={`lb-luna${oscuro ? '' : ' visible'}`}>
-              <Moon size={20} color="currentColor" />
+            <span className="lb-icono">
+              <span className={`lb-luna${oscuro ? '' : ' visible'}`}>
+                <Moon size={22} color="currentColor" strokeWidth={1.6} />
+              </span>
+              <span className={`lb-sol${oscuro ? ' visible' : ''}`}>
+                <Sun size={22} color="currentColor" strokeWidth={1.6} />
+              </span>
             </span>
-            <span className={`lb-sol${oscuro ? ' visible' : ''}`}>
-              <Sun size={20} color="currentColor" />
-            </span>
+            <span className="lb-texto">{oscuro ? 'Modo claro' : 'Modo oscuro'}</span>
           </button>
           <button
             ref={refAjustes}
             type="button"
-            className={`lb-accion${pathname.startsWith('/ajustes') ? ' activa' : ''}`}
+            className={`lb-item${pathname.startsWith('/ajustes') ? ' activa' : ''}`}
             title="Ajustes"
-            aria-label="Ajustes"
             aria-current={pathname.startsWith('/ajustes') ? 'page' : undefined}
             onClick={() => router.navigate('/ajustes')}
           >
-            <IconoAjustes size={20} color="currentColor" />
+            <span className="lb-icono">
+              <IconoAjustes size={22} color="currentColor" strokeWidth={pathname.startsWith('/ajustes') ? 2 : 1.6} />
+            </span>
+            <span className="lb-texto">Ajustes</span>
+          </button>
+          <button type="button" className="lb-item lb-destacada" title={`Inscribir ${termino.toLowerCase()}`} onClick={() => router.push('/registrar')}>
+            <span className="lb-icono">
+              <Plus size={22} color="currentColor" strokeWidth={2} />
+            </span>
+            <span className="lb-texto">Inscribir {termino.toLowerCase()}</span>
           </button>
           <button
             type="button"
-            className="lb-accion lb-destacada"
-            title={`Inscribir ${termino.toLowerCase()}`}
-            aria-label={`Inscribir ${termino.toLowerCase()}`}
-            onClick={() => router.push('/registrar')}
-          >
-            <Plus size={20} color="currentColor" />
-          </button>
-          <button
-            type="button"
-            className="lb-accion lb-salir"
+            className="lb-item lb-salir"
             title="Cerrar sesión"
-            aria-label="Cerrar sesión"
             onClick={() => confirmar('¿Cerrar sesión?', undefined, 'Cerrar sesión', () => cerrarSesion())}
           >
-            <IconoCerrarSesion size={20} color="currentColor" />
+            <span className="lb-icono">
+              <IconoCerrarSesion size={22} color="currentColor" strokeWidth={1.6} />
+            </span>
+            <span className="lb-texto">Cerrar sesión</span>
           </button>
         </div>
       </aside>
@@ -318,18 +325,17 @@ const CSS = `
   left: calc(100% - 40px); top: 12px; height: 22px; border-radius: 11px; font-size: 12px; line-height: 18px;
 }
 
-/* Acciones: la rejilla pasa sola de columna (contraída) a fila (expandida) mientras cambia el ancho */
-.lb-acciones { display: grid; grid-template-columns: repeat(auto-fill, 44px); justify-content: space-between; gap: 8px; padding: 0 8px; flex: none; }
-.lb-accion {
-  position: relative; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
-  color: var(--lb-suave) !important; transition: background .2s, color .2s;
-}
-.lb-accion:hover { background: var(--lb-hover); color: var(--lb-texto) !important; }
-.lb-accion.activa { background: var(--lb-activo); color: var(--lb-activo-texto) !important; }
-.lb-destacada { background: var(--lb-marca) !important; color: var(--lb-sobre-marca) !important; }
-.lb-destacada:hover { filter: brightness(1.08); }
-.lb-tema > span { position: absolute; display: flex; opacity: 0; transform: rotate(-90deg) scale(.6); transition: opacity .25s, transform .35s cubic-bezier(.4,0,.2,1); }
-.lb-tema > span.visible { opacity: 1; transform: none; }
+/* Acciones: misma geometría que la navegación, separadas por una línea */
+.lb-acciones { display: flex; flex-direction: column; gap: 4px; flex: none; padding-top: 10px; border-top: 1px solid var(--lb-borde); }
+.lb-destacada { color: var(--lb-sobre-marca) !important; font-family: Figtree_700Bold, sans-serif; }
+.lb-destacada::before { background: var(--lb-marca) !important; opacity: 1 !important; transform: none !important; }
+.lb-destacada:hover { color: var(--lb-sobre-marca) !important; }
+.lb-destacada:hover::before { filter: brightness(1.08); }
+.lb-salir:hover { color: var(--lb-peligro) !important; }
+/* Luna y sol ocupan el mismo lugar y se cruzan al cambiar de tema */
+.lb-tema .lb-icono { width: 22px; height: 22px; }
+.lb-tema .lb-icono > span { position: absolute; inset: 0; display: flex; opacity: 0; transform: rotate(-90deg) scale(.6); transition: opacity .25s, transform .35s cubic-bezier(.4,0,.2,1); }
+.lb-tema .lb-icono > span.visible { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: reduce) { .lb, .lb * { transition: none !important; } }
 `;
