@@ -1,7 +1,7 @@
-import type { LucideIcon } from 'lucide-react-native';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useState, type ComponentType } from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { useTema } from '@/theme';
+import type { PropsIcono } from './iconos/Iconly';
 import { OjoAnimado } from './iconos/OjoAnimado';
 import { Texto } from './Texto';
 
@@ -9,7 +9,7 @@ type Props = TextInputProps & {
   etiqueta: string;
   ayuda?: string;
   error?: string | null;
-  icono?: LucideIcon;
+  icono?: ComponentType<PropsIcono>;
 };
 
 export const Campo = forwardRef<TextInput, Props>(function Campo(

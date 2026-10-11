@@ -1,4 +1,5 @@
-import { CircleCheck, Clock, SearchX, TriangleAlert, Wallet, WifiOff } from 'lucide-react-native';
+import { CircleCheck, Clock, SearchX, TriangleAlert, WifiOff } from 'lucide-react-native';
+import { IconoFiltro, IconoPagos } from '@/components/iconos/Iconly';
 import { useMemo, useState } from 'react';
 import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -71,9 +72,9 @@ export default function CobrosScreen() {
   const vacio = error ? (
     <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudieron cargar los recibos" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
   ) : cargando ? null : busqueda || filtro !== 'todos' ? (
-    <EstadoVacio icono={SearchX} titulo="Sin recibos con ese filtro" mensaje="Prueba con otro estado o búsqueda." />
+    <EstadoVacio icono={IconoFiltro} titulo="Sin recibos con ese filtro" mensaje="Prueba con otro estado o búsqueda." />
   ) : (
-    <EstadoVacio icono={Wallet} titulo="Aún no hay recibos" mensaje="Cada inscripción genera su primer recibo automáticamente." />
+    <EstadoVacio icono={IconoPagos} titulo="Aún no hay recibos" mensaje="Cada inscripción genera su primer recibo automáticamente." />
   );
 
   return (
@@ -88,6 +89,7 @@ export default function CobrosScreen() {
           <View style={estilos.cabecera}>
             <Encabezado titulo="Cobros" detalle={porCobrar > 0 ? `${formatoMoneda(porCobrar)} por cobrar` : undefined} />
             <Segmentos<Filtro>
+              icono={IconoFiltro}
               valor={filtro}
               onCambio={setFiltro}
               opciones={[

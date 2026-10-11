@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { KeyRound, Lock, Mail } from 'lucide-react-native';
+import { KeyRound, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { olvidePassword, resetearPassword } from '@/api/endpoints';
+import { IconoCandado } from '@/components/iconos/Iconly';
 import { Boton, Campo, Texto } from '@/components/ui';
 import { useTema } from '@/theme';
 
@@ -59,7 +60,7 @@ export default function RecuperarScreen() {
         {pinEnviado ? (
           <View style={{ gap: 14 }}>
             <Campo etiqueta="Código" value={pin} onChangeText={setPin} keyboardType="number-pad" maxLength={6} icono={KeyRound} autoFocus />
-            <Campo etiqueta="Nueva contraseña" value={nueva} onChangeText={setNueva} secureTextEntry icono={Lock} ayuda="Mínimo 6 caracteres." />
+            <Campo etiqueta="Nueva contraseña" value={nueva} onChangeText={setNueva} secureTextEntry icono={IconoCandado} ayuda="Mínimo 6 caracteres." />
             <Boton titulo="Cambiar contraseña" onPress={restablecer} cargando={cargando} />
             <Boton titulo="Usar otro correo" variante="fantasma" tamano="compacto" onPress={() => setPinEnviado(false)} />
           </View>

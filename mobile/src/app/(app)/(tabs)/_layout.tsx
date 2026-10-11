@@ -1,9 +1,9 @@
 import { Tabs } from 'expo-router';
-import { Package, Users, Wallet } from 'lucide-react-native';
+import { Package, Users } from 'lucide-react-native';
 import type { ComponentProps } from 'react';
 import { useSesion } from '@/auth/session';
 import { BarraLiquida, type PestanaLiquida } from '@/components/BarraLiquida';
-import { IconoFinanzas, IconoInicio } from '@/components/iconos/Iconly';
+import { IconoFinanzas, IconoInicio, IconoPagos } from '@/components/iconos/Iconly';
 import { plural } from '@/utils/texto';
 
 // Props de la barra tal como las entrega expo-router (sin depender de @react-navigation directamente)
@@ -12,7 +12,7 @@ type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tab
 const ICONOS: Record<string, PestanaLiquida['icono']> = {
   index: IconoInicio,
   alumnos: Users,
-  mensualidades: Wallet,
+  mensualidades: IconoPagos,
   inventario: Package,
   finanzas: IconoFinanzas,
 };

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { CircleCheck, Tablet, TriangleAlert, Wallet } from 'lucide-react-native';
-import { IconoAgregarAlumno, IconoAjustes, IconoCerrarSesion } from '@/components/iconos/Iconly';
+import { CircleCheck, Tablet, TriangleAlert } from 'lucide-react-native';
+import { IconoAgregarAlumno, IconoAjustes, IconoCerrarSesion, IconoPagos } from '@/components/iconos/Iconly';
 import { useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -120,7 +120,7 @@ export default function InicioScreen() {
             <Fila
               titulo={`${cantidad(datos.vencidos.n, 'recibo vencido', 'recibos vencidos')}`}
               detalle={`${formatoMoneda(datos.vencidos.monto)} sin pagar`}
-              izquierda={<Wallet size={22} color={color.peligro} />}
+              izquierda={<IconoPagos size={22} color={color.peligro} />}
               onPress={() => router.navigate('/mensualidades')}
             />
           )}
@@ -128,7 +128,7 @@ export default function InicioScreen() {
             <Fila
               titulo={`${cantidad(datos.pendientes.n, 'recibo por cobrar', 'recibos por cobrar')}`}
               detalle={formatoMoneda(datos.pendientes.monto)}
-              izquierda={<Wallet size={22} color={color.aviso} />}
+              izquierda={<IconoPagos size={22} color={color.aviso} />}
               onPress={() => router.navigate('/mensualidades')}
             />
           )}

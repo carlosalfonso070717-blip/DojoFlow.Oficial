@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { Lock, Mail, UserRound } from 'lucide-react-native';
+import { Mail, UserRound } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { Alert, TextInput } from 'react-native';
 import { enviarVerificacion } from '@/api/endpoints';
+import { IconoCandado } from '@/components/iconos/Iconly';
 import { Campo } from '@/components/ui';
 import { PantallaPaso } from '@/onboarding/PantallaPaso';
 import { useRegistro } from '@/onboarding/RegistroContexto';
@@ -67,7 +68,7 @@ export default function PasoCuenta() {
         onChangeText={(v) => actualizar({ password: v })}
         secureTextEntry
         autoComplete="new-password"
-        icono={Lock}
+        icono={IconoCandado}
         ayuda={borrador.password.length >= 6 ? 'Lista.' : `Mínimo 6 caracteres (${borrador.password.length}/6).`}
         returnKeyType="go"
         onSubmitEditing={() => valido && continuar()}

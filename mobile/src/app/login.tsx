@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
-import { Lock, Mail, Tablet } from 'lucide-react-native';
+import { Mail, Tablet } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSesion } from '@/auth/session';
-import { IconoIniciarSesion } from '@/components/iconos/Iconly';
+import { IconoCandado, IconoIniciarSesion } from '@/components/iconos/Iconly';
 import { Boton, Campo, Texto } from '@/components/ui';
 import { useTema } from '@/theme';
 
@@ -70,7 +70,7 @@ export default function LoginScreen() {
               onChangeText={setPassword}
               secureTextEntry
               autoComplete="password"
-              icono={Lock}
+              icono={IconoCandado}
               returnKeyType="go"
               onSubmitEditing={entrar}
             />

@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { CircleCheck, CircleX, Delete, Lock, TriangleAlert, X } from 'lucide-react-native';
+import { CircleCheck, CircleX, Delete, TriangleAlert, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { checarAsistencia, obtenerMarcaKiosco, type MarcaAcademia, type ResultadoChequeo } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { Avatar, Boton, Insignia, Presionable, Texto } from '@/components/ui';
+import { IconoCandado } from '@/components/iconos/Iconly';
 import { ProveedorTema, useTema } from '@/theme';
 
 const LARGO_PIN = 5;
@@ -50,7 +51,7 @@ function SinVincular() {
   const { color } = useTema();
   return (
     <SafeAreaView style={[estilos.centro, { backgroundColor: color.fondo, padding: 32, gap: 14 }]}>
-      <Lock size={44} color={color.textoSuave} />
+      <IconoCandado size={44} color={color.textoSuave} />
       <Texto variante="encabezado" style={{ textAlign: 'center' }}>
         Este kiosco no está vinculado
       </Texto>
