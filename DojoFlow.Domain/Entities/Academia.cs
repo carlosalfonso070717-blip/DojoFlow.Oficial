@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace DojoFlow.Domain.Entities
@@ -38,6 +39,9 @@ namespace DojoFlow.Domain.Entities
         public int DiaVencimiento { get; set; } = 15;
 
         public DateTime FechaCreacion { get; set; }
+
+        // Código del enlace público del catálogo (dojoflow.club/catalogo/{codigo}); null = no compartido
+        public string? CodigoCatalogo { get; set; }
 
         private static readonly Regex ColorHex = new("^#[0-9a-fA-F]{6}$");
 
@@ -82,6 +86,16 @@ namespace DojoFlow.Domain.Entities
             Logo = null;
             LogoContentType = null;
             LogoVersion++;
+        }
+
+        // Genera un código nuevo; el anterior deja de funcionar
+        public string RenovarCodigoCatalogo()
+        {
+            // Sin letras ni números que se confundan al leerlos (0/o, 1/l/i)
+            const string alfabeto = "abcdefghjkmnpqrstuvwxyz23456789";
+            var bytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(10);
+            CodigoCatalogo = new string(bytes.Select(b => alfabeto[b % alfabeto.Length]).ToArray());
+            return CodigoCatalogo;
         }
 
         // Fecha del primer recibo: el día de vencimiento de este mes, o del siguiente si ya pasó

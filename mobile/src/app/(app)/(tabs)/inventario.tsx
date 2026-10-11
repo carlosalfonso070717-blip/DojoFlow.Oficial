@@ -1,18 +1,20 @@
 import { Package, PackagePlus, SearchX, ShoppingCart, TriangleAlert, WifiOff } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, Share, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   agregarProducto,
   editarProducto,
   eliminarProducto,
   obtenerAlertasInventario,
+  obtenerEnlaceCatalogo,
   obtenerInventario,
+  renovarEnlaceCatalogo,
   venderProducto,
   type Producto,
 } from '@/api/endpoints';
 import { useEspacioBarra } from '@/components/BarraLiquida';
-import { IconoEditar, IconoEliminar } from '@/components/iconos/Iconly';
+import { IconoCompartir, IconoEditar, IconoEliminar } from '@/components/iconos/Iconly';
 import {
   Boton,
   BotonIcono,
@@ -25,12 +27,14 @@ import {
   Grupo,
   Hoja,
   ItemGrupo,
+  formatoMoneda,
   ParDato,
   Superficie,
   Texto,
 } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
+import { useSesion } from '@/auth/session';
 import { useTema } from '@/theme';
 import { useObjetivoTour } from '@/tour/Tour';
 import { cantidad } from '@/utils/texto';
@@ -46,8 +50,9 @@ const cargarInventario = async (): Promise<DatosInventario> => {
 type Modo =
   | { tipo: 'detalle'; producto: Producto }
   | { tipo: 'vender'; producto: Producto; precio: string }
-  | { tipo: 'editar'; producto: Producto; nombre: string; cantidad: string; minimo: string }
-  | { tipo: 'nuevo'; nombre: string; cantidad: string; minimo: string };
+  | { tipo: 'editar'; producto: Producto; nombre: string; cantidad: string; minimo: string; precio: string; enCatalogo: boolean }
+  | { tipo: 'nuevo'; nombre: string; cantidad: string; minimo: string; precio: string; enCatalogo: boolean }
+  | { tipo: 'compartir'; url: string | null };
 
 const aEntero = (s: string) => {
   const n = parseInt(s, 10);
@@ -63,6 +68,36 @@ export default function InventarioScreen() {
   const [busqueda, setBusqueda] = useState('');
   const [modo, setModo] = useState<Modo | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const { perfil } = useSesion();
+
+  // Pide (o crea) el enlace del catálogo y abre la hoja para compartirlo
+  async function abrirCompartir() {
+    setModo({ tipo: 'compartir', url: null });
+    try {
+      const { url } = await obtenerEnlaceCatalogo();
+      setModo({ tipo: 'compartir', url });
+    } catch (e) {
+      setModo(null);
+      Alert.alert('No se pudo obtener el enlace', (e as Error).message);
+    }
+  }
+
+  async function compartir(url: string) {
+    const nombre = perfil?.academia.nombre ?? 'la academia';
+    await Share.share({ message: `Mira el catálogo de ${nombre}: ${url}`, url });
+  }
+
+  function renovar() {
+    confirmar(
+      '¿Cambiar el enlace?',
+      'El enlace anterior dejará de funcionar; tendrás que compartir el nuevo.',
+      'Cambiar enlace',
+      async () => {
+        const { url } = await renovarEnlaceCatalogo();
+        setModo({ tipo: 'compartir', url });
+      },
+    );
+  }
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -71,12 +106,12 @@ export default function InventarioScreen() {
 
   const bajos = datos.productos.filter((p) => p.stockActual <= p.stockMinimo).length;
 
-  function actualizar(campo: string, valor: string) {
+  function actualizar(campo: string, valor: string | boolean) {
     setModo((m) => (m ? ({ ...m, [campo]: valor } as Modo) : m));
   }
 
   async function guardar() {
-    if (!modo || modo.tipo === 'detalle') return;
+    if (!modo || modo.tipo === 'detalle' || modo.tipo === 'compartir') return;
     setGuardando(true);
     try {
       if (modo.tipo === 'vender') {
@@ -86,13 +121,21 @@ export default function InventarioScreen() {
       } else {
         if (!modo.nombre.trim()) throw new Error('El producto necesita un nombre.');
         if (modo.tipo === 'nuevo') {
-          await agregarProducto({ nombre: modo.nombre.trim(), cantidad: aEntero(modo.cantidad), stockMinimo: aEntero(modo.minimo) });
+          await agregarProducto({
+            nombre: modo.nombre.trim(),
+            cantidad: aEntero(modo.cantidad),
+            stockMinimo: aEntero(modo.minimo),
+            precio: parseFloat(modo.precio) || 0,
+            enCatalogo: modo.enCatalogo,
+          });
         } else {
           await editarProducto(modo.producto.id, {
             nombre: modo.nombre.trim(),
             nuevoStockActual: aEntero(modo.cantidad),
             nuevoStockMinimo: aEntero(modo.minimo),
             imagenUrl: modo.producto.imagenUrl,
+            precio: parseFloat(modo.precio) || 0,
+            enCatalogo: modo.enCatalogo,
           });
         }
       }
@@ -113,7 +156,7 @@ export default function InventarioScreen() {
     });
   }
 
-  const nuevo = () => setModo({ tipo: 'nuevo', nombre: '', cantidad: '10', minimo: '3' });
+  const nuevo = () => setModo({ tipo: 'nuevo', nombre: '', cantidad: '10', minimo: '3', precio: '', enCatalogo: true });
 
   const vacio = error ? (
     <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudo cargar el inventario" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
@@ -133,6 +176,7 @@ export default function InventarioScreen() {
     vender: 'Registrar venta',
     editar: 'Editar producto',
     nuevo: 'Nuevo producto',
+    compartir: 'Compartir catálogo',
   };
 
   return (
@@ -149,7 +193,10 @@ export default function InventarioScreen() {
               titulo="Inventario"
               detalle={bajos > 0 ? `${cantidad(bajos, 'producto', 'productos')} por resurtir` : undefined}
               acciones={
-                <BotonIcono destacado etiqueta="Agregar producto" icono={<PackagePlus size={21} color={color.sobreMarca} />} onPress={nuevo} />
+                <>
+                  <BotonIcono etiqueta="Compartir catálogo" icono={<IconoCompartir size={21} color={color.texto} />} onPress={abrirCompartir} />
+                  <BotonIcono destacado etiqueta="Agregar producto" icono={<PackagePlus size={21} color={color.sobreMarca} />} onPress={nuevo} />
+                </>
               }
             />
             {datos.alertas.length > 0 && (
@@ -172,7 +219,7 @@ export default function InventarioScreen() {
             <ItemGrupo indice={index} total={filtrados.length}>
               <Fila
                 titulo={item.nombre}
-                detalle={bajo ? `Por resurtir, mínimo ${item.stockMinimo}` : `Mínimo ${item.stockMinimo}`}
+                detalle={bajo ? `Por resurtir, mínimo ${item.stockMinimo}` : item.precio > 0 ? formatoMoneda(item.precio) : `Mínimo ${item.stockMinimo}`}
                 izquierda={
                   <View style={[estilos.stock, { backgroundColor: bajo ? color.peligroSuave : color.fondo }]}>
                     <Texto variante="subtitulo" cifras style={{ color: bajo ? color.peligro : color.texto }}>
@@ -190,10 +237,16 @@ export default function InventarioScreen() {
       <Hoja
         visible={modo !== null}
         titulo={modo ? titulos[modo.tipo] : ''}
-        descripcion={modo?.tipo === 'vender' ? `${modo.producto.nombre}. Se descuenta una pieza y la venta se suma a las finanzas del mes.` : undefined}
+        descripcion={
+          modo?.tipo === 'vender'
+            ? `${modo.producto.nombre}. Se descuenta una pieza y la venta se suma a las finanzas del mes.`
+            : modo?.tipo === 'compartir'
+              ? 'Tus alumnos ven los productos, su precio y si hay existencias, sin necesidad de cuenta.'
+              : undefined
+        }
         onCerrar={() => setModo(null)}
         accion={
-          modo && modo.tipo !== 'detalle'
+          modo && modo.tipo !== 'detalle' && modo.tipo !== 'compartir'
             ? { titulo: modo.tipo === 'vender' ? 'Registrar venta' : 'Guardar', onPress: guardar, cargando: guardando }
             : undefined
         }
@@ -209,13 +262,17 @@ export default function InventarioScreen() {
               </Texto>
             </Superficie>
             <Grupo>
+              <ParDato etiqueta="Precio" valor={modo.producto.precio > 0 ? formatoMoneda(modo.producto.precio) : 'Sin precio'} />
               <ParDato etiqueta="Avisar al llegar a" valor={String(modo.producto.stockMinimo)} />
+              <ParDato etiqueta="En el catálogo" valor={modo.producto.enCatalogo ? 'Visible' : 'Oculto'} />
             </Grupo>
             <Boton
               titulo="Vender una pieza"
               icono={ShoppingCart}
               deshabilitado={modo.producto.stockActual === 0}
-              onPress={() => setModo({ tipo: 'vender', producto: modo.producto, precio: '' })}
+              onPress={() =>
+                setModo({ tipo: 'vender', producto: modo.producto, precio: modo.producto.precio > 0 ? String(modo.producto.precio) : '' })
+              }
             />
             <View style={estilos.acciones}>
               <Boton
@@ -230,6 +287,8 @@ export default function InventarioScreen() {
                     nombre: modo.producto.nombre,
                     cantidad: String(modo.producto.stockActual),
                     minimo: String(modo.producto.stockMinimo),
+                    precio: modo.producto.precio > 0 ? String(modo.producto.precio) : '',
+                    enCatalogo: modo.producto.enCatalogo,
                   })
                 }
               />
@@ -265,6 +324,42 @@ export default function InventarioScreen() {
                 <Campo etiqueta="Avisar al llegar a" value={modo.minimo} onChangeText={(v) => actualizar('minimo', v)} keyboardType="number-pad" />
               </View>
             </View>
+            <Campo
+              etiqueta="Precio de venta"
+              value={modo.precio}
+              onChangeText={(v) => actualizar('precio', v.replace(/[^0-9.]/g, ''))}
+              keyboardType="decimal-pad"
+              placeholder="0.00"
+              ayuda="Se propone al vender y aparece en el catálogo."
+            />
+            <Grupo>
+              <ParDato etiqueta="Mostrar en el catálogo">
+                <Switch
+                  value={modo.enCatalogo}
+                  onValueChange={(v) => actualizar('enCatalogo', v)}
+                  trackColor={{ true: color.marca, false: color.bordeFuerte }}
+                  thumbColor="#ffffff"
+                  accessibilityLabel="Mostrar en el catálogo"
+                />
+              </ParDato>
+            </Grupo>
+          </>
+        )}
+
+        {modo?.tipo === 'compartir' && (
+          <>
+            <Superficie style={{ gap: 6 }}>
+              <Texto variante="pequeno" tono="tenue">
+                Enlace del catálogo
+              </Texto>
+              <Texto variante="cuerpoFuerte" selectable numberOfLines={2}>
+                {modo.url ?? 'Generando enlace...'}
+              </Texto>
+            </Superficie>
+            <Boton titulo="Compartir enlace" icono={IconoCompartir} deshabilitado={!modo.url} onPress={() => modo.url && compartir(modo.url)} />
+            {perfil?.usuario.rol === 'Dueno' && (
+              <Boton titulo="Cambiar enlace" variante="fantasma" tamano="compacto" deshabilitado={!modo.url} onPress={renovar} />
+            )}
           </>
         )}
       </Hoja>

@@ -153,19 +153,21 @@ export type Producto = {
   stockActual: number;
   stockMinimo: number;
   imagenUrl: string;
+  precio: number;
+  enCatalogo: boolean;
 };
 
 export const obtenerInventario = () => api<Producto[]>('/Inventario');
 
 export const obtenerAlertasInventario = () => api<string[]>('/Inventario/alertas');
 
-export const agregarProducto = (datos: { nombre: string; cantidad: number; stockMinimo: number }) =>
+export const agregarProducto = (datos: { nombre: string; cantidad: number; stockMinimo: number; precio: number; enCatalogo: boolean }) =>
   post<Producto>('/Inventario', datos);
 
 // La API sobrescribe ImagenUrl en cada PUT, por eso siempre se manda la actual
 export const editarProducto = (
   id: string,
-  datos: { nombre: string; nuevoStockActual: number; nuevoStockMinimo: number; imagenUrl: string },
+  datos: { nombre: string; nuevoStockActual: number; nuevoStockMinimo: number; imagenUrl: string; precio: number; enCatalogo: boolean },
 ) => api<Mensaje>(`/Inventario/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
 
 export const eliminarProducto = (id: string) => api<Mensaje>(`/Inventario/${id}`, { method: 'DELETE' });
@@ -215,3 +217,8 @@ export const editarClase = (id: string, datos: { nombre: string; precio: number;
 export const eliminarClase = (id: string) => api<Mensaje>(`/Clases/${id}`, { method: 'DELETE' });
 
 export const marcarTourCompletado = () => post<Mensaje>('/Auth/tour-completado');
+
+// ===== CATÁLOGO COMPARTIBLE =====
+export const obtenerEnlaceCatalogo = () => post<{ url: string }>('/Catalogo/enlace');
+
+export const renovarEnlaceCatalogo = () => post<{ url: string }>('/Catalogo/enlace/renovar');

@@ -42,6 +42,8 @@ namespace DojoFlow.Infrastructure.Persistence
                 academia.Property(a => a.Moneda).HasMaxLength(3);
                 academia.Property(a => a.LogoContentType).HasMaxLength(40);
                 academia.Property(a => a.ModoCobro).HasConversion<string>().HasMaxLength(20);
+                academia.Property(a => a.CodigoCatalogo).HasMaxLength(16);
+                academia.HasIndex(a => a.CodigoCatalogo).IsUnique();
             });
 
             modelBuilder.Entity<Clase>(clase =>

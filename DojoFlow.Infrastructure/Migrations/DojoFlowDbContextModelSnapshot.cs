@@ -29,6 +29,10 @@ namespace DojoFlow.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CodigoCatalogo")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
                     b.Property<string>("ColorPrimario")
                         .IsRequired()
                         .HasMaxLength(7)
@@ -85,6 +89,9 @@ namespace DojoFlow.Infrastructure.Migrations
                         .HasColumnType("character varying(60)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CodigoCatalogo")
+                        .IsUnique();
 
                     b.ToTable("Academias");
 
@@ -303,6 +310,9 @@ namespace DojoFlow.Infrastructure.Migrations
                     b.Property<Guid>("AcademiaId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("EnCatalogo")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("ImagenUrl")
                         .IsRequired()
                         .HasColumnType("text");
@@ -310,6 +320,9 @@ namespace DojoFlow.Infrastructure.Migrations
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<decimal>("Precio")
+                        .HasColumnType("numeric");
 
                     b.Property<int>("StockActual")
                         .HasColumnType("integer");
@@ -328,8 +341,10 @@ namespace DojoFlow.Infrastructure.Migrations
                         {
                             Id = new Guid("d4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f90"),
                             AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            EnCatalogo = true,
                             ImagenUrl = "",
                             Nombre = "Cinturón (Todos los colores)",
+                            Precio = 0m,
                             StockActual = 10,
                             StockMinimo = 3
                         },
@@ -337,8 +352,10 @@ namespace DojoFlow.Infrastructure.Migrations
                         {
                             Id = new Guid("e5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9001"),
                             AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            EnCatalogo = true,
                             ImagenUrl = "",
                             Nombre = "Guantes de 16 oz",
+                            Precio = 0m,
                             StockActual = 10,
                             StockMinimo = 3
                         },
@@ -346,8 +363,10 @@ namespace DojoFlow.Infrastructure.Migrations
                         {
                             Id = new Guid("f6a7b8c9-d0e1-2f3a-4b5c-6d7e8f900112"),
                             AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            EnCatalogo = true,
                             ImagenUrl = "",
                             Nombre = "Guantes de 14 oz",
+                            Precio = 0m,
                             StockActual = 10,
                             StockMinimo = 3
                         },
@@ -355,8 +374,10 @@ namespace DojoFlow.Infrastructure.Migrations
                         {
                             Id = new Guid("a7b8c9d0-e1f2-3a4b-5c6d-7e8f90011223"),
                             AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            EnCatalogo = true,
                             ImagenUrl = "",
                             Nombre = "Espinilleras Fighter Legend",
+                            Precio = 0m,
                             StockActual = 10,
                             StockMinimo = 2
                         },
@@ -364,8 +385,10 @@ namespace DojoFlow.Infrastructure.Migrations
                         {
                             Id = new Guid("b8c9d0e1-f2a3-4b5c-6d7e-8f9001122334"),
                             AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            EnCatalogo = true,
                             ImagenUrl = "",
                             Nombre = "Bucales de GuardPro",
+                            Precio = 0m,
                             StockActual = 10,
                             StockMinimo = 4
                         },
@@ -373,8 +396,10 @@ namespace DojoFlow.Infrastructure.Migrations
                         {
                             Id = new Guid("c9d0e1f2-a3b4-5c6d-7e8f-900112233445"),
                             AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            EnCatalogo = true,
                             ImagenUrl = "",
                             Nombre = "Aguas",
+                            Precio = 0m,
                             StockActual = 10,
                             StockMinimo = 5
                         });

@@ -12,6 +12,8 @@ namespace DojoFlow.API.Controllers
         public int Cantidad { get; set; }
         public int StockMinimo { get; set; }
         public string ImagenUrl { get; set; } = string.Empty;
+        public decimal Precio { get; set; }
+        public bool EnCatalogo { get; set; } = true;
     }
 
     public class EditarProductoRequest
@@ -20,6 +22,9 @@ namespace DojoFlow.API.Controllers
         public int NuevoStockActual { get; set; }
         public int NuevoStockMinimo { get; set; }
         public string ImagenUrl { get; set; } = string.Empty;
+        // Opcionales: si no se mandan (p. ej. desde la web anterior) se conservan los actuales
+        public decimal? Precio { get; set; }
+        public bool? EnCatalogo { get; set; }
     }
 
     [Authorize]
@@ -62,9 +67,14 @@ namespace DojoFlow.API.Controllers
             if (request.Cantidad < 0 || request.StockMinimo < 0)
                 return BadRequest(new { Error = "Las cantidades no pueden ser negativas." });
 
+            if (request.Precio < 0)
+                return BadRequest(new { Error = "El precio no puede ser negativo." });
+
             var nuevoProducto = new Producto(Guid.NewGuid(), request.Nombre, request.Cantidad, request.StockMinimo)
             {
-                ImagenUrl = request.ImagenUrl
+                ImagenUrl = request.ImagenUrl,
+                Precio = request.Precio,
+                EnCatalogo = request.EnCatalogo
             };
 
             await _productoRepository.AgregarAsync(nuevoProducto);
@@ -89,6 +99,10 @@ namespace DojoFlow.API.Controllers
             producto.StockActual = request.NuevoStockActual;
             producto.StockMinimo = request.NuevoStockMinimo;
             producto.ImagenUrl = request.ImagenUrl;
+            if (request.Precio is < 0)
+                return BadRequest(new { Error = "El precio no puede ser negativo." });
+            if (request.Precio.HasValue) producto.Precio = request.Precio.Value;
+            if (request.EnCatalogo.HasValue) producto.EnCatalogo = request.EnCatalogo.Value;
 
             // Si se resurtió, la alerta deja de aplicar; si sigue bajo, ReducirStock(0) la regenera
             AlertaStockObserver.QuitarAlertasDe(producto.AcademiaId, producto.Nombre);

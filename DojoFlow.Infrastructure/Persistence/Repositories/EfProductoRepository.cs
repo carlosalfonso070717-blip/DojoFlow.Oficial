@@ -21,6 +21,15 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
             return await _context.Productos.AsNoTracking().ToListAsync();
         }
 
+        public async Task<List<Producto>> ObtenerCatalogoAsync(Guid academiaId)
+        {
+            // Sin sesión no hay academia en el token: se filtra explícitamente por la del enlace
+            return await _context.Productos.IgnoreQueryFilters().AsNoTracking()
+                .Where(p => p.AcademiaId == academiaId && p.EnCatalogo)
+                .OrderBy(p => p.Nombre)
+                .ToListAsync();
+        }
+
         public async Task<Producto?> ObtenerPorIdAsync(Guid id)
         {
             var producto = await _context.Productos.FirstOrDefaultAsync(p => p.Id == id);

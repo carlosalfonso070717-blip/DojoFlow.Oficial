@@ -18,6 +18,11 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
             return await _context.Academias.FirstOrDefaultAsync(a => a.Id == id);
         }
 
+        public async Task<Academia?> ObtenerPorCodigoCatalogoAsync(string codigo)
+        {
+            return await _context.Academias.AsNoTracking().FirstOrDefaultAsync(a => a.CodigoCatalogo == codigo);
+        }
+
         public async Task RegistrarAsync(Academia academia, IEnumerable<Clase> clases, UsuarioCoach dueno)
         {
             // Un solo SaveChanges = una sola transacción: o se crea todo o nada

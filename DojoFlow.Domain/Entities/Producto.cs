@@ -1,4 +1,4 @@
-﻿// Ubicación: DojoFlow.Domain/Entities/Producto.cs
+// Ubicación: DojoFlow.Domain/Entities/Producto.cs
 using System;
 using System.Collections.Generic;
 using DojoFlow.Domain.Observers;
@@ -14,6 +14,10 @@ namespace DojoFlow.Domain.Entities
         public int StockMinimo { get; set; }
 
         public string ImagenUrl { get; set; } = string.Empty;
+        // Precio de venta sugerido; también se muestra en el catálogo público
+        public decimal Precio { get; set; }
+        // Si aparece en el catálogo que la academia comparte con sus alumnos
+        public bool EnCatalogo { get; set; } = true;
 
         // La lista oculta de vigías (Observer Pattern)
         private readonly List<INotificadorInventario> _observadores = new();
