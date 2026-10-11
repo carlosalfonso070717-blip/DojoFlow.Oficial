@@ -10,16 +10,19 @@ type Props = TextInputProps & {
   ayuda?: string;
   error?: string | null;
   icono?: ComponentType<PropsIcono>;
+  // En contraseñas: ícono mientras el texto está visible (p. ej. candado abierto)
+  iconoVisible?: ComponentType<PropsIcono>;
 };
 
 export const Campo = forwardRef<TextInput, Props>(function Campo(
-  { etiqueta, ayuda, error, icono: Icono, secureTextEntry, style, onFocus, onBlur, ...props },
+  { etiqueta, ayuda, error, icono, iconoVisible, secureTextEntry, style, onFocus, onBlur, ...props },
   ref,
 ) {
   const { color, radio, tipografia } = useTema();
   const [enfocado, setEnfocado] = useState(false);
   const [oculto, setOculto] = useState(true);
   const esPassword = !!secureTextEntry;
+  const Icono = esPassword && !oculto && iconoVisible ? iconoVisible : icono;
 
   const colorBorde = error ? color.peligro : enfocado ? color.marcaTexto : color.borde;
 

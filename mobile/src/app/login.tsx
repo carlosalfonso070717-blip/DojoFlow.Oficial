@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSesion } from '@/auth/session';
-import { IconoCandado, IconoIniciarSesion } from '@/components/iconos/Iconly';
+import { IconoCandado, IconoCandadoAbierto, IconoIniciarSesion } from '@/components/iconos/Iconly';
 import { Boton, Campo, Texto } from '@/components/ui';
 import { useTema } from '@/theme';
 
@@ -71,6 +71,7 @@ export default function LoginScreen() {
               secureTextEntry
               autoComplete="password"
               icono={IconoCandado}
+              iconoVisible={IconoCandadoAbierto}
               returnKeyType="go"
               onSubmitEditing={entrar}
             />
