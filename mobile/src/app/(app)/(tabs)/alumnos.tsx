@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Plus, SearchX, Trash2, Users, WifiOff } from 'lucide-react-native';
+import { Plus, SearchX, Users, WifiOff } from 'lucide-react-native';
+import { IconoEliminar } from '@/components/iconos/Iconly';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,10 +19,12 @@ import {
   ItemGrupo,
 } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
+import { useEspacioBarra } from '@/components/BarraLiquida';
 import { useTema } from '@/theme';
 import { plural } from '@/utils/texto';
 
 export default function AlumnosScreen() {
+  const espacioBarra = useEspacioBarra();
   const { color, espacio } = useTema();
   const { perfil } = useSesion();
   const termino = perfil?.academia.terminoAlumno || 'Alumno';
@@ -59,7 +62,7 @@ export default function AlumnosScreen() {
       <FlatList
         data={filtrados}
         keyExtractor={(a) => a.id}
-        contentContainerStyle={{ padding: espacio.l, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: espacio.l, paddingBottom: espacioBarra }}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
@@ -90,7 +93,7 @@ export default function AlumnosScreen() {
               izquierda={<Avatar nombre={item.nombre} />}
               derecha={
                 <Pressable onPress={() => darDeBaja(item)} hitSlop={12} accessibilityRole="button" accessibilityLabel={`Dar de baja a ${item.nombre}`}>
-                  <Trash2 size={19} color={color.textoTenue} />
+                  <IconoEliminar size={21} color={color.textoTenue} />
                 </Pressable>
               }
             >

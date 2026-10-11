@@ -1,4 +1,5 @@
-import { Package, PackagePlus, Pencil, SearchX, ShoppingCart, Trash2, TriangleAlert, WifiOff } from 'lucide-react-native';
+import { Package, PackagePlus, SearchX, ShoppingCart, TriangleAlert, WifiOff } from 'lucide-react-native';
+import { IconoEditar, IconoEliminar } from '@/components/iconos/Iconly';
 import { useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +27,7 @@ import {
   Texto,
 } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
+import { useEspacioBarra } from '@/components/BarraLiquida';
 import { useTema } from '@/theme';
 import { cantidad } from '@/utils/texto';
 
@@ -48,6 +50,7 @@ const aEntero = (s: string) => {
 };
 
 export default function InventarioScreen() {
+  const espacioBarra = useEspacioBarra();
   const { color, espacio } = useTema();
   const { datos, cargando, error, recargar } = useRecurso(cargarInventario, { productos: [], alertas: [] });
   const [busqueda, setBusqueda] = useState('');
@@ -125,7 +128,7 @@ export default function InventarioScreen() {
       <FlatList
         data={filtrados}
         keyExtractor={(p) => p.id}
-        contentContainerStyle={{ padding: espacio.l, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: espacio.l, paddingBottom: espacioBarra }}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
@@ -177,10 +180,10 @@ export default function InventarioScreen() {
                         setForm({ tipo: 'editar', producto: item, nombre: item.nombre, cantidad: String(item.stockActual), minimo: String(item.stockMinimo) })
                       }
                     >
-                      <Pencil size={19} color={color.textoTenue} />
+                      <IconoEditar size={21} color={color.textoTenue} />
                     </Pressable>
                     <Pressable hitSlop={10} accessibilityLabel={`Eliminar ${item.nombre}`} onPress={() => eliminar(item)}>
-                      <Trash2 size={19} color={color.textoTenue} />
+                      <IconoEliminar size={21} color={color.textoTenue} />
                     </Pressable>
                   </View>
                 }

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui';
 import { Segmentos } from '@/components/Segmentos';
 import { useRecurso } from '@/hooks/useRecurso';
+import { useEspacioBarra } from '@/components/BarraLiquida';
 import { useTema } from '@/theme';
 
 type Filtro = 'todos' | 'Pendiente' | 'Vencido' | 'Pagado';
@@ -29,6 +30,7 @@ const ESTADOS: Record<string, { tono: TonoInsignia; icono: typeof Clock; texto: 
 };
 
 export default function CobrosScreen() {
+  const espacioBarra = useEspacioBarra();
   const { color, espacio } = useTema();
   const { datos, cargando, error, recargar } = useRecurso(obtenerMensualidades, [] as Mensualidad[]);
   const [busqueda, setBusqueda] = useState('');
@@ -79,7 +81,7 @@ export default function CobrosScreen() {
       <FlatList
         data={filtrados}
         keyExtractor={(m) => m.id}
-        contentContainerStyle={{ padding: espacio.l, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: espacio.l, paddingBottom: espacioBarra }}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={

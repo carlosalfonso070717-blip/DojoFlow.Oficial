@@ -1,9 +1,11 @@
-import { ChartColumn, Trash2, WifiOff } from 'lucide-react-native';
+import { WifiOff } from 'lucide-react-native';
+import { IconoEliminar, IconoFinanzas } from '@/components/iconos/Iconly';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { eliminarMesFinanzas, obtenerFinanzas, type RegistroFinanciero } from '@/api/endpoints';
 import { confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, ItemGrupo, Superficie, Texto } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
+import { useEspacioBarra } from '@/components/BarraLiquida';
 import { useTema } from '@/theme';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -16,6 +18,7 @@ function nombreMes(mesAnio: string) {
 }
 
 export default function FinanzasScreen() {
+  const espacioBarra = useEspacioBarra();
   const { color, espacio, radio } = useTema();
   const { datos, cargando, error, recargar } = useRecurso(obtenerFinanzas, [] as RegistroFinanciero[]);
   // El primer registro del historial es el mes más reciente con movimientos
@@ -35,7 +38,7 @@ export default function FinanzasScreen() {
       <FlatList
         data={datos}
         keyExtractor={(f) => f.mesAnio}
-        contentContainerStyle={{ padding: espacio.l, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: espacio.l, paddingBottom: espacioBarra }}
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
           <View style={estilos.cabecera}>
@@ -79,7 +82,7 @@ export default function FinanzasScreen() {
           error ? (
             <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudieron cargar las finanzas" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
           ) : cargando ? null : (
-            <EstadoVacio icono={ChartColumn} titulo="Aún no hay movimientos" mensaje="Los cobros y las ventas se suman aquí automáticamente." />
+            <EstadoVacio icono={IconoFinanzas} titulo="Aún no hay movimientos" mensaje="Los cobros y las ventas se suman aquí automáticamente." />
           )
         }
         // El mes actual ya se muestra arriba; la lista es el historial completo
@@ -94,7 +97,7 @@ export default function FinanzasScreen() {
                     {formatoMoneda(item.total)}
                   </Texto>
                   <Pressable hitSlop={10} onPress={() => borrarMes(item.mesAnio)} accessibilityLabel={`Borrar ${nombreMes(item.mesAnio)}`}>
-                    <Trash2 size={18} color={color.textoTenue} />
+                    <IconoEliminar size={20} color={color.textoTenue} />
                   </Pressable>
                 </View>
               }

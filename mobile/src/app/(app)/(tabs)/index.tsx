@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { CircleCheck, LogOut, Settings, Tablet, TriangleAlert, UserPlus, Wallet } from 'lucide-react-native';
+import { CircleCheck, LogOut, Tablet, TriangleAlert, UserPlus, Wallet } from 'lucide-react-native';
+import { IconoAjustes } from '@/components/iconos/Iconly';
 import { useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,6 +24,7 @@ import {
   Texto,
 } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
+import { useEspacioBarra } from '@/components/BarraLiquida';
 import { useTema } from '@/theme';
 import { cantidad, plural, saludo } from '@/utils/texto';
 
@@ -59,6 +61,7 @@ const VACIO = {
 };
 
 export default function InicioScreen() {
+  const espacioBarra = useEspacioBarra();
   const { color, espacio } = useTema();
   const { perfil, cerrarSesion, vincularKiosco } = useSesion();
   const { datos, cargando, recargar, error } = useRecurso(cargarResumen, VACIO);
@@ -81,7 +84,7 @@ export default function InicioScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
       <ScrollView
-        contentContainerStyle={[estilos.contenido, { padding: espacio.l }]}
+        contentContainerStyle={[estilos.contenido, { padding: espacio.l, paddingBottom: espacioBarra }]}
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
       >
         <View style={estilos.saludo}>
@@ -91,7 +94,7 @@ export default function InicioScreen() {
             </Texto>
             <Texto variante="subtitulo">{usuario.nombre.split(' ')[0]}</Texto>
           </View>
-          <BotonIcono icono={<Settings size={20} color={color.texto} />} etiqueta="Opciones" onPress={() => setOpciones(true)} />
+          <BotonIcono icono={<IconoAjustes size={22} color={color.texto} />} etiqueta="Ajustes" onPress={() => setOpciones(true)} />
         </View>
 
         <Credencial academia={academia}>
@@ -171,7 +174,7 @@ export default function InicioScreen() {
 }
 
 const estilos = StyleSheet.create({
-  contenido: { gap: 24, paddingBottom: 40 },
+  contenido: { gap: 24 },
   saludo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   acciones: { gap: 10 },
 });

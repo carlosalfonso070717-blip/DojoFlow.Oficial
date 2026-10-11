@@ -1,17 +1,17 @@
 import { Image } from 'expo-image';
-import type { LucideIcon } from 'lucide-react-native';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { API_URL } from '@/api/client';
 import { useTema } from '@/theme';
 import { Boton } from './Boton';
+import type { PropsIcono } from './iconos/Iconly';
 import { Presionable } from './Presionable';
 import { Texto } from './Texto';
 
 export type TonoInsignia = 'marca' | 'exito' | 'aviso' | 'peligro' | 'neutro';
 
 // Insignia tonal: fondo suave y texto fuerte del mismo color
-export function Insignia({ texto, tono = 'neutro', icono: Icono }: { texto: string; tono?: TonoInsignia; icono?: LucideIcon }) {
+export function Insignia({ texto, tono = 'neutro', icono: Icono }: { texto: string; tono?: TonoInsignia; icono?: ComponentType<PropsIcono> }) {
   const { color, radio } = useTema();
   const paleta: Record<TonoInsignia, [string, string]> = {
     marca: [color.marcaSuave, color.marcaTexto],
@@ -102,7 +102,7 @@ export function urlAbsoluta(ruta: string) {
 }
 
 type EstadoVacioProps = {
-  icono: LucideIcon;
+  icono: ComponentType<PropsIcono>;
   titulo: string;
   mensaje?: string;
   accion?: { titulo: string; onPress: () => void };
