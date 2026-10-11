@@ -1,31 +1,17 @@
 import { router } from 'expo-router';
 import { CircleCheck, Tablet, TriangleAlert } from 'lucide-react-native';
-import { IconoAgregarAlumno, IconoAjustes, IconoCerrarSesion, IconoPagos } from '@/components/iconos/Iconly';
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  obtenerAlertasInventario,
-  obtenerAlumnos,
-  obtenerFinanzas,
-  obtenerMensualidades,
-} from '@/api/endpoints';
+import { obtenerAlertasInventario, obtenerAlumnos, obtenerFinanzas, obtenerMensualidades } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
-import {
-  BotonIcono,
-  Credencial,
-  DatoCredencial,
-  Fila,
-  formatoCorto,
-  formatoMoneda,
-  Grupo,
-  Hoja,
-  Boton,
-  Texto,
-} from '@/components/ui';
-import { useRecurso } from '@/hooks/useRecurso';
 import { useEspacioBarra } from '@/components/BarraLiquida';
+import { IconoAgregarAlumno, IconoAjustes, IconoPagos } from '@/components/iconos/Iconly';
+import { Boton, BotonIcono, Credencial, DatoCredencial, Fila, formatoCorto, formatoMoneda, Grupo, Texto } from '@/components/ui';
+import { useDiseno } from '@/hooks/useDiseno';
+import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
+import { useObjetivoTour, useTour } from '@/tour/Tour';
 import { cantidad, plural, saludo } from '@/utils/texto';
 
 // Mismo formato que guarda la API: "10-2026"
@@ -52,20 +38,29 @@ const cargarResumen = async () => {
   };
 };
 
-const VACIO = {
-  alumnos: 0,
-  vencidos: { n: 0, monto: 0 },
-  pendientes: { n: 0, monto: 0 },
-  ingresosMes: 0,
-  alertasStock: 0,
-};
+const VACIO = { alumnos: 0, vencidos: { n: 0, monto: 0 }, pendientes: { n: 0, monto: 0 }, ingresosMes: 0, alertasStock: 0 };
 
 export default function InicioScreen() {
+  const { color } = useTema();
+  const { margen, esTableta } = useDiseno();
   const espacioBarra = useEspacioBarra();
-  const { color, espacio } = useTema();
-  const { perfil, cerrarSesion, vincularKiosco } = useSesion();
+  const { perfil, vincularKiosco } = useSesion();
+  const { iniciar: iniciarTour } = useTour();
   const { datos, cargando, recargar, error } = useRecurso(cargarResumen, VACIO);
-  const [opciones, setOpciones] = useState(false);
+
+  const refCredencial = useObjetivoTour('credencial');
+  const refPendiente = useObjetivoTour('pendiente');
+  const refInscribir = useObjetivoTour('inscribir');
+  const refAjustes = useObjetivoTour('ajustes');
+
+  // La primera vez que alguien entra, el recorrido arranca solo (una vez por sesión)
+  const tourLanzado = useRef(false);
+  useEffect(() => {
+    if (!perfil || perfil.usuario.tourCompletado || tourLanzado.current) return;
+    tourLanzado.current = true;
+    const t = setTimeout(iniciarTour, 900);
+    return () => clearTimeout(t);
+  }, [perfil, iniciarTour]);
 
   if (!perfil) return null;
   const { academia, usuario } = perfil;
@@ -81,10 +76,59 @@ export default function InicioScreen() {
     }
   }
 
+  const pendiente = (
+    <View ref={refPendiente} collapsable={false}>
+      <Grupo titulo="Pendiente">
+        {error ? (
+          <Fila
+            titulo="No se pudo cargar el resumen"
+            detalle="Desliza hacia abajo para intentar de nuevo."
+            izquierda={<TriangleAlert size={22} color={color.peligro} />}
+          />
+        ) : todoAlDia ? (
+          <Fila titulo="Todo al día" detalle="Sin recibos por cobrar ni productos por resurtir." izquierda={<CircleCheck size={22} color={color.exito} />} />
+        ) : null}
+        {!error && datos.vencidos.n > 0 && (
+          <Fila
+            titulo={cantidad(datos.vencidos.n, 'recibo vencido', 'recibos vencidos')}
+            detalle={`${formatoMoneda(datos.vencidos.monto)} sin pagar`}
+            izquierda={<IconoPagos size={22} color={color.peligro} />}
+            onPress={() => router.navigate('/mensualidades')}
+          />
+        )}
+        {!error && datos.pendientes.n > 0 && (
+          <Fila
+            titulo={cantidad(datos.pendientes.n, 'recibo por cobrar', 'recibos por cobrar')}
+            detalle={formatoMoneda(datos.pendientes.monto)}
+            izquierda={<IconoPagos size={22} color={color.aviso} />}
+            onPress={() => router.navigate('/mensualidades')}
+          />
+        )}
+        {!error && datos.alertasStock > 0 && (
+          <Fila
+            titulo={`${cantidad(datos.alertasStock, 'producto', 'productos')} por resurtir`}
+            detalle="Llegaron a su stock mínimo"
+            izquierda={<TriangleAlert size={22} color={color.aviso} />}
+            onPress={() => router.navigate('/inventario')}
+          />
+        )}
+      </Grupo>
+    </View>
+  );
+
+  const acciones = (
+    <View style={{ gap: 10 }}>
+      <View ref={refInscribir} collapsable={false}>
+        <Boton titulo={`Inscribir ${termino.toLowerCase()}`} icono={IconoAgregarAlumno} onPress={() => router.push('/registrar')} />
+      </View>
+      <Boton titulo="Abrir kiosco" icono={Tablet} variante="tonal" onPress={abrirKiosco} />
+    </View>
+  );
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
       <ScrollView
-        contentContainerStyle={[estilos.contenido, { padding: espacio.l, paddingBottom: espacioBarra }]}
+        contentContainerStyle={[estilos.contenido, { paddingHorizontal: margen, paddingBottom: espacioBarra, maxWidth: esTableta ? 1000 : 560 }]}
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
       >
         <View style={estilos.saludo}>
@@ -92,89 +136,33 @@ export default function InicioScreen() {
             <Texto variante="detalle" tono="suave">
               {saludo()},
             </Texto>
-            <Texto variante="subtitulo">{usuario.nombre.split(' ')[0]}</Texto>
+            <Texto variante="encabezado">{usuario.nombre.split(' ')[0]}</Texto>
           </View>
-          <BotonIcono icono={<IconoAjustes size={22} color={color.texto} />} etiqueta="Ajustes" onPress={() => setOpciones(true)} />
+          <View ref={refAjustes} collapsable={false}>
+            <BotonIcono icono={<IconoAjustes size={22} color={color.texto} />} etiqueta="Ajustes" onPress={() => router.push('/ajustes')} />
+          </View>
         </View>
 
-        <Credencial academia={academia}>
-          <DatoCredencial valor={String(datos.alumnos)} etiqueta={plural(termino)} fondo={academia.colorSecundario} />
-          <DatoCredencial valor={formatoCorto(datos.ingresosMes)} etiqueta="Ingresos del mes" fondo={academia.colorSecundario} />
-        </Credencial>
-
-        <Grupo titulo="Pendiente">
-          {error ? (
-            <Fila
-              titulo="No se pudo cargar el resumen"
-              detalle="Desliza hacia abajo para intentar de nuevo."
-              izquierda={<TriangleAlert size={22} color={color.peligro} />}
-            />
-          ) : todoAlDia ? (
-            <Fila
-              titulo="Todo al día"
-              detalle="Sin recibos por cobrar ni productos por resurtir."
-              izquierda={<CircleCheck size={22} color={color.exito} />}
-            />
-          ) : null}
-          {!error && datos.vencidos.n > 0 && (
-            <Fila
-              titulo={`${cantidad(datos.vencidos.n, 'recibo vencido', 'recibos vencidos')}`}
-              detalle={`${formatoMoneda(datos.vencidos.monto)} sin pagar`}
-              izquierda={<IconoPagos size={22} color={color.peligro} />}
-              onPress={() => router.navigate('/mensualidades')}
-            />
-          )}
-          {!error && datos.pendientes.n > 0 && (
-            <Fila
-              titulo={`${cantidad(datos.pendientes.n, 'recibo por cobrar', 'recibos por cobrar')}`}
-              detalle={formatoMoneda(datos.pendientes.monto)}
-              izquierda={<IconoPagos size={22} color={color.aviso} />}
-              onPress={() => router.navigate('/mensualidades')}
-            />
-          )}
-          {!error && datos.alertasStock > 0 && (
-            <Fila
-              titulo={`${cantidad(datos.alertasStock, 'producto', 'productos')} por resurtir`}
-              detalle="Llegaron a su stock mínimo"
-              izquierda={<TriangleAlert size={22} color={color.aviso} />}
-              onPress={() => router.navigate('/inventario')}
-            />
-          )}
-        </Grupo>
-
-        <View style={estilos.acciones}>
-          <Boton titulo={`Inscribir ${termino.toLowerCase()}`} icono={IconoAgregarAlumno} onPress={() => router.push('/registrar')} />
-          <Boton titulo="Abrir kiosco" icono={Tablet} variante="tonal" onPress={abrirKiosco} />
+        {/* En tableta: credencial a la izquierda, pendientes y acciones a la derecha */}
+        <View style={esTableta ? estilos.columnas : { gap: 28 }}>
+          <View ref={refCredencial} collapsable={false} style={esTableta ? { flex: 1.1 } : undefined}>
+            <Credencial academia={academia}>
+              <DatoCredencial valor={String(datos.alumnos)} etiqueta={plural(termino)} fondo={academia.colorSecundario} />
+              <DatoCredencial valor={formatoCorto(datos.ingresosMes)} etiqueta="Ingresos del mes" fondo={academia.colorSecundario} />
+            </Credencial>
+          </View>
+          <View style={[{ gap: 28 }, esTableta && { flex: 1 }]}>
+            {pendiente}
+            {acciones}
+          </View>
         </View>
       </ScrollView>
-
-      <Hoja visible={opciones} titulo={academia.nombre} descripcion={usuario.email} onCerrar={() => setOpciones(false)}>
-        <Grupo>
-          <Fila
-            titulo="Abrir kiosco"
-            detalle="Vincula esta tablet para registrar asistencias"
-            izquierda={<Tablet size={22} color={color.marcaTexto} />}
-            onPress={() => {
-              setOpciones(false);
-              abrirKiosco();
-            }}
-          />
-          <Fila
-            titulo="Cerrar sesión"
-            izquierda={<IconoCerrarSesion size={22} color={color.peligro} />}
-            onPress={() => {
-              setOpciones(false);
-              cerrarSesion();
-            }}
-          />
-        </Grupo>
-      </Hoja>
     </SafeAreaView>
   );
 }
 
 const estilos = StyleSheet.create({
-  contenido: { gap: 24 },
+  contenido: { gap: 28, paddingTop: 8, width: '100%', alignSelf: 'center' },
   saludo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  acciones: { gap: 10 },
+  columnas: { flexDirection: 'row', gap: 24, alignItems: 'flex-start' },
 });

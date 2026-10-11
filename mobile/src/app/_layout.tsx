@@ -35,14 +35,6 @@ function RootNavigator() {
 
   if (!listo) return null;
 
-  const conEncabezado = {
-    headerShown: true,
-    headerStyle: { backgroundColor: color.fondo },
-    headerTintColor: color.texto,
-    headerTitleStyle: { fontFamily: tipografia.subtitulo.fontFamily },
-    headerShadowVisible: false,
-    headerBackTitle: 'Atrás',
-  };
 
   return (
     <>
@@ -53,9 +45,10 @@ function RootNavigator() {
         </Stack.Protected>
 
         <Stack.Protected guard={!token}>
-          <Stack.Screen name="login" />
-          <Stack.Screen name="registro" />
-          <Stack.Screen name="recuperar" options={{ ...conEncabezado, title: 'Recuperar contraseña' }} />
+          {/* Entre login, registro y recuperar: fundido corto, sin desplazamientos bruscos */}
+          <Stack.Screen name="login" options={{ animation: 'fade' }} />
+          <Stack.Screen name="registro" options={{ animation: 'fade', animationDuration: 260 }} />
+          <Stack.Screen name="recuperar" options={{ animation: 'fade', animationDuration: 260 }} />
         </Stack.Protected>
 
         {/* El kiosco usa su propio token: funciona con o sin sesión de coach */}

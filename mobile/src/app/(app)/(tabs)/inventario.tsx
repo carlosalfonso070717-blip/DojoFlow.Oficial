@@ -1,7 +1,6 @@
 import { Package, PackagePlus, SearchX, ShoppingCart, TriangleAlert, WifiOff } from 'lucide-react-native';
-import { IconoEditar, IconoEliminar } from '@/components/iconos/Iconly';
 import { useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   agregarProducto,
@@ -12,6 +11,8 @@ import {
   venderProducto,
   type Producto,
 } from '@/api/endpoints';
+import { useEspacioBarra } from '@/components/BarraLiquida';
+import { IconoEditar, IconoEliminar } from '@/components/iconos/Iconly';
 import {
   Boton,
   BotonIcono,
@@ -21,13 +22,15 @@ import {
   Encabezado,
   EstadoVacio,
   Fila,
+  Grupo,
   Hoja,
-  Insignia,
   ItemGrupo,
+  ParDato,
+  Superficie,
   Texto,
 } from '@/components/ui';
+import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
-import { useEspacioBarra } from '@/components/BarraLiquida';
 import { useTema } from '@/theme';
 import { cantidad } from '@/utils/texto';
 
@@ -38,11 +41,12 @@ const cargarInventario = async (): Promise<DatosInventario> => {
   return { productos, alertas };
 };
 
-// Una sola hoja para alta, edición y venta
-type Formulario =
-  | { tipo: 'nuevo'; nombre: string; cantidad: string; minimo: string }
+// La hoja pasa por estos modos sin cerrarse: detalle → vender / editar
+type Modo =
+  | { tipo: 'detalle'; producto: Producto }
+  | { tipo: 'vender'; producto: Producto; precio: string }
   | { tipo: 'editar'; producto: Producto; nombre: string; cantidad: string; minimo: string }
-  | { tipo: 'vender'; producto: Producto; precio: string };
+  | { tipo: 'nuevo'; nombre: string; cantidad: string; minimo: string };
 
 const aEntero = (s: string) => {
   const n = parseInt(s, 10);
@@ -50,11 +54,12 @@ const aEntero = (s: string) => {
 };
 
 export default function InventarioScreen() {
+  const { color } = useTema();
+  const { margen, maximo } = useDiseno();
   const espacioBarra = useEspacioBarra();
-  const { color, espacio } = useTema();
   const { datos, cargando, error, recargar } = useRecurso(cargarInventario, { productos: [], alertas: [] });
   const [busqueda, setBusqueda] = useState('');
-  const [form, setForm] = useState<Formulario | null>(null);
+  const [modo, setModo] = useState<Modo | null>(null);
   const [guardando, setGuardando] = useState(false);
 
   const filtrados = useMemo(() => {
@@ -65,31 +70,31 @@ export default function InventarioScreen() {
   const bajos = datos.productos.filter((p) => p.stockActual <= p.stockMinimo).length;
 
   function actualizar(campo: string, valor: string) {
-    setForm((f) => (f ? ({ ...f, [campo]: valor } as Formulario) : f));
+    setModo((m) => (m ? ({ ...m, [campo]: valor } as Modo) : m));
   }
 
   async function guardar() {
-    if (!form) return;
+    if (!modo || modo.tipo === 'detalle') return;
     setGuardando(true);
     try {
-      if (form.tipo === 'vender') {
-        const precio = parseFloat(form.precio);
+      if (modo.tipo === 'vender') {
+        const precio = parseFloat(modo.precio);
         if (Number.isNaN(precio) || precio < 0) throw new Error('Escribe un precio válido.');
-        await venderProducto(form.producto.id, precio);
+        await venderProducto(modo.producto.id, precio);
       } else {
-        if (!form.nombre.trim()) throw new Error('El producto necesita un nombre.');
-        if (form.tipo === 'nuevo') {
-          await agregarProducto({ nombre: form.nombre.trim(), cantidad: aEntero(form.cantidad), stockMinimo: aEntero(form.minimo) });
+        if (!modo.nombre.trim()) throw new Error('El producto necesita un nombre.');
+        if (modo.tipo === 'nuevo') {
+          await agregarProducto({ nombre: modo.nombre.trim(), cantidad: aEntero(modo.cantidad), stockMinimo: aEntero(modo.minimo) });
         } else {
-          await editarProducto(form.producto.id, {
-            nombre: form.nombre.trim(),
-            nuevoStockActual: aEntero(form.cantidad),
-            nuevoStockMinimo: aEntero(form.minimo),
-            imagenUrl: form.producto.imagenUrl,
+          await editarProducto(modo.producto.id, {
+            nombre: modo.nombre.trim(),
+            nuevoStockActual: aEntero(modo.cantidad),
+            nuevoStockMinimo: aEntero(modo.minimo),
+            imagenUrl: modo.producto.imagenUrl,
           });
         }
       }
-      setForm(null);
+      setModo(null);
       recargar();
     } catch (e) {
       Alert.alert('No se pudo guardar', (e as Error).message);
@@ -101,11 +106,12 @@ export default function InventarioScreen() {
   function eliminar(p: Producto) {
     confirmar(`¿Eliminar ${p.nombre}?`, 'Se quitará del inventario.', 'Eliminar', async () => {
       await eliminarProducto(p.id);
+      setModo(null);
       recargar();
     });
   }
 
-  const nuevo = () => setForm({ tipo: 'nuevo', nombre: '', cantidad: '10', minimo: '3' });
+  const nuevo = () => setModo({ tipo: 'nuevo', nombre: '', cantidad: '10', minimo: '3' });
 
   const vacio = error ? (
     <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudo cargar el inventario" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
@@ -120,15 +126,19 @@ export default function InventarioScreen() {
     />
   );
 
-  const tituloHoja =
-    form?.tipo === 'vender' ? `Vender ${form.producto.nombre}` : form?.tipo === 'editar' ? 'Editar producto' : 'Nuevo producto';
+  const titulos: Record<Modo['tipo'], string> = {
+    detalle: modo && 'producto' in modo ? modo.producto.nombre : '',
+    vender: 'Registrar venta',
+    editar: 'Editar producto',
+    nuevo: 'Nuevo producto',
+  };
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
       <FlatList
         data={filtrados}
         keyExtractor={(p) => p.id}
-        contentContainerStyle={{ padding: espacio.l, paddingBottom: espacioBarra }}
+        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingBottom: espacioBarra, maxWidth: maximo + margen * 2 }]}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
@@ -137,22 +147,19 @@ export default function InventarioScreen() {
               titulo="Inventario"
               detalle={bajos > 0 ? `${cantidad(bajos, 'producto', 'productos')} por resurtir` : undefined}
               acciones={
-                <BotonIcono
-                  destacado
-                  etiqueta="Agregar producto"
-                  icono={<PackagePlus size={21} color={color.sobreMarca} />}
-                  onPress={nuevo}
-                />
+                <BotonIcono destacado etiqueta="Agregar producto" icono={<PackagePlus size={21} color={color.sobreMarca} />} onPress={nuevo} />
               }
             />
-            {datos.alertas.map((a) => (
-              <View key={a} style={[estilos.alerta, { backgroundColor: color.avisoSuave }]}>
+            {datos.alertas.length > 0 && (
+              <View style={[estilos.alerta, { backgroundColor: color.avisoSuave }]}>
                 <TriangleAlert size={18} color={color.aviso} />
-                <Texto variante="detalle" style={{ flex: 1, color: color.texto }}>
-                  {a.replace(/^⚠️\s*ALERTA:\s*/, '')}
+                <Texto variante="detalle" style={{ flex: 1 }}>
+                  {bajos > 0
+                    ? `${cantidad(bajos, 'producto llegó', 'productos llegaron')} a su mínimo. Resúrtelos pronto.`
+                    : 'Hay productos con aviso de resurtido.'}
                 </Texto>
               </View>
-            ))}
+            )}
             {datos.productos.length > 0 && <Buscador value={busqueda} onChangeText={setBusqueda} placeholder="Buscar producto" />}
           </View>
         }
@@ -163,96 +170,110 @@ export default function InventarioScreen() {
             <ItemGrupo indice={index} total={filtrados.length}>
               <Fila
                 titulo={item.nombre}
-                detalle={`Mínimo ${item.stockMinimo}`}
+                detalle={bajo ? `Por resurtir, mínimo ${item.stockMinimo}` : `Mínimo ${item.stockMinimo}`}
                 izquierda={
-                  <View style={[estilos.stock, { backgroundColor: bajo ? color.peligroSuave : color.exitoSuave }]}>
-                    <Texto variante="subtitulo" cifras style={{ color: bajo ? color.peligro : color.exito }}>
+                  <View style={[estilos.stock, { backgroundColor: bajo ? color.peligroSuave : color.fondo }]}>
+                    <Texto variante="subtitulo" cifras style={{ color: bajo ? color.peligro : color.texto }}>
                       {item.stockActual}
                     </Texto>
                   </View>
                 }
-                derecha={
-                  <View style={estilos.iconos}>
-                    <Pressable
-                      hitSlop={10}
-                      accessibilityLabel={`Editar ${item.nombre}`}
-                      onPress={() =>
-                        setForm({ tipo: 'editar', producto: item, nombre: item.nombre, cantidad: String(item.stockActual), minimo: String(item.stockMinimo) })
-                      }
-                    >
-                      <IconoEditar size={21} color={color.textoTenue} />
-                    </Pressable>
-                    <Pressable hitSlop={10} accessibilityLabel={`Eliminar ${item.nombre}`} onPress={() => eliminar(item)}>
-                      <IconoEliminar size={21} color={color.textoTenue} />
-                    </Pressable>
-                  </View>
-                }
-              >
-                <View style={estilos.pie}>
-                  {bajo ? <Insignia texto="Por resurtir" tono="peligro" /> : <View />}
-                  <Boton
-                    titulo="Vender"
-                    icono={ShoppingCart}
-                    tamano="compacto"
-                    variante="contorno"
-                    deshabilitado={item.stockActual === 0}
-                    onPress={() => setForm({ tipo: 'vender', producto: item, precio: '' })}
-                  />
-                </View>
-              </Fila>
+                onPress={() => setModo({ tipo: 'detalle', producto: item })}
+              />
             </ItemGrupo>
           );
         }}
       />
 
       <Hoja
-        visible={form !== null}
-        titulo={tituloHoja}
-        descripcion={form?.tipo === 'vender' ? 'Se descuenta una pieza y la venta se suma a las finanzas del mes.' : undefined}
-        onCerrar={() => setForm(null)}
-        accion={{ titulo: form?.tipo === 'vender' ? 'Registrar venta' : 'Guardar', onPress: guardar, cargando: guardando }}
+        visible={modo !== null}
+        titulo={modo ? titulos[modo.tipo] : ''}
+        descripcion={modo?.tipo === 'vender' ? `${modo.producto.nombre}. Se descuenta una pieza y la venta se suma a las finanzas del mes.` : undefined}
+        onCerrar={() => setModo(null)}
+        accion={
+          modo && modo.tipo !== 'detalle'
+            ? { titulo: modo.tipo === 'vender' ? 'Registrar venta' : 'Guardar', onPress: guardar, cargando: guardando }
+            : undefined
+        }
       >
-        {form?.tipo === 'vender' ? (
+        {modo?.tipo === 'detalle' && (
+          <>
+            <Superficie style={{ alignItems: 'center', gap: 4, paddingVertical: 20 }}>
+              <Texto variante="detalle" tono="suave">
+                En existencia
+              </Texto>
+              <Texto variante="cifra" cifras style={{ fontSize: 44, lineHeight: 50 }}>
+                {modo.producto.stockActual}
+              </Texto>
+            </Superficie>
+            <Grupo>
+              <ParDato etiqueta="Avisar al llegar a" valor={String(modo.producto.stockMinimo)} />
+            </Grupo>
+            <Boton
+              titulo="Vender una pieza"
+              icono={ShoppingCart}
+              deshabilitado={modo.producto.stockActual === 0}
+              onPress={() => setModo({ tipo: 'vender', producto: modo.producto, precio: '' })}
+            />
+            <View style={estilos.acciones}>
+              <Boton
+                titulo="Editar"
+                icono={IconoEditar}
+                variante="contorno"
+                style={{ flex: 1 }}
+                onPress={() =>
+                  setModo({
+                    tipo: 'editar',
+                    producto: modo.producto,
+                    nombre: modo.producto.nombre,
+                    cantidad: String(modo.producto.stockActual),
+                    minimo: String(modo.producto.stockMinimo),
+                  })
+                }
+              />
+              <Boton titulo="Eliminar" icono={IconoEliminar} variante="peligro" style={{ flex: 1 }} onPress={() => eliminar(modo.producto)} />
+            </View>
+          </>
+        )}
+
+        {modo?.tipo === 'vender' && (
           <Campo
             etiqueta="Precio de venta"
-            value={form.precio}
+            value={modo.precio}
             onChangeText={(v) => actualizar('precio', v)}
             keyboardType="decimal-pad"
             placeholder="0.00"
             autoFocus
           />
-        ) : form ? (
+        )}
+
+        {(modo?.tipo === 'editar' || modo?.tipo === 'nuevo') && (
           <>
-            <Campo etiqueta="Nombre" value={form.nombre} onChangeText={(v) => actualizar('nombre', v)} placeholder="Ej. Guantes de 14 oz" />
-            <View style={{ flexDirection: 'row', gap: 12 }}>
+            <Campo etiqueta="Nombre" value={modo.nombre} onChangeText={(v) => actualizar('nombre', v)} placeholder="Ej. Guantes de 14 oz" />
+            <View style={estilos.acciones}>
               <View style={{ flex: 1 }}>
                 <Campo
-                  etiqueta={form.tipo === 'nuevo' ? 'Piezas' : 'En existencia'}
-                  value={form.cantidad}
+                  etiqueta={modo.tipo === 'nuevo' ? 'Piezas' : 'En existencia'}
+                  value={modo.cantidad}
                   onChangeText={(v) => actualizar('cantidad', v)}
                   keyboardType="number-pad"
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Campo
-                  etiqueta="Avisar al llegar a"
-                  value={form.minimo}
-                  onChangeText={(v) => actualizar('minimo', v)}
-                  keyboardType="number-pad"
-                />
+                <Campo etiqueta="Avisar al llegar a" value={modo.minimo} onChangeText={(v) => actualizar('minimo', v)} keyboardType="number-pad" />
               </View>
             </View>
           </>
-        ) : null}
+        )}
       </Hoja>
     </SafeAreaView>
   );
 }
 
 const estilos = StyleSheet.create({
+  lista: { width: '100%', alignSelf: 'center' },
   cabecera: { gap: 14, marginBottom: 16 },
-  alerta: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12 },
-  stock: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  iconos: { flexDirection: 'row', gap: 18, alignSelf: 'flex-start', paddingTop: 2 },
-  pie: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  alerta: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 14 },
+  stock: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  acciones: { flexDirection: 'row', gap: 10 },
 });

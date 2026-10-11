@@ -4,6 +4,7 @@ import type { ComponentProps } from 'react';
 import { useSesion } from '@/auth/session';
 import { BarraLiquida, type PestanaLiquida } from '@/components/BarraLiquida';
 import { IconoFinanzas, IconoInicio, IconoPagos } from '@/components/iconos/Iconly';
+import { useObjetivoTour } from '@/tour/Tour';
 import { plural } from '@/utils/texto';
 
 // Props de la barra tal como las entrega expo-router (sin depender de @react-navigation directamente)
@@ -18,6 +19,7 @@ const ICONOS: Record<string, PestanaLiquida['icono']> = {
 };
 
 function Barra({ state, descriptors, navigation }: BottomTabBarProps) {
+  const refTour = useObjetivoTour('barra');
   const pestanas: PestanaLiquida[] = state.routes.map((ruta) => {
     const { options } = descriptors[ruta.key];
     return { clave: ruta.key, etiqueta: options.title ?? ruta.name, icono: ICONOS[ruta.name] ?? IconoInicio };
@@ -25,6 +27,7 @@ function Barra({ state, descriptors, navigation }: BottomTabBarProps) {
 
   return (
     <BarraLiquida
+      refContenedor={refTour}
       pestanas={pestanas}
       activa={state.index}
       onCambiar={(i) => {

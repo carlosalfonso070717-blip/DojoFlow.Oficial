@@ -36,7 +36,7 @@ export function Segmentos<T extends string>({ opciones, valor, onCambio, icono: 
             <Texto
               variante="detalle"
               numberOfLines={1}
-              style={{ color: activo ? color.texto : color.textoSuave, fontFamily: activo ? 'Figtree_700Bold' : 'Figtree_500Medium' }}
+              style={{ fontSize: 13, color: activo ? color.texto : color.textoSuave, fontFamily: activo ? 'Figtree_700Bold' : 'Figtree_500Medium' }}
             >
               {o.etiqueta}
               {o.conteo ? ` ${o.conteo}` : ''}
@@ -52,5 +52,5 @@ export function Segmentos<T extends string>({ opciones, valor, onCambio, icono: 
 const estilos = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   contenedor: { flex: 1, flexDirection: 'row', padding: 3 },
-  opcion: { flex: 1, alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4 },
+  opcion: { flex: 1, alignItems: 'center', paddingVertical: 9, paddingHorizontal: 2 },
 });

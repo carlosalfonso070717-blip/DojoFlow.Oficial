@@ -7,8 +7,12 @@ export type Marca = {
   secundario: string;
 };
 
-// Identidad por defecto mientras no hay academia (login, registro)
+// Identidad de DojoFlow (logo, splash). La app sin academia (login, registro) usa el tema neutro.
 export const MARCA_DOJOFLOW: Marca = { primario: '#d90429', secundario: '#14161a' };
+
+// Neutro: tinta sobre gris frío. Se usa cuando todavía no hay academia que dé color
+const NEUTRO_CLARO: Marca = { primario: '#151619', secundario: '#151619' };
+const NEUTRO_OSCURO: Marca = { primario: '#f2f2f3', secundario: '#1b1c20' };
 
 export const fuentes = {
   display: 'BricolageGrotesque_700Bold',
@@ -21,6 +25,7 @@ export const fuentes = {
 
 // Escala tipográfica para móvil (pt), con interlineado proporcional
 export const tipografia = {
+  gigante: { fontFamily: fuentes.display, fontSize: 44, lineHeight: 46, letterSpacing: -1.4 },
   titulo: { fontFamily: fuentes.display, fontSize: 30, lineHeight: 34, letterSpacing: -0.6 },
   encabezado: { fontFamily: fuentes.display, fontSize: 22, lineHeight: 27, letterSpacing: -0.3 },
   subtitulo: { fontFamily: fuentes.cuerpoFuerte, fontSize: 17, lineHeight: 23 },
@@ -36,11 +41,16 @@ export const espacio = { xs: 4, s: 8, m: 12, l: 16, xl: 24, xxl: 32 } as const;
 // Radios con jerarquía: lo más grande contiene, lo más pequeño se toca
 export const radio = { s: 8, m: 12, l: 18, xl: 26, total: 999 } as const;
 
-export function crearTema(marca: Marca, esquema: Esquema) {
+// `marca` null = tema neutro (sin academia)
+export function crearTema(marcaAcademia: Marca | null, esquema: Esquema) {
   const oscuro = esquema === 'dark';
-  // Los neutros llevan un toque del tono de la marca: cada academia se siente propia sin ruido
-  const { h } = hexAHsl(marca.primario);
-  const neutro = (s: number, l: number) => hslAHex({ h, s, l });
+  const esNeutro = marcaAcademia === null;
+  const marca = marcaAcademia ?? (oscuro ? NEUTRO_OSCURO : NEUTRO_CLARO);
+  // Los neutros llevan un toque del tono de la marca: cada academia se siente propia sin ruido.
+  // En el tema neutro el tinte es mínimo y frío.
+  const h = esNeutro ? 225 : hexAHsl(marca.primario).h;
+  const tinte = esNeutro ? 0.35 : 1;
+  const neutro = (s: number, l: number) => hslAHex({ h, s: s * tinte, l });
 
   const fondo = oscuro ? neutro(0.1, 0.065) : neutro(0.14, 0.965);
   const superficie = oscuro ? neutro(0.09, 0.105) : '#ffffff';
@@ -69,7 +79,7 @@ export function crearTema(marca: Marca, esquema: Esquema) {
     marcaPresionada: mezclar(relleno, oscuro ? '#ffffff' : '#000000', 0.15),
     sobreMarca: textoSobre(relleno),
     marcaTexto: asegurarContraste(marca.primario, superficie),
-    marcaSuave: conAlfa(marca.primario, oscuro ? 0.2 : 0.1),
+    marcaSuave: conAlfa(marca.primario, esNeutro ? (oscuro ? 0.1 : 0.06) : oscuro ? 0.2 : 0.1),
 
     secundario: marca.secundario,
     sobreSecundario: textoSobre(marca.secundario),
@@ -84,7 +94,7 @@ export function crearTema(marca: Marca, esquema: Esquema) {
     velo: oscuro ? 'rgba(0,0,0,0.6)' : 'rgba(10,12,16,0.4)',
   };
 
-  return { esquema, oscuro, color, fuentes, tipografia, espacio, radio };
+  return { esquema, oscuro, esNeutro, color, fuentes, tipografia, espacio, radio };
 }
 
 export type Tema = ReturnType<typeof crearTema>;

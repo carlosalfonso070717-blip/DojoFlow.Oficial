@@ -43,8 +43,8 @@ export function Boton({ titulo, onPress, variante = 'primario', tamano = 'normal
         estilos.base,
         {
           backgroundColor: v.fondo,
-          borderRadius: radio.m,
-          minHeight: compacto ? 40 : 52,
+          borderRadius: compacto ? radio.m : radio.m + 2,
+          minHeight: compacto ? 40 : 56,
           paddingHorizontal: compacto ? 14 : 20,
         },
         v.borde && { borderWidth: StyleSheet.hairlineWidth * 2, borderColor: v.borde },

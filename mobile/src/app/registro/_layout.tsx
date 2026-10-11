@@ -1,16 +1,6 @@
 import { Stack } from 'expo-router';
-import { ProveedorRegistro, useRegistro } from '@/onboarding/RegistroContexto';
+import { ProveedorRegistro } from '@/onboarding/RegistroContexto';
 import { ProveedorTema, useTema } from '@/theme';
-
-// El asistente se pinta con los colores que la persona va eligiendo
-function PasosConMarca() {
-  const { borrador } = useRegistro();
-  return (
-    <ProveedorTema marca={{ primario: borrador.colorPrimario, secundario: borrador.colorSecundario }}>
-      <Pasos />
-    </ProveedorTema>
-  );
-}
 
 function Pasos() {
   const { color } = useTema();
@@ -28,10 +18,13 @@ function Pasos() {
   );
 }
 
+// El registro es neutro: aún no hay academia. Su color solo aparece en la vista previa de la credencial.
 export default function RegistroLayout() {
   return (
     <ProveedorRegistro>
-      <PasosConMarca />
+      <ProveedorTema neutro>
+        <Pasos />
+      </ProveedorTema>
     </ProveedorRegistro>
   );
 }

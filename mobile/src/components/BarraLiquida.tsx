@@ -43,6 +43,8 @@ const RESORTE = { damping: 17, stiffness: 190, mass: 0.9 };
 export type PestanaLiquida = { clave: string; etiqueta: string; icono: ComponentType<PropsIcono> };
 
 type Props = {
+  // Para que el tour pueda iluminar la barra
+  refContenedor?: (nodo: View | null) => void;
   pestanas: PestanaLiquida[];
   activa: number;
   onCambiar: (indice: number) => void;
@@ -80,7 +82,7 @@ function contorno(ancho: number, cx: number, gota: number) {
   ].join(' ');
 }
 
-export function BarraLiquida({ pestanas, activa, onCambiar }: Props) {
+export function BarraLiquida({ pestanas, activa, onCambiar, refContenedor }: Props) {
   const { color, oscuro } = useTema();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -126,6 +128,7 @@ export function BarraLiquida({ pestanas, activa, onCambiar }: Props) {
       accessibilityRole="tablist"
     >
       <View style={{ width: ancho, height: altoTotal }}>
+        <View ref={refContenedor} collapsable={false} pointerEvents="none" style={[StyleSheet.absoluteFill, { top: HOLGURA }]} />
         {/* Resplandor amplio detrás de la barra, sigue a la pestaña activa */}
         <Svg width={ancho} height={altoTotal + 40} style={[StyleSheet.absoluteFill, { top: -20, overflow: 'visible' }]} pointerEvents="none">
           <Defs>

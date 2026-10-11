@@ -189,3 +189,29 @@ export const obtenerFinanzas = () => api<RegistroFinanciero[]>('/Finanzas');
 
 export const eliminarMesFinanzas = (mesAnio: string) =>
   api<Mensaje>(`/Finanzas/${encodeURIComponent(mesAnio)}`, { method: 'DELETE' });
+
+// ===== AJUSTES DE LA ACADEMIA (solo el dueño puede cambiarlos) =====
+export type ModoCobro = 'Paquete' | 'PorClase';
+
+export type ConfiguracionCobro = { modoCobro: ModoCobro; preciosPaquete: number[]; diaVencimiento: number };
+
+export type ConfiguracionAcademia = { marca: MarcaAcademia; cobro: ConfiguracionCobro };
+
+export const obtenerConfiguracion = () => api<ConfiguracionAcademia>('/Academia');
+
+export const actualizarMarca = (datos: { nombre: string; colorPrimario: string; colorSecundario: string; terminoAlumno: string }) =>
+  api<MarcaAcademia>('/Academia/marca', { method: 'PUT', body: JSON.stringify(datos) });
+
+export const configurarCobro = (datos: ConfiguracionCobro) =>
+  api<ConfiguracionCobro>('/Academia/cobro', { method: 'PUT', body: JSON.stringify(datos) });
+
+export const quitarLogo = () => api<MarcaAcademia>('/Academia/logo', { method: 'DELETE' });
+
+export const crearClase = (datos: { nombre: string; precio: number }) => post<Clase>('/Clases', { ...datos, activa: true });
+
+export const editarClase = (id: string, datos: { nombre: string; precio: number; activa: boolean }) =>
+  api<Clase>(`/Clases/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
+
+export const eliminarClase = (id: string) => api<Mensaje>(`/Clases/${id}`, { method: 'DELETE' });
+
+export const marcarTourCompletado = () => post<Mensaje>('/Auth/tour-completado');

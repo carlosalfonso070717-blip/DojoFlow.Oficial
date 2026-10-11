@@ -27,7 +27,7 @@ export const Campo = forwardRef<TextInput, Props>(function Campo(
   const colorBorde = error ? color.peligro : enfocado ? color.marcaTexto : color.borde;
 
   return (
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: 8 }}>
       <Texto variante="detalle" tono="suave">
         {etiqueta}
       </Texto>
@@ -37,7 +37,7 @@ export const Campo = forwardRef<TextInput, Props>(function Campo(
           {
             backgroundColor: color.superficie,
             borderColor: colorBorde,
-            borderRadius: radio.m,
+            borderRadius: radio.m + 2,
             borderWidth: enfocado || error ? 1.5 : StyleSheet.hairlineWidth * 2,
           },
         ]}
@@ -84,6 +84,6 @@ export const Campo = forwardRef<TextInput, Props>(function Campo(
 const sinContornoWeb = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
 const estilos = StyleSheet.create({
-  caja: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, minHeight: 52 },
-  input: { flex: 1, paddingVertical: 12 },
+  caja: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 56 },
+  input: { flex: 1, paddingVertical: 14 },
 });

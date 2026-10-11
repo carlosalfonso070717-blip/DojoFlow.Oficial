@@ -46,52 +46,56 @@ export function Hoja({ visible, titulo, descripcion, onCerrar, accion, children 
           <Pressable style={{ flex: 1 }} onPress={onCerrar} accessibilityLabel="Cerrar" />
         </Animated.View>
 
-        <Animated.View
-          style={[
-            estilos.panel,
-            {
-              backgroundColor: color.superficieElevada,
-              borderTopLeftRadius: radio.xl,
-              borderTopRightRadius: radio.xl,
-              paddingBottom: Math.max(insets.bottom, 16),
-            },
-            panel,
-          ]}
-        >
-          <View style={[estilos.asa, { backgroundColor: color.bordeFuerte }]} />
-          <View style={{ gap: 4, marginBottom: 16 }}>
-            <Texto variante="encabezado">{titulo}</Texto>
-            {descripcion && (
-              <Texto variante="detalle" tono="suave">
-                {descripcion}
-              </Texto>
-            )}
-          </View>
-
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16 }} style={{ flexGrow: 0 }}>
-            {children}
-          </ScrollView>
-
-          {accion && (
-            <View style={estilos.acciones}>
-              <Boton titulo="Cancelar" variante="contorno" onPress={onCerrar} style={{ flex: 1 }} />
-              <Boton
-                titulo={accion.titulo}
-                onPress={accion.onPress}
-                cargando={accion.cargando}
-                variante={accion.variante ?? 'primario'}
-                style={{ flex: 1.4 }}
-              />
+        {/* El panel se centra con ancho máximo: en tableta no ocupa toda la pantalla */}
+        <View style={estilos.ancla} pointerEvents="box-none">
+          <Animated.View
+            style={[
+              estilos.panel,
+              {
+                backgroundColor: color.superficieElevada,
+                borderTopLeftRadius: radio.xl,
+                borderTopRightRadius: radio.xl,
+                paddingBottom: Math.max(insets.bottom, 16),
+              },
+              panel,
+            ]}
+          >
+            <View style={[estilos.asa, { backgroundColor: color.bordeFuerte }]} />
+            <View style={{ gap: 6, marginBottom: 20 }}>
+              <Texto variante="encabezado">{titulo}</Texto>
+              {descripcion && (
+                <Texto variante="detalle" tono="suave">
+                  {descripcion}
+                </Texto>
+              )}
             </View>
-          )}
-        </Animated.View>
+
+            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16 }} style={{ flexGrow: 0 }}>
+              {children}
+            </ScrollView>
+
+            {accion && (
+              <View style={estilos.acciones}>
+                <Boton titulo="Cancelar" variante="contorno" onPress={onCerrar} style={{ flex: 1 }} />
+                <Boton
+                  titulo={accion.titulo}
+                  onPress={accion.onPress}
+                  cargando={accion.cargando}
+                  variante={accion.variante ?? 'primario'}
+                  style={{ flex: 1.4 }}
+                />
+              </View>
+            )}
+          </Animated.View>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const estilos = StyleSheet.create({
-  panel: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 10, maxHeight: '90%' },
+  ancla: { position: 'absolute', left: 0, right: 0, bottom: 0, top: 0, justifyContent: 'flex-end', alignItems: 'center' },
+  panel: { width: '100%', maxWidth: 600, paddingHorizontal: 24, paddingTop: 10, maxHeight: '90%' },
   asa: { width: 40, height: 5, borderRadius: 3, alignSelf: 'center', marginBottom: 16 },
-  acciones: { flexDirection: 'row', gap: 10, marginTop: 20 },
+  acciones: { flexDirection: 'row', gap: 10, marginTop: 24 },
 });

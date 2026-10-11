@@ -99,7 +99,26 @@ export function ItemGrupo({ indice, total, children }: { indice: number; total: 
 }
 
 const estilos = StyleSheet.create({
+  par: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingHorizontal: 16, paddingVertical: 14, minHeight: 52 },
   superficie: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   separador: { height: StyleSheet.hairlineWidth, marginLeft: 16 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14, minHeight: 56 },
 });
+
+// Par etiqueta/valor para hojas de detalle (Cuota mensual: $850.00)
+export function ParDato({ etiqueta, valor, children }: { etiqueta: string; valor?: string; children?: ReactNode }) {
+  return (
+    <View style={estilos.par}>
+      <Texto variante="detalle" tono="suave">
+        {etiqueta}
+      </Texto>
+      {valor !== undefined ? (
+        <Texto variante="cuerpoFuerte" cifras style={{ textAlign: 'right', flexShrink: 1 }}>
+          {valor}
+        </Texto>
+      ) : (
+        children
+      )}
+    </View>
+  );
+}

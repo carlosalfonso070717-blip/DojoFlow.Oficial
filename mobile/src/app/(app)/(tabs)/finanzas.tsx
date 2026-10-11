@@ -1,11 +1,13 @@
 import { WifiOff } from 'lucide-react-native';
-import { IconoEliminar, IconoFinanzas } from '@/components/iconos/Iconly';
-import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { eliminarMesFinanzas, obtenerFinanzas, type RegistroFinanciero } from '@/api/endpoints';
-import { confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, ItemGrupo, Superficie, Texto } from '@/components/ui';
-import { useRecurso } from '@/hooks/useRecurso';
 import { useEspacioBarra } from '@/components/BarraLiquida';
+import { IconoEliminar, IconoFinanzas } from '@/components/iconos/Iconly';
+import { Boton, confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, Grupo, Hoja, ItemGrupo, ParDato, Superficie, Texto } from '@/components/ui';
+import { useDiseno } from '@/hooks/useDiseno';
+import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -18,9 +20,11 @@ function nombreMes(mesAnio: string) {
 }
 
 export default function FinanzasScreen() {
+  const { color, radio } = useTema();
+  const { margen, maximo } = useDiseno();
   const espacioBarra = useEspacioBarra();
-  const { color, espacio, radio } = useTema();
   const { datos, cargando, error, recargar } = useRecurso(obtenerFinanzas, [] as RegistroFinanciero[]);
+  const [seleccionado, setSeleccionado] = useState<RegistroFinanciero | null>(null);
   // El primer registro del historial es el mes más reciente con movimientos
   const actual = datos[0];
   const total = actual?.total ?? 0;
@@ -29,6 +33,7 @@ export default function FinanzasScreen() {
   function borrarMes(mesAnio: string) {
     confirmar(`¿Borrar ${nombreMes(mesAnio)}?`, 'El historial de ese mes se eliminará de forma permanente.', 'Borrar', async () => {
       await eliminarMesFinanzas(mesAnio);
+      setSeleccionado(null);
       recargar();
     });
   }
@@ -38,15 +43,15 @@ export default function FinanzasScreen() {
       <FlatList
         data={datos}
         keyExtractor={(f) => f.mesAnio}
-        contentContainerStyle={{ padding: espacio.l, paddingBottom: espacioBarra }}
+        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingBottom: espacioBarra, maxWidth: maximo + margen * 2 }]}
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
           <View style={estilos.cabecera}>
             <Encabezado titulo="Finanzas" />
 
             {actual && (
-              <Superficie style={{ gap: 16 }}>
-                <View style={{ gap: 2 }}>
+              <Superficie style={{ gap: 20, padding: 20 }}>
+                <View style={{ gap: 4 }}>
                   <Texto variante="detalle" tono="suave">
                     Ingresos de {nombreMes(actual.mesAnio).toLowerCase()}
                   </Texto>
@@ -62,16 +67,12 @@ export default function FinanzasScreen() {
 
                 <View style={estilos.desglose}>
                   <Desglose etiqueta="Cuotas" valor={actual.ingresosMensualidades} colorPunto={color.marca} />
-                  <Desglose
-                    etiqueta={`Ventas (${actual.ventasRealizadas})`}
-                    valor={actual.ingresosVentas}
-                    colorPunto={color.marcaSuave}
-                  />
+                  <Desglose etiqueta={`Ventas (${actual.ventasRealizadas})`} valor={actual.ingresosVentas} colorPunto={color.marcaSuave} />
                 </View>
               </Superficie>
             )}
 
-            {datos.length > 1 && (
+            {datos.length > 0 && (
               <Texto variante="detalle" tono="suave" style={{ paddingHorizontal: 4, marginTop: 8 }}>
                 Historial
               </Texto>
@@ -85,33 +86,41 @@ export default function FinanzasScreen() {
             <EstadoVacio icono={IconoFinanzas} titulo="Aún no hay movimientos" mensaje="Los cobros y las ventas se suman aquí automáticamente." />
           )
         }
-        // El mes actual ya se muestra arriba; la lista es el historial completo
         renderItem={({ item, index }) => (
           <ItemGrupo indice={index} total={datos.length}>
             <Fila
               titulo={nombreMes(item.mesAnio)}
-              detalle={`Cuotas ${formatoMoneda(item.ingresosMensualidades)}, ventas ${formatoMoneda(item.ingresosVentas)}`}
+              detalle={`${item.ventasRealizadas} ${item.ventasRealizadas === 1 ? 'venta' : 'ventas'}`}
               derecha={
-                <View style={estilos.derecha}>
-                  <Texto variante="cuerpoFuerte" cifras>
-                    {formatoMoneda(item.total)}
-                  </Texto>
-                  <Pressable hitSlop={10} onPress={() => borrarMes(item.mesAnio)} accessibilityLabel={`Borrar ${nombreMes(item.mesAnio)}`}>
-                    <IconoEliminar size={20} color={color.textoTenue} />
-                  </Pressable>
-                </View>
+                <Texto variante="cuerpoFuerte" cifras>
+                  {formatoMoneda(item.total)}
+                </Texto>
               }
+              onPress={() => setSeleccionado(item)}
             />
           </ItemGrupo>
         )}
       />
+
+      <Hoja visible={!!seleccionado} titulo={seleccionado ? nombreMes(seleccionado.mesAnio) : ''} onCerrar={() => setSeleccionado(null)}>
+        {seleccionado && (
+          <>
+            <Grupo>
+              <ParDato etiqueta="Cuotas cobradas" valor={formatoMoneda(seleccionado.ingresosMensualidades)} />
+              <ParDato etiqueta={`Ventas (${seleccionado.ventasRealizadas})`} valor={formatoMoneda(seleccionado.ingresosVentas)} />
+              <ParDato etiqueta="Total" valor={formatoMoneda(seleccionado.total)} />
+            </Grupo>
+            <Boton titulo="Borrar este mes" icono={IconoEliminar} variante="peligro" onPress={() => borrarMes(seleccionado.mesAnio)} />
+          </>
+        )}
+      </Hoja>
     </SafeAreaView>
   );
 }
 
 function Desglose({ etiqueta, valor, colorPunto }: { etiqueta: string; valor: number; colorPunto: string }) {
   return (
-    <View style={{ flex: 1, gap: 2 }}>
+    <View style={{ flex: 1, gap: 4 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorPunto }} />
         <Texto variante="detalle" tono="suave">
@@ -126,8 +135,8 @@ function Desglose({ etiqueta, valor, colorPunto }: { etiqueta: string; valor: nu
 }
 
 const estilos = StyleSheet.create({
+  lista: { width: '100%', alignSelf: 'center' },
   cabecera: { gap: 14, marginBottom: 8 },
   barra: { height: 10, flexDirection: 'row', overflow: 'hidden' },
   desglose: { flexDirection: 'row', gap: 16 },
-  derecha: { flexDirection: 'row', alignItems: 'center', gap: 14 },
 });

@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import {
+  Check,
   Dumbbell,
   Languages,
   Music,
@@ -66,14 +67,17 @@ export default function PasoTipo() {
                 estilos.tarjeta,
                 {
                   borderRadius: radio.l,
-                  backgroundColor: activo ? color.marcaSuave : color.superficie,
-                  borderColor: activo ? t.colorPrimario : color.borde,
+                  backgroundColor: color.superficie,
+                  borderColor: activo ? color.texto : color.borde,
                   borderWidth: activo ? 2 : StyleSheet.hairlineWidth * 2,
                 },
               ]}
             >
-              <View style={[estilos.icono, { backgroundColor: t.colorPrimario }]}>
-                <Icono size={22} color="#ffffff" strokeWidth={2.2} />
+              <View style={estilos.cabecera}>
+                <View style={[estilos.icono, { backgroundColor: activo ? color.marca : color.fondo }]}>
+                  <Icono size={22} color={activo ? color.sobreMarca : color.texto} strokeWidth={1.8} />
+                </View>
+                {activo && <Check size={18} color={color.texto} strokeWidth={2.6} />}
               </View>
               <Texto variante="cuerpoFuerte">{t.tipoNegocio}</Texto>
               <Texto variante="pequeno" tono="tenue" numberOfLines={1}>
@@ -89,6 +93,7 @@ export default function PasoTipo() {
 
 const estilos = StyleSheet.create({
   rejilla: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  tarjeta: { width: '48%', flexGrow: 1, padding: 14, gap: 6 },
-  icono: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  tarjeta: { width: '47%', flexGrow: 1, padding: 16, gap: 4 },
+  cabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
+  icono: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
 });

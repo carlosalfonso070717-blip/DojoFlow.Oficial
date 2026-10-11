@@ -14,3 +14,13 @@ export function saludo(fecha = new Date()): string {
   if (hora < 19) return 'Buenas tardes';
   return 'Buenas noches';
 }
+
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+// "15/10/2026" → "15 oct" (o "15 oct 2025" si no es del año en curso)
+export function fechaCorta(ddmmyyyy: string, hoy = new Date()): string {
+  const [d, m, a] = ddmmyyyy.split('/').map(Number);
+  if (!d || !m || !a) return ddmmyyyy;
+  const base = `${d} ${MESES_CORTOS[m - 1]}`;
+  return a === hoy.getFullYear() ? base : `${base} ${a}`;
+}
