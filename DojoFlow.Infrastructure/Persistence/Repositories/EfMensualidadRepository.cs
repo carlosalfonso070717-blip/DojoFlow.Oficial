@@ -15,7 +15,9 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
 
         public async Task<List<Mensualidad>> ObtenerTodasAsync()
         {
-            return await _context.Mensualidades.AsNoTracking().ToListAsync();
+            return await _context.Mensualidades.AsNoTracking()
+                .OrderByDescending(m => m.FechaVencimiento)
+                .ToListAsync();
         }
 
         public async Task<Mensualidad?> ObtenerPorIdAsync(Guid id)
@@ -23,9 +25,12 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
             return await _context.Mensualidades.FirstOrDefaultAsync(m => m.Id == id);
         }
 
-        public async Task<Mensualidad?> ObtenerPorAlumnoIdAsync(Guid alumnoId)
+        public async Task<List<Mensualidad>> ObtenerPorAlumnoAsync(Guid alumnoId)
         {
-            return await _context.Mensualidades.FirstOrDefaultAsync(m => m.AlumnoId == alumnoId);
+            return await _context.Mensualidades.AsNoTracking()
+                .Where(m => m.AlumnoId == alumnoId)
+                .OrderBy(m => m.FechaVencimiento)
+                .ToListAsync();
         }
 
         public async Task AgregarAsync(Mensualidad mensualidad)

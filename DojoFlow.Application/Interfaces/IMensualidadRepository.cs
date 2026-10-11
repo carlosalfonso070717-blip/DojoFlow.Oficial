@@ -6,7 +6,7 @@ namespace DojoFlow.Application.Interfaces
     {
         Task<List<Mensualidad>> ObtenerTodasAsync();
         Task<Mensualidad?> ObtenerPorIdAsync(Guid id);
-        Task<Mensualidad?> ObtenerPorAlumnoIdAsync(Guid alumnoId);
+        Task<List<Mensualidad>> ObtenerPorAlumnoAsync(Guid alumnoId);
         Task AgregarAsync(Mensualidad mensualidad);
         Task ActualizarAsync(Mensualidad mensualidad);
         Task EliminarPorAlumnoIdAsync(Guid alumnoId);

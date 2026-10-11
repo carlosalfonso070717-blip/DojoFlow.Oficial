@@ -2,6 +2,7 @@ using DojoFlow.API.Services;
 using DojoFlow.Application.Interfaces;
 using DojoFlow.Application.UseCases.Academias;
 using DojoFlow.Application.UseCases.Alumnos;
+using DojoFlow.Application.UseCases.Mensualidades;
 using DojoFlow.Domain.Entities;
 using DojoFlow.Infrastructure.Persistence;
 using DojoFlow.Infrastructure.Persistence.Repositories;
@@ -57,6 +58,7 @@ else
     builder.Services.AddHttpClient<IEmailSender, BrevoEmailSender>();
 builder.Services.AddScoped<RegistrarAlumnoUseCase>();
 builder.Services.AddScoped<RegistrarAcademiaUseCase>();
+builder.Services.AddScoped<ActualizarMensualidadesUseCase>();
 
 // RECUPERAMOS LA POLÍTICA DE CORS AQUÍ
 builder.Services.AddCors(options =>

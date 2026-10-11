@@ -1,6 +1,8 @@
 using DojoFlow.API.Services;
 using DojoFlow.Application.Interfaces;
+using DojoFlow.Application.UseCases.Mensualidades;
 using DojoFlow.Domain.Entities;
+using DojoFlow.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,17 +17,20 @@ namespace DojoFlow.API.Controllers
         private readonly IMensualidadRepository _mensualidadRepository;
         private readonly ITenantContext _tenant;
         private readonly GeneradorTokens _tokens;
+        private readonly ActualizarMensualidadesUseCase _actualizarMensualidades;
 
         public AsistenciasController(
             IAlumnoRepository alumnoRepository,
             IMensualidadRepository mensualidadRepository,
             ITenantContext tenant,
-            GeneradorTokens tokens)
+            GeneradorTokens tokens,
+            ActualizarMensualidadesUseCase actualizarMensualidades)
         {
             _alumnoRepository = alumnoRepository;
             _mensualidadRepository = mensualidadRepository;
             _tenant = tenant;
             _tokens = tokens;
+            _actualizarMensualidades = actualizarMensualidades;
         }
 
         // Vincula una tablet a la academia: un coach la activa y la tablet queda
@@ -75,8 +80,10 @@ namespace DojoFlow.API.Controllers
 
         private async Task<string> ObtenerEstatusFinancieroAsync(Guid alumnoId)
         {
-            var mensualidad = await _mensualidadRepository.ObtenerPorAlumnoIdAsync(alumnoId);
-            return mensualidad != null ? mensualidad.EstadoActual : "Sin Recibo";
+            // Primero se ponen al día sus recibos (vencer / generar el del mes) y luego se evalúa
+            await _actualizarMensualidades.EjecutarParaAlumnoAsync(alumnoId, DateTime.UtcNow);
+            var recibos = await _mensualidadRepository.ObtenerPorAlumnoAsync(alumnoId);
+            return CicloMensualidades.EstatusActual(recibos);
         }
     }
 }
