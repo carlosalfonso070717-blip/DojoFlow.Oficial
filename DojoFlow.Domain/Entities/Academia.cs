@@ -38,6 +38,9 @@ namespace DojoFlow.Domain.Entities
         public string Moneda { get; set; } = "MXN";
         public int DiaVencimiento { get; set; } = 15;
 
+        // Registrador de asistencias con PIN (antes "kiosco"). Es opcional: no todos los negocios lo usan
+        public bool AsistenciasActivas { get; set; }
+
         public DateTime FechaCreacion { get; set; }
 
         // Código del enlace público del catálogo (dojoflow.club/catalogo/{codigo}); null = no compartido

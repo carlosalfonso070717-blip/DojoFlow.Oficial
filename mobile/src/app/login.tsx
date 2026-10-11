@@ -115,11 +115,11 @@ export default function LoginScreen() {
           onPress={() => router.push('/kiosco')}
           style={[estilos.kiosco, { borderColor: color.borde, backgroundColor: color.superficie }]}
           accessibilityRole="button"
-          accessibilityLabel="Abrir kiosco"
+          accessibilityLabel="Abrir registrador de asistencias"
         >
           <Tablet size={16} color={color.texto} />
           <Texto variante="pequeno" style={{ fontFamily: 'Figtree_600SemiBold' }}>
-            Kiosco
+            Asistencias
           </Texto>
         </Pressable>
       )}

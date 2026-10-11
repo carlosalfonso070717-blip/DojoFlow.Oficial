@@ -5,6 +5,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DojoFlow.API.Controllers
 {
+    public class ConfigurarAsistenciasRequest
+    {
+        public bool Activas { get; set; }
+    }
+
     public class ActualizarMarcaRequest
     {
         public string Nombre { get; set; } = string.Empty;
@@ -48,6 +53,7 @@ namespace DojoFlow.API.Controllers
             a.ColorSecundario,
             a.TerminoAlumno,
             a.Moneda,
+            a.AsistenciasActivas,
             LogoUrl = a.Logo == null ? null : $"/api/Academia/{a.Id}/logo?v={a.LogoVersion}"
         };
 
@@ -106,6 +112,19 @@ namespace DojoFlow.API.Controllers
                 return BadRequest(new { Error = ex.Message });
             }
 
+            await _academiaRepository.ActualizarAsync(academia);
+            return Ok(AMarca(academia));
+        }
+
+        // Activa o desactiva el registrador de asistencias de la academia
+        [Authorize(Roles = Roles.Dueno)]
+        [HttpPut("asistencias")]
+        public async Task<IActionResult> ConfigurarAsistencias([FromBody] ConfigurarAsistenciasRequest request)
+        {
+            var academia = await _academiaRepository.ObtenerPorIdAsync(_tenant.AcademiaId);
+            if (academia == null) return NotFound();
+
+            academia.AsistenciasActivas = request.Activas;
             await _academiaRepository.ActualizarAsync(academia);
             return Ok(AMarca(academia));
         }

@@ -57,7 +57,7 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
     {
       id: 'inscribir',
       titulo: `Inscribe a tu primer ${termino.toLowerCase()}`,
-      texto: 'Cada inscripción genera un PIN para el kiosco y su primer recibo.',
+      texto: 'Cada inscripción genera su PIN para registrar asistencia y su primer recibo.',
     },
     {
       id: 'barra',

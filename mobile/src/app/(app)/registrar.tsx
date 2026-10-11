@@ -78,7 +78,7 @@ export default function InscribirScreen() {
         </View>
         <Superficie style={{ alignItems: 'center', gap: 6, alignSelf: 'stretch', borderRadius: radio.xl }}>
           <Texto variante="detalle" tono="suave">
-            PIN para el kiosco
+            PIN para registrar asistencia
           </Texto>
           <Texto variante="cifra" cifras style={{ fontSize: 48, lineHeight: 54, letterSpacing: 6 }} selectable>
             {resultado.claveKioscoAsignada}

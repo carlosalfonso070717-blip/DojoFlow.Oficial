@@ -33,7 +33,7 @@ export default function PasoLogo() {
     <PantallaPaso
       paso="logo"
       titulo="Sube tu logo"
-      descripcion="Aparece en la credencial, en el kiosco y en tu perfil. Funciona mejor una imagen cuadrada."
+      descripcion="Aparece en la credencial, en el registrador de asistencias y en tu perfil. Funciona mejor una imagen cuadrada."
       continuar={{ onPress: siguiente, titulo: borrador.logo ? 'Continuar' : 'Elegir de mi galería', ...(borrador.logo ? {} : { onPress: elegir, cargando }) }}
       secundaria={borrador.logo ? undefined : { titulo: 'Omitir por ahora', onPress: siguiente }}
     >

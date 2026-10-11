@@ -70,6 +70,7 @@ export function ProveedorRegistro({ children }: { children: ReactNode }) {
       colorSecundario: borrador.colorSecundario,
       terminoAlumno: borrador.terminoAlumno,
       moneda: 'MXN',
+      asistenciasActivas: false,
       logoUrl: borrador.logo?.uri ?? null,
     }),
     [borrador],

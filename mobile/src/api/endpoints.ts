@@ -45,6 +45,8 @@ export type MarcaAcademia = {
   terminoAlumno: string;
   moneda: string;
   logoUrl: string | null;
+  // Registrador de asistencias con PIN (opcional por academia)
+  asistenciasActivas: boolean;
 };
 
 export type Perfil = {
@@ -234,3 +236,20 @@ export const marcarTourCompletado = () => post<Mensaje>('/Auth/tour-completado')
 export const obtenerEnlaceCatalogo = () => post<{ url: string }>('/Catalogo/enlace');
 
 export const renovarEnlaceCatalogo = () => post<{ url: string }>('/Catalogo/enlace/renovar');
+
+// ===== REGISTRADOR DE ASISTENCIAS =====
+export const configurarAsistencias = (activas: boolean) =>
+  api<MarcaAcademia>('/Academia/asistencias', { method: 'PUT', body: JSON.stringify({ activas }) });
+
+export type RegistroAsistencia = {
+  id: string;
+  alumnoId: string;
+  nombreAlumno: string;
+  // ISO en UTC
+  fechaHora: string;
+  permitirAcceso: boolean;
+  estatusFinanciero: string;
+};
+
+export const obtenerAsistencias = (desde: Date, hasta: Date) =>
+  api<RegistroAsistencia[]>(`/Asistencias?desde=${encodeURIComponent(desde.toISOString())}&hasta=${encodeURIComponent(hasta.toISOString())}`);

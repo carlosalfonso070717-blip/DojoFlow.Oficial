@@ -53,10 +53,10 @@ function SinVincular() {
     <SafeAreaView style={[estilos.centro, { backgroundColor: color.fondo, padding: 32, gap: 14 }]}>
       <IconoCandado size={44} color={color.textoSuave} />
       <Texto variante="encabezado" style={{ textAlign: 'center' }}>
-        Este kiosco no está vinculado
+        Este registrador no está vinculado
       </Texto>
       <Texto variante="cuerpo" tono="suave" style={{ textAlign: 'center', maxWidth: 360 }}>
-        Inicia sesión como coach en esta tablet y toca “Abrir kiosco” en Inicio.
+        Inicia sesión en esta tablet, activa el registrador en Ajustes y toca “Abrir registrador de asistencias”.
       </Texto>
       <Boton titulo="Volver" variante="contorno" onPress={salir} style={{ marginTop: 8, minWidth: 200 }} />
     </SafeAreaView>
@@ -116,7 +116,7 @@ function Terminal({ academia, tokenKiosco }: { academia: MarcaAcademia | null; t
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: color.fondo }}>
-      <Pressable onPress={salir} style={estilos.salir} hitSlop={14} accessibilityRole="button" accessibilityLabel="Salir del kiosco">
+      <Pressable onPress={salir} style={estilos.salir} hitSlop={14} accessibilityRole="button" accessibilityLabel="Salir del registrador de asistencias">
         <X size={26} color={color.textoTenue} />
       </Pressable>
 

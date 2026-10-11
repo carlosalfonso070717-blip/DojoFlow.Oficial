@@ -152,7 +152,7 @@ export default function AlumnosScreen() {
           <>
             <Superficie style={{ alignItems: 'center', gap: 4, paddingVertical: 20 }}>
               <Texto variante="detalle" tono="suave">
-                PIN para el kiosco
+                PIN para registrar asistencia
               </Texto>
               <Texto variante="cifra" cifras style={{ fontSize: 40, lineHeight: 46, letterSpacing: 6 }} selectable>
                 {seleccionado.claveKiosco}

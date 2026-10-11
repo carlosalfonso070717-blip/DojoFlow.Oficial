@@ -43,7 +43,7 @@ export default function MarcaScreen() {
   return (
     <PantallaSecundaria
       titulo="Nombre y colores"
-      descripcion="Así se ve tu academia en la app, el kiosco y la credencial."
+      descripcion="Así se ve tu academia en la app, el registrador de asistencias y la credencial."
       pie={<Boton titulo="Guardar cambios" onPress={guardar} cargando={guardando} deshabilitado={!cambios || nombre.trim().length < 2 || termino.trim().length < 2} />}
     >
       <Credencial

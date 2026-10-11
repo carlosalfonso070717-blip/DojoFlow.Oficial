@@ -22,8 +22,8 @@ export function useDiseno() {
     maximoEscritorio: 1240,
     // Ancho máximo de las secciones con lista (Alumnos, Cobros, Inventario, Finanzas)
     anchoSeccion: esEscritorio ? 1240 : esTableta ? 720 : 560,
-    // Aire arriba del título de cada sección (en el celular ya lo da el área segura)
-    arriba: esEscritorio ? 36 : 0,
+    // Aire arriba del título de cada sección (se suma al área segura del celular)
+    arriba: esEscritorio ? 36 : 14,
     // Columnas de tarjetas para las listas: 1 en celular, más en escritorio según el espacio
     columnas: esEscritorio ? (width >= 1700 ? 4 : width >= 1280 ? 3 : 2) : 1,
   };

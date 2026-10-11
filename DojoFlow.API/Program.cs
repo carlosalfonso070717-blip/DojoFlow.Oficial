@@ -50,6 +50,7 @@ builder.Services.AddScoped<IRegistroFinancieroRepository, EfRegistroFinancieroRe
 builder.Services.AddScoped<IUsuarioCoachRepository, EfUsuarioCoachRepository>();
 builder.Services.AddScoped<IVerificacionEmailRepository, EfVerificacionEmailRepository>();
 builder.Services.AddScoped<IImagenRepository, EfImagenRepository>();
+builder.Services.AddScoped<IAsistenciaRepository, EfAsistenciaRepository>();
 // En desarrollo sin llave de Brevo los correos van al log; en producción siempre se usa Brevo
 var brevoSinConfigurar = string.IsNullOrWhiteSpace(builder.Configuration["Brevo:ApiKey"])
     || builder.Configuration["Brevo:ApiKey"]!.StartsWith("TU_");

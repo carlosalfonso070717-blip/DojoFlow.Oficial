@@ -1,14 +1,22 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { CircleCheck, Package, ShoppingCart, Tablet, TriangleAlert, Users } from 'lucide-react-native';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { ChevronRight, CircleCheck, ClipboardCheck, Package, ShoppingCart, Tablet, TrendingDown, TrendingUp, TriangleAlert, Users } from 'lucide-react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { obtenerAlertasInventario, obtenerAlumnos, obtenerFinanzas, obtenerMensualidades, type MarcaAcademia, type RegistroFinanciero } from '@/api/endpoints';
+import {
+  obtenerAlertasInventario,
+  obtenerAlumnos,
+  obtenerAsistencias,
+  obtenerFinanzas,
+  obtenerMensualidades,
+  type MarcaAcademia,
+  type RegistroFinanciero,
+} from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
-import { GraficaIngresos, type MesGrafica } from '@/components/GraficaIngresos';
+import { GraficaBarras } from '@/components/GraficaBarras';
 import { IconoAgregarAlumno, IconoAjustes, IconoPagos } from '@/components/iconos/Iconly';
 import { IconoTonal, Indicador, Rejilla, Tarjeta, TarjetaAccion, TituloSeccion, useSombra } from '@/components/Tarjetas';
 import { Avatar, Boton, Fila, formatoCorto, formatoMoneda, Grupo, Presionable, Texto } from '@/components/ui';
@@ -26,38 +34,47 @@ const MESES_GRAFICA = 6;
 // Mismo formato que guarda la API: "10-2026"
 const claveMes = (fecha: Date) => `${String(fecha.getMonth() + 1).padStart(2, '0')}-${fecha.getFullYear()}`;
 
+type Mes = { clave: string; corto: string; largo: string; total: number; cuotas: number; ventas: number; nVentas: number };
+
 // Los últimos meses, del más viejo al actual; los meses sin movimientos valen 0
-function mesesRecientes(finanzas: RegistroFinanciero[]): MesGrafica[] {
+function mesesRecientes(finanzas: RegistroFinanciero[]): Mes[] {
   const hoy = new Date();
   return Array.from({ length: MESES_GRAFICA }, (_, i) => {
     const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - (MESES_GRAFICA - 1 - i), 1);
     const nombre = MESES[fecha.getMonth()];
+    const registro = finanzas.find((f) => f.mesAnio === claveMes(fecha));
     return {
       clave: claveMes(fecha),
       corto: nombre.slice(0, 3),
       largo: nombre[0].toUpperCase() + nombre.slice(1),
-      valor: finanzas.find((f) => f.mesAnio === claveMes(fecha))?.total ?? 0,
+      total: registro?.total ?? 0,
+      cuotas: registro?.ingresosMensualidades ?? 0,
+      ventas: registro?.ingresosVentas ?? 0,
+      nVentas: registro?.ventasRealizadas ?? 0,
     };
   });
 }
 
 const cargarResumen = async () => {
-  const [alumnos, recibos, finanzas, alertas] = await Promise.all([
+  const inicioHoy = new Date();
+  inicioHoy.setHours(0, 0, 0, 0);
+  const [alumnos, recibos, finanzas, alertas, asistencias] = await Promise.all([
     obtenerAlumnos(),
     obtenerMensualidades(),
     obtenerFinanzas(),
     obtenerAlertasInventario(),
+    // Si la academia no usa el registrador, simplemente no hay registros
+    obtenerAsistencias(inicioHoy, new Date()).catch(() => []),
   ]);
   const vencidos = recibos.filter((r) => r.estado === 'Vencido');
   const pendientes = recibos.filter((r) => r.estado === 'Pendiente');
-  const mes = finanzas.find((f) => f.mesAnio === claveMes(new Date()));
   return {
     alumnos: alumnos.length,
     vencidos: { n: vencidos.length, monto: vencidos.reduce((s, r) => s + r.monto, 0) },
     pendientes: { n: pendientes.length, monto: pendientes.reduce((s, r) => s + r.monto, 0) },
-    ingresos: { total: mes?.total ?? 0, cuotas: mes?.ingresosMensualidades ?? 0, ventas: mes?.ingresosVentas ?? 0, nVentas: mes?.ventasRealizadas ?? 0 },
     meses: mesesRecientes(finanzas),
     alertasStock: alertas.length,
+    asistenciasHoy: asistencias.length,
   };
 };
 
@@ -67,13 +84,14 @@ const VACIO: Resumen = {
   alumnos: 0,
   vencidos: { n: 0, monto: 0 },
   pendientes: { n: 0, monto: 0 },
-  ingresos: { total: 0, cuotas: 0, ventas: 0, nVentas: 0 },
-  meses: [],
+  meses: mesesRecientes([]),
   alertasStock: 0,
+  asistenciasHoy: 0,
 };
 
-// Alto de la cabecera flotante del celular (sin el área segura)
+// Alto de la cabecera flotante del celular (sin el área segura) y su aire superior
 const ALTO_CABECERA = 60;
+const AIRE_SUPERIOR = 14;
 
 export default function InicioScreen() {
   const { color } = useTema();
@@ -104,25 +122,19 @@ export default function InicioScreen() {
   const todoAlDia = datos.vencidos.n === 0 && datos.pendientes.n === 0 && datos.alertasStock === 0;
   const porCobrar = datos.vencidos.monto + datos.pendientes.monto;
 
-  async function abrirKiosco() {
+  async function abrirRegistrador() {
     try {
       await vincularKiosco();
       router.push('/kiosco');
     } catch (e) {
-      alerta('No se pudo abrir el kiosco', (e as Error).message);
+      alerta('No se pudo abrir el registrador de asistencias', (e as Error).message);
     }
   }
 
   const ingresos = (
     <View ref={refCredencial} collapsable={false}>
-      <TarjetaIngresos academia={academia} ingresos={datos.ingresos} />
+      <TarjetaIngresos academia={academia} meses={datos.meses} />
     </View>
-  );
-
-  const grafica = datos.meses.length > 0 && (
-    <Animated.View entering={FadeInDown.duration(420).delay(120)}>
-      <GraficaIngresos meses={datos.meses} />
-    </Animated.View>
   );
 
   // Resumen del negocio: lo que importa de un vistazo, cada tarjeta lleva a su sección
@@ -159,6 +171,22 @@ export default function InicioScreen() {
     </View>
   );
 
+  // Solo para quienes usan el registrador de asistencias
+  const asistencias = academia.asistenciasActivas && (
+    <Tarjeta onPress={() => router.push('/asistencias')} etiqueta="Ver reporte de asistencias">
+      <View style={estilos.estadoTarjeta}>
+        <IconoTonal icono={ClipboardCheck} tono="exito" />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Texto variante="cuerpoFuerte">{cantidad(datos.asistenciasHoy, 'asistencia hoy', 'asistencias hoy')}</Texto>
+          <Texto variante="detalle" tono="suave">
+            Ver el reporte de asistencias
+          </Texto>
+        </View>
+        <ChevronRight size={18} color={color.textoTenue} />
+      </View>
+    </Tarjeta>
+  );
+
   // ===== Escritorio: tablero en dos columnas =====
   if (esEscritorio) {
     return (
@@ -176,7 +204,9 @@ export default function InicioScreen() {
               {academia.tipoNegocio}
             </Texto>
           </View>
-          <Boton titulo="Abrir kiosco" icono={Tablet} variante="contorno" tamano="compacto" onPress={abrirKiosco} />
+          {academia.asistenciasActivas && (
+            <Boton titulo="Registrador de asistencias" icono={Tablet} variante="contorno" tamano="compacto" onPress={abrirRegistrador} />
+          )}
           <View ref={refInscribir} collapsable={false}>
             <Boton titulo={`Inscribir ${termino.toLowerCase()}`} icono={IconoAgregarAlumno} tamano="compacto" onPress={() => router.push('/registrar')} />
           </View>
@@ -185,10 +215,7 @@ export default function InicioScreen() {
         {indicadores}
 
         <View style={estilos.columnas}>
-          <View style={{ flex: 1.35, gap: 24 }}>
-            {ingresos}
-            {grafica}
-          </View>
+          <View style={{ flex: 1.35 }}>{ingresos}</View>
           <View style={{ flex: 1, gap: 24 }}>
             <View style={{ gap: 10 }}>
               <TituloSeccion titulo="Acciones rápidas" />
@@ -197,6 +224,7 @@ export default function InicioScreen() {
                 <TarjetaAccion icono={ShoppingCart} titulo="Vender" detalle="Descuenta una pieza del inventario" onPress={() => router.navigate('/inventario')} />
               </Rejilla>
             </View>
+            {asistencias}
             <Pendientes datos={datos} error={!!error} todoAlDia={todoAlDia} />
           </View>
         </View>
@@ -205,7 +233,8 @@ export default function InicioScreen() {
   }
 
   // ===== Celular y tableta: la academia flota arriba; debajo, solo las tarjetas que importan =====
-  const arribaContenido = insets.top + ALTO_CABECERA + 22;
+  const arribaCabecera = insets.top + AIRE_SUPERIOR;
+  const arribaContenido = arribaCabecera + ALTO_CABECERA + 20;
   return (
     <View style={{ flex: 1, backgroundColor: color.fondo }}>
       <ScrollView
@@ -217,14 +246,14 @@ export default function InicioScreen() {
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} progressViewOffset={arribaContenido} />}
       >
         {ingresos}
-        {grafica}
         {indicadores}
+        {asistencias}
       </ScrollView>
 
       <CabeceraFlotante
         academia={academia}
-        alto={insets.top + ALTO_CABECERA}
-        top={insets.top}
+        alto={arribaCabecera + ALTO_CABECERA}
+        top={arribaCabecera}
         margen={margen}
         ancho={esTableta ? 760 : 560}
         accion={
@@ -357,17 +386,23 @@ function Pendientes({ datos, error, todoAlDia }: { datos: Resumen; error: boolea
   );
 }
 
-// Tarjeta protagonista: ingresos del mes con los colores de la academia
-function TarjetaIngresos({ academia, ingresos }: { academia: MarcaAcademia; ingresos: Resumen['ingresos'] }) {
+// Tarjeta protagonista con los colores de la academia: los ingresos del mes elegido,
+// su comparación con el anterior, la gráfica de los últimos meses y el desglose
+function TarjetaIngresos({ academia, meses }: { academia: MarcaAcademia; meses: Mes[] }) {
   const { radio } = useTema();
   const sombra = useSombra('alta');
+  const [elegido, setElegido] = useState(meses.length - 1);
   const base = academia.colorSecundario;
   const tinta = textoSobre(base, '#14161a');
   const claro = tinta === '#ffffff';
   const tintaSuave = claro ? 'rgba(255,255,255,0.72)' : 'rgba(20,22,26,0.62)';
   const pista = claro ? 'rgba(255,255,255,0.16)' : 'rgba(20,22,26,0.1)';
-  const parteCuotas = ingresos.total > 0 ? (ingresos.cuotas / ingresos.total) * 100 : 0;
-  const mes = MESES[new Date().getMonth()];
+
+  const indice = Math.min(elegido, meses.length - 1);
+  const mes = meses[indice];
+  const anterior = meses[indice - 1];
+  const cambio = anterior && anterior.total > 0 ? ((mes.total - anterior.total) / anterior.total) * 100 : null;
+  const enCurso = indice === meses.length - 1;
 
   return (
     <Animated.View entering={FadeInDown.duration(420).delay(60).springify().damping(18)} style={[{ borderRadius: radio.xl }, sombra]}>
@@ -386,22 +421,49 @@ function TarjetaIngresos({ academia, ingresos }: { academia: MarcaAcademia; ingr
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={{ gap: 4 }}>
-          <Texto variante="detalle" style={{ color: tintaSuave }}>
-            Ingresos de {mes}
-          </Texto>
-          <Texto variante="gigante" cifras numberOfLines={1} adjustsFontSizeToFit style={{ color: tinta }}>
-            {formatoMoneda(ingresos.total)}
-          </Texto>
+        <View style={estilos.filaIngresos}>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Texto variante="detalle" style={{ color: tintaSuave }}>
+              Ingresos de {mes.largo.toLowerCase()}
+              {enCurso ? ' · en curso' : ''}
+            </Texto>
+            <Texto variante="gigante" cifras numberOfLines={1} adjustsFontSizeToFit style={{ color: tinta }}>
+              {formatoMoneda(mes.total)}
+            </Texto>
+          </View>
+          {cambio !== null && (
+            <View style={[estilos.cambio, { backgroundColor: pista }]}>
+              {cambio >= 0 ? <TrendingUp size={13} color={tinta} strokeWidth={2.4} /> : <TrendingDown size={13} color={tinta} strokeWidth={2.4} />}
+              <Texto variante="pequeno" cifras style={{ color: tinta, fontFamily: 'Figtree_700Bold' }}>
+                {cambio >= 0 ? '+' : ''}
+                {Math.round(cambio)}% vs {anterior.corto}
+              </Texto>
+            </View>
+          )}
         </View>
 
-        <View style={[estilos.barra, { backgroundColor: pista }]}>
-          <View style={{ width: `${parteCuotas}%`, backgroundColor: academia.colorPrimario, borderRadius: 999 }} />
-        </View>
+        <GraficaBarras
+          datos={meses.map((m) => ({ clave: m.clave, etiqueta: m.corto, valor: m.total, descripcion: `${m.largo}: ${formatoMoneda(m.total)}` }))}
+          elegido={indice}
+          onElegir={setElegido}
+          alto={112}
+          formatoGuia={formatoCorto}
+          mensajeVacio="Aquí verás cómo crecen tus ingresos"
+          colores={{
+            activo: tinta,
+            inactivo: claro ? 'rgba(255,255,255,0.28)' : 'rgba(20,22,26,0.22)',
+            vacio: pista,
+            guia: pista,
+            base: pista,
+            etiqueta: tintaSuave,
+            etiquetaActiva: tinta,
+            fondo: 'transparent',
+          }}
+        />
 
         <View style={{ flexDirection: 'row', gap: 16 }}>
-          <Parte etiqueta="Cuotas" valor={ingresos.cuotas} punto={academia.colorPrimario} tinta={tinta} suave={tintaSuave} />
-          <Parte etiqueta={`Ventas (${ingresos.nVentas})`} valor={ingresos.ventas} punto={pista} tinta={tinta} suave={tintaSuave} />
+          <Parte etiqueta="Cuotas" valor={mes.cuotas} punto={academia.colorPrimario} tinta={tinta} suave={tintaSuave} />
+          <Parte etiqueta={`Ventas (${mes.nVentas})`} valor={mes.ventas} punto={pista} tinta={tinta} suave={tintaSuave} />
         </View>
       </LinearGradient>
     </Animated.View>
@@ -433,6 +495,7 @@ const estilos = StyleSheet.create({
   aro: { borderWidth: 2, padding: 2 },
   botonFlotante: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },
   ingresos: { padding: 22, gap: 18, overflow: 'hidden' },
-  barra: { height: 8, borderRadius: 999, flexDirection: 'row', overflow: 'hidden' },
+  filaIngresos: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  cambio: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
   estadoTarjeta: { flexDirection: 'row', alignItems: 'center', gap: 14 },
 });

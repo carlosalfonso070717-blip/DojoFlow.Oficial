@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { BookOpen, Compass, Palette, SunMoon, Tablet } from 'lucide-react-native';
+import { BookOpen, ClipboardCheck, Compass, Palette, SunMoon, Tablet } from 'lucide-react-native';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Switch, View } from 'react-native';
 import {
+  configurarAsistencias,
   obtenerClases,
   obtenerConfiguracion,
   quitarFotoPerfil,
@@ -13,7 +14,7 @@ import {
   type ConfiguracionAcademia,
 } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
-import { IconoCerrarSesion, IconoPagos } from '@/components/iconos/Iconly';
+import { IconoCerrarSesion, IconoFinanzas, IconoPagos } from '@/components/iconos/Iconly';
 import { PantallaSecundaria } from '@/components/PantallaSecundaria';
 import { Segmentos } from '@/components/Segmentos';
 import { Avatar, Boton, confirmar, Fila, Grupo, Hoja, Texto } from '@/components/ui';
@@ -44,6 +45,7 @@ export default function AjustesScreen() {
   const [tipoFoto, setTipoFoto] = useState<TipoFoto>('logo');
   const [hojaAbierta, setHojaAbierta] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
+  const [cambiandoAsistencias, setCambiandoAsistencias] = useState(false);
 
   if (!perfil) return null;
   const { academia, usuario } = perfil;
@@ -89,12 +91,24 @@ export default function AjustesScreen() {
     );
   }
 
-  async function abrirKiosco() {
+  async function abrirRegistrador() {
     try {
       await vincularKiosco();
       router.push('/kiosco');
     } catch (e) {
-      alerta('No se pudo abrir el kiosco', (e as Error).message);
+      alerta('No se pudo abrir el registrador de asistencias', (e as Error).message);
+    }
+  }
+
+  async function alternarAsistencias(activas: boolean) {
+    setCambiandoAsistencias(true);
+    try {
+      await configurarAsistencias(activas);
+      await recargarPerfil();
+    } catch (e) {
+      alerta('No se pudo cambiar el registrador', (e as Error).message);
+    } finally {
+      setCambiandoAsistencias(false);
     }
   }
 
@@ -139,13 +153,47 @@ export default function AjustesScreen() {
         </Texto>
       )}
 
-      <Grupo titulo="Recepción">
+      {/* Opcional: no todos los negocios toman asistencia */}
+      <Grupo titulo="Registrador de asistencias">
         <Fila
-          titulo="Abrir kiosco"
-          detalle="Vincula esta tablet para registrar asistencias con PIN"
-          izquierda={<Tablet size={22} color={color.texto} />}
-          onPress={abrirKiosco}
+          titulo="Registrar asistencias"
+          detalle={
+            academia.asistenciasActivas
+              ? 'Tus alumnos marcan su entrada con su PIN'
+              : esDueno
+                ? 'Actívalo si tus alumnos registran su entrada con PIN'
+                : 'Desactivado. Solo la persona dueña puede activarlo'
+          }
+          izquierda={<ClipboardCheck size={22} color={color.texto} />}
+          derecha={
+            <Switch
+              value={academia.asistenciasActivas}
+              onValueChange={alternarAsistencias}
+              disabled={!esDueno || cambiandoAsistencias}
+              trackColor={{ true: color.marca, false: color.bordeFuerte }}
+              thumbColor="#ffffff"
+              // react-native-web pinta el círculo encendido de verde azulado si no se indica
+              {...({ activeThumbColor: '#ffffff' } as object)}
+              accessibilityLabel="Registrar asistencias"
+            />
+          }
         />
+        {academia.asistenciasActivas && (
+          <Fila
+            titulo="Abrir registrador de asistencias"
+            detalle="Vincula esta tablet para que marquen su PIN"
+            izquierda={<Tablet size={22} color={color.texto} />}
+            onPress={abrirRegistrador}
+          />
+        )}
+        {academia.asistenciasActivas && (
+          <Fila
+            titulo="Reporte de asistencias"
+            detalle="Quién viene, cuándo y quién no pudo entrar"
+            izquierda={<IconoFinanzas size={22} color={color.texto} />}
+            onPress={() => router.push('/asistencias')}
+          />
+        )}
       </Grupo>
 
       <View style={{ gap: 8 }}>

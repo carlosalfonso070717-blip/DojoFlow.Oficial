@@ -1,5 +1,5 @@
 import { router, usePathname, type Href } from 'expo-router';
-import { ChevronRight, Moon, Package, Plus, Search, Sun, Tablet, Users } from 'lucide-react-native';
+import { ChevronRight, ClipboardCheck, Moon, Package, Plus, Search, Sun, Tablet, Users } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ComponentType, type CSSProperties, type MouseEvent } from 'react';
 import { obtenerAlertasInventario, obtenerMensualidades } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
@@ -52,6 +52,10 @@ export function BarraLateral() {
   ];
   const secundarias: Seccion[] = [
     { ruta: '/finanzas', etiqueta: 'Finanzas', icono: IconoFinanzas, activa: (p) => p.startsWith('/finanzas') },
+    // Solo para quienes usan el registrador de asistencias
+    ...(academia.asistenciasActivas
+      ? [{ ruta: '/asistencias' as Href, etiqueta: 'Asistencias', icono: ClipboardCheck, activa: (p: string) => p.startsWith('/asistencias') }]
+      : []),
   ];
 
   // Clic normal: navegación de la app. Ctrl/Cmd o botón central: el navegador abre otra pestaña.
@@ -70,12 +74,12 @@ export function BarraLateral() {
     (document.activeElement as HTMLElement | null)?.blur();
   }
 
-  async function abrirKiosco() {
+  async function abrirRegistrador() {
     try {
       await vincularKiosco();
       router.push('/kiosco');
     } catch (e) {
-      alerta('No se pudo abrir el kiosco', (e as Error).message);
+      alerta('No se pudo abrir el registrador de asistencias', (e as Error).message);
     }
   }
 
@@ -163,12 +167,14 @@ export function BarraLateral() {
           {principales.map(item)}
           <hr />
           {secundarias.map(item)}
-          <button type="button" className="lb-item" title="Abrir kiosco" onClick={abrirKiosco}>
-            <span className="lb-icono">
-              <Tablet size={22} color="currentColor" strokeWidth={1.6} />
-            </span>
-            <span className="lb-texto">Abrir kiosco</span>
-          </button>
+          {academia.asistenciasActivas && (
+            <button type="button" className="lb-item" title="Abrir registrador de asistencias" onClick={abrirRegistrador}>
+              <span className="lb-icono">
+                <Tablet size={22} color="currentColor" strokeWidth={1.6} />
+              </span>
+              <span className="lb-texto">Registrador</span>
+            </button>
+          )}
         </nav>
 
         {/* Acciones en columna, igual que la navegación: cada ícono se queda en su lugar

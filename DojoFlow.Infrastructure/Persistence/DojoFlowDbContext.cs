@@ -30,6 +30,7 @@ namespace DojoFlow.Infrastructure.Persistence
         public DbSet<VerificacionEmail> VerificacionesEmail => Set<VerificacionEmail>();
         public DbSet<Transaccion> Transacciones => Set<Transaccion>();
         public DbSet<Imagen> Imagenes => Set<Imagen>();
+        public DbSet<Asistencia> Asistencias => Set<Asistencia>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -101,6 +102,14 @@ namespace DojoFlow.Infrastructure.Persistence
             ConfigurarMultiAcademia<RegistroFinanciero>(modelBuilder);
             ConfigurarMultiAcademia<Transaccion>(modelBuilder);
             ConfigurarMultiAcademia<Imagen>(modelBuilder);
+            ConfigurarMultiAcademia<Asistencia>(modelBuilder);
+            modelBuilder.Entity<Asistencia>(a =>
+            {
+                a.Property(x => x.NombreAlumno).HasMaxLength(200);
+                a.Property(x => x.EstatusFinanciero).HasMaxLength(20);
+                // El reporte siempre filtra por academia y periodo
+                a.HasIndex(x => new { x.AcademiaId, x.FechaHora });
+            });
             modelBuilder.Entity<Imagen>().Property(i => i.ContentType).HasMaxLength(40);
             modelBuilder.Entity<UsuarioCoach>().Property(u => u.FotoUrl).HasMaxLength(200);
 
@@ -159,6 +168,8 @@ namespace DojoFlow.Infrastructure.Persistence
                 PreciosPaquete = new List<decimal> { 850m, 1500m, 2400m, 3200m, 4000m },
                 Moneda = "MXN",
                 DiaVencimiento = 15,
+                // La academia original ya usaba el registrador de asistencias
+                AsistenciasActivas = true,
                 FechaCreacion = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
 

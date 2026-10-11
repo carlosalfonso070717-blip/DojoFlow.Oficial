@@ -12,7 +12,7 @@ export default function PasoNombre() {
     <PantallaPaso
       paso="index"
       titulo="¿Cómo se llama tu academia?"
-      descripcion="Así la verán tus alumnos en el kiosco y en sus recibos."
+      descripcion="Así la verán tus alumnos al registrar su asistencia y en sus recibos."
       continuar={{ onPress: () => router.push('/registro/tipo'), deshabilitado: !valido }}
     >
       <Campo

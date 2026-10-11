@@ -29,6 +29,9 @@ namespace DojoFlow.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("AsistenciasActivas")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("CodigoCatalogo")
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
@@ -99,6 +102,7 @@ namespace DojoFlow.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            AsistenciasActivas = true,
                             ColorPrimario = "#d90429",
                             ColorSecundario = "#111418",
                             DiaVencimiento = 15,
@@ -183,6 +187,41 @@ namespace DojoFlow.Infrastructure.Migrations
                             Nombre = "María",
                             Telefono = "9999876543"
                         });
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Asistencia", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcademiaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AlumnoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EstatusFinanciero")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("FechaHora")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("NombreAlumno")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("PermitirAcceso")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcademiaId", "FechaHora");
+
+                    b.ToTable("Asistencias");
                 });
 
             modelBuilder.Entity("DojoFlow.Domain.Entities.Clase", b =>
@@ -602,6 +641,15 @@ namespace DojoFlow.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("DojoFlow.Domain.Entities.Alumno", b =>
+                {
+                    b.HasOne("DojoFlow.Domain.Entities.Academia", null)
+                        .WithMany()
+                        .HasForeignKey("AcademiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Asistencia", b =>
                 {
                     b.HasOne("DojoFlow.Domain.Entities.Academia", null)
                         .WithMany()
