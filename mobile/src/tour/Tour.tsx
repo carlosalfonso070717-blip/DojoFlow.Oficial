@@ -46,8 +46,8 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
   const pasos: Paso[] = [
     {
       id: 'credencial',
-      titulo: 'Esta es tu academia',
-      texto: `Aquí ves de un vistazo cuántos ${plural(termino).toLowerCase()} tienes y cuánto ha entrado este mes.`,
+      titulo: 'Tus ingresos del mes',
+      texto: `Cuánto ha entrado este mes, separado entre cuotas y ventas. Debajo ves tus ${plural(termino).toLowerCase()}, lo que falta por cobrar y lo que hay que resurtir.`,
     },
     { id: 'pendiente', titulo: 'Lo que requiere atención', texto: 'Recibos vencidos, cobros pendientes y productos por resurtir aparecen aquí.' },
     {

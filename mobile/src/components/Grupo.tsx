@@ -2,6 +2,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useDiseno } from '@/hooks/useDiseno';
+import { useSombra } from './Tarjetas';
 import { useTema } from '@/theme';
 import { Presionable } from './Presionable';
 import { Texto } from './Texto';
@@ -124,6 +125,7 @@ function SeparadorRejilla() {
 // Celda de una lista: parte de un grupo continuo (celular) o tarjeta suelta (escritorio)
 export function CeldaLista({ indice, total, columnas, children }: { indice: number; total: number; columnas: number; children: ReactNode }) {
   const { color, radio } = useTema();
+  const sombra = useSombra();
   if (columnas <= 1) return <ItemGrupo indice={indice} total={total}>{children}</ItemGrupo>;
 
   // Todas las tarjetas miden lo mismo aunque la última fila quede incompleta
@@ -133,6 +135,7 @@ export function CeldaLista({ indice, total, columnas, children }: { indice: numb
       style={[
         estilos.tarjeta,
         { backgroundColor: color.superficie, borderColor: color.borde, borderRadius: radio.l, maxWidth: ancho as unknown as number },
+        sombra,
       ]}
     >
       {children}

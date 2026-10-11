@@ -1,4 +1,4 @@
-import { Copy, ExternalLink, Package, PackagePlus, SearchX, ShoppingCart, TriangleAlert, WifiOff } from 'lucide-react-native';
+import { Boxes, Copy, ExternalLink, Package, PackagePlus, SearchX, ShoppingCart, TriangleAlert, Wallet, WifiOff } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,6 +37,7 @@ import {
   Texto,
   useRejilla,
 } from '@/components/ui';
+import { Indicador, Rejilla } from '@/components/Tarjetas';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useSesion } from '@/auth/session';
@@ -81,7 +82,7 @@ const aEntero = (s: string) => {
 export default function InventarioScreen() {
   const refTour = useObjetivoTour('inventario');
   const { color } = useTema();
-  const { margen, anchoSeccion, arriba } = useDiseno();
+  const { margen, anchoSeccion, arriba, esEscritorio } = useDiseno();
   const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { datos, cargando, error, recargar } = useRecurso(cargarInventario, { productos: [], alertas: [] });
@@ -129,6 +130,8 @@ export default function InventarioScreen() {
   }, [datos.productos, busqueda]);
 
   const bajos = datos.productos.filter((p) => p.stockActual <= p.stockMinimo).length;
+  const piezas = datos.productos.reduce((s, p) => s + p.stockActual, 0);
+  const valor = datos.productos.reduce((s, p) => s + p.precio * p.stockActual, 0);
 
   function actualizar<K extends keyof Formulario>(campo: K, valor: Formulario[K]) {
     setModo((m) => (m && (m.tipo === 'editar' || m.tipo === 'nuevo') ? { ...m, [campo]: valor } : m));
@@ -234,12 +237,38 @@ export default function InventarioScreen() {
               titulo="Inventario"
               detalle={bajos > 0 ? `${cantidad(bajos, 'producto', 'productos')} por resurtir` : undefined}
               acciones={
-                <>
-                  <BotonIcono etiqueta="Compartir catálogo" icono={<IconoCompartir size={21} color={color.texto} />} onPress={abrirCompartir} />
-                  <BotonIcono destacado etiqueta="Agregar producto" icono={<PackagePlus size={21} color={color.sobreMarca} />} onPress={nuevo} />
-                </>
+                esEscritorio ? (
+                  <>
+                    <Boton titulo="Compartir catálogo" icono={IconoCompartir} variante="contorno" tamano="compacto" onPress={abrirCompartir} />
+                    <Boton titulo="Agregar producto" icono={PackagePlus} tamano="compacto" onPress={nuevo} />
+                  </>
+                ) : (
+                  <>
+                    <BotonIcono etiqueta="Compartir catálogo" icono={<IconoCompartir size={21} color={color.texto} />} onPress={abrirCompartir} />
+                    <BotonIcono destacado etiqueta="Agregar producto" icono={<PackagePlus size={21} color={color.sobreMarca} />} onPress={nuevo} />
+                  </>
+                )
               }
             />
+            {esEscritorio && datos.productos.length > 0 && (
+              <Rejilla columnas={4}>
+                <Indicador
+                  icono={Package}
+                  etiqueta="Productos"
+                  valor={String(datos.productos.length)}
+                  detalle={`${datos.productos.filter((p) => p.enCatalogo).length} en el catálogo`}
+                />
+                <Indicador icono={Boxes} tono="neutro" etiqueta="Piezas en existencia" valor={String(piezas)} />
+                <Indicador
+                  icono={TriangleAlert}
+                  tono={bajos > 0 ? 'aviso' : 'exito'}
+                  etiqueta="Por resurtir"
+                  valor={String(bajos)}
+                  detalle={bajos > 0 ? 'Llegaron a su mínimo' : 'Todo surtido'}
+                />
+                <Indicador icono={Wallet} tono="exito" etiqueta="Valor a precio de venta" valor={formatoMoneda(valor)} />
+              </Rejilla>
+            )}
             {datos.alertas.length > 0 && (
               <View style={[estilos.alerta, { backgroundColor: color.avisoSuave }]}>
                 <TriangleAlert size={18} color={color.aviso} />

@@ -1,12 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { SearchX, Users, WifiOff } from 'lucide-react-native';
+import { BookOpen, SearchX, Users, WifiOff } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { eliminarAlumno, obtenerAlumnos, type Alumno } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
-import { IconoAgregarAlumno, IconoEliminar } from '@/components/iconos/Iconly';
+import { IconoAgregarAlumno, IconoEliminar, IconoPagos } from '@/components/iconos/Iconly';
+import { Indicador, Rejilla } from '@/components/Tarjetas';
 import {
   Avatar,
   Boton,
@@ -35,7 +36,7 @@ import { plural } from '@/utils/texto';
 export default function AlumnosScreen() {
   const refTour = useObjetivoTour('alumnos');
   const { color } = useTema();
-  const { margen, anchoSeccion, arriba } = useDiseno();
+  const { margen, anchoSeccion, arriba, esEscritorio } = useDiseno();
   const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { perfil } = useSesion();
@@ -68,6 +69,10 @@ export default function AlumnosScreen() {
 
   const inscribir = () => router.push('/registrar');
 
+  // Resumen para el escritorio
+  const cuotaMensual = alumnos.reduce((s, a) => s + a.costoMensualidad, 0);
+  const clases = new Set(alumnos.flatMap((a) => a.disciplinas)).size;
+
   const vacio = error ? (
     <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudo cargar la lista" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
   ) : busqueda ? (
@@ -97,14 +102,31 @@ export default function AlumnosScreen() {
               titulo={plural(termino)}
               detalle={alumnos.length ? `${alumnos.length} en total` : undefined}
               acciones={
-                <BotonIcono
-                  destacado
-                  etiqueta={`Inscribir ${termino.toLowerCase()}`}
-                  icono={<IconoAgregarAlumno size={22} color={color.sobreMarca} />}
-                  onPress={inscribir}
-                />
+                esEscritorio ? (
+                  <Boton titulo={`Inscribir ${termino.toLowerCase()}`} icono={IconoAgregarAlumno} tamano="compacto" onPress={inscribir} />
+                ) : (
+                  <BotonIcono
+                    destacado
+                    etiqueta={`Inscribir ${termino.toLowerCase()}`}
+                    icono={<IconoAgregarAlumno size={22} color={color.sobreMarca} />}
+                    onPress={inscribir}
+                  />
+                )
               }
             />
+            {esEscritorio && alumnos.length > 0 && (
+              <Rejilla columnas={4}>
+                <Indicador icono={Users} etiqueta={`${plural(termino)} inscritos`} valor={String(alumnos.length)} />
+                <Indicador icono={IconoPagos} tono="exito" etiqueta="Cuotas al mes" valor={formatoMoneda(cuotaMensual)} detalle="Si todos pagan" />
+                <Indicador
+                  icono={IconoPagos}
+                  tono="neutro"
+                  etiqueta="Cuota promedio"
+                  valor={formatoMoneda(alumnos.length ? cuotaMensual / alumnos.length : 0)}
+                />
+                <Indicador icono={BookOpen} tono="aviso" etiqueta="Clases con inscritos" valor={String(clases)} />
+              </Rejilla>
+            )}
             {alumnos.length > 0 && <Buscador value={busqueda} onChangeText={setBusqueda} placeholder="Buscar por nombre o PIN" />}
           </View>
         }
@@ -113,7 +135,11 @@ export default function AlumnosScreen() {
           <CeldaLista indice={index} total={filtrados.length} columnas={rejilla.columnas}>
             <Fila
               titulo={item.nombre}
-              detalle={`PIN ${item.claveKiosco}`}
+              detalle={
+                esEscritorio
+                  ? `PIN ${item.claveKiosco} · ${formatoMoneda(item.costoMensualidad)} al mes · ${item.disciplinas.join(', ')}`
+                  : `PIN ${item.claveKiosco}`
+              }
               izquierda={<Avatar nombre={item.nombre} />}
               onPress={() => setSeleccionado(item)}
             />

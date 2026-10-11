@@ -1,10 +1,11 @@
-import { WifiOff } from 'lucide-react-native';
+import { ShoppingCart, TrendingUp, WifiOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { eliminarMesFinanzas, obtenerFinanzas, type RegistroFinanciero } from '@/api/endpoints';
 import { useEspacioBarra } from '@/components/BarraLiquida';
-import { IconoDescargar, IconoEliminar, IconoFinanzas } from '@/components/iconos/Iconly';
+import { IconoDescargar, IconoEliminar, IconoFinanzas, IconoPagos } from '@/components/iconos/Iconly';
+import { Indicador, Rejilla } from '@/components/Tarjetas';
 import { Boton, BotonIcono, confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, CeldaLista, Grupo, Hoja, ParDato, Superficie, Texto, useRejilla } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -26,7 +27,7 @@ function nombreMes(mesAnio: string) {
 export default function FinanzasScreen() {
   const refTour = useObjetivoTour('finanzas');
   const { color, radio } = useTema();
-  const { margen, anchoSeccion, arriba } = useDiseno();
+  const { margen, anchoSeccion, arriba, esEscritorio } = useDiseno();
   const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { datos, cargando, error, recargar } = useRecurso(obtenerFinanzas, [] as RegistroFinanciero[]);
@@ -71,7 +72,9 @@ export default function FinanzasScreen() {
             <Encabezado
               titulo="Finanzas"
               acciones={
-                actual ? (
+                actual && esEscritorio ? (
+                  <Boton titulo="Descargar reporte" icono={IconoDescargar} variante="contorno" tamano="compacto" onPress={() => setSeleccionado(actual)} />
+                ) : actual ? (
                   <BotonIcono
                     etiqueta={`Descargar reporte de ${nombreMes(actual.mesAnio)}`}
                     icono={<IconoDescargar size={22} color={color.texto} />}
@@ -81,7 +84,28 @@ export default function FinanzasScreen() {
               }
             />
 
-            {actual && (
+            {/* Escritorio: cifras del mes en tarjetas; celular: una tarjeta con la proporción */}
+            {actual && esEscritorio && (
+              <Rejilla columnas={4}>
+                <Indicador icono={IconoFinanzas} etiqueta={`Ingresos de ${nombreMes(actual.mesAnio).toLowerCase()}`} valor={formatoMoneda(total)} />
+                <Indicador
+                  icono={IconoPagos}
+                  tono="exito"
+                  etiqueta="Cuotas cobradas"
+                  valor={formatoMoneda(actual.ingresosMensualidades)}
+                  detalle={`${Math.round(parteCuotas)}% del mes`}
+                />
+                <Indicador icono={ShoppingCart} tono="aviso" etiqueta={`Ventas (${actual.ventasRealizadas})`} valor={formatoMoneda(actual.ingresosVentas)} />
+                <Indicador
+                  icono={TrendingUp}
+                  tono="neutro"
+                  etiqueta="Promedio mensual"
+                  valor={formatoMoneda(datos.reduce((s, f) => s + f.total, 0) / datos.length)}
+                  detalle={`${datos.length} ${datos.length === 1 ? 'mes' : 'meses'} con movimientos`}
+                />
+              </Rejilla>
+            )}
+            {actual && !esEscritorio && (
               <Superficie style={{ gap: 20, padding: 20 }}>
                 <View style={{ gap: 4 }}>
                   <Texto variante="detalle" tono="suave">

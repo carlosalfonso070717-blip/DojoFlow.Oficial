@@ -22,6 +22,7 @@ import {
   useRejilla,
   type TonoInsignia,
 } from '@/components/ui';
+import { Indicador, Rejilla } from '@/components/Tarjetas';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema, type Tema } from '@/theme';
@@ -58,6 +59,8 @@ export default function CobrosScreen() {
   const [cobrando, setCobrando] = useState(false);
 
   const porCobrar = datos.filter((m) => m.estado !== 'Pagado').reduce((s, m) => s + m.monto, 0);
+  const deEstado = (estado: string) => datos.filter((m) => m.estado === estado);
+  const suma = (lista: Mensualidad[]) => lista.reduce((s, m) => s + m.monto, 0);
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -108,6 +111,41 @@ export default function CobrosScreen() {
         ListHeaderComponent={
           <View style={estilos.cabecera} ref={refTour} collapsable={false}>
             <Encabezado titulo="Cobros" detalle={porCobrar > 0 ? `${formatoMoneda(porCobrar)} por cobrar` : 'Todo cobrado'} />
+            {esEscritorio && datos.length > 0 && (
+              <Rejilla columnas={4}>
+                <Indicador
+                  icono={IconoPagos}
+                  etiqueta="Por cobrar"
+                  valor={formatoMoneda(porCobrar)}
+                  detalle={`${datos.length - deEstado('Pagado').length} recibos abiertos`}
+                  onPress={() => setFiltro('todos')}
+                />
+                <Indicador
+                  icono={TriangleAlert}
+                  tono={deEstado('Vencido').length ? 'peligro' : 'exito'}
+                  etiqueta="Vencidos"
+                  valor={String(deEstado('Vencido').length)}
+                  detalle={formatoMoneda(suma(deEstado('Vencido')))}
+                  onPress={() => setFiltro('Vencido')}
+                />
+                <Indicador
+                  icono={Clock}
+                  tono="aviso"
+                  etiqueta="Pendientes"
+                  valor={String(deEstado('Pendiente').length)}
+                  detalle={formatoMoneda(suma(deEstado('Pendiente')))}
+                  onPress={() => setFiltro('Pendiente')}
+                />
+                <Indicador
+                  icono={CircleCheck}
+                  tono="exito"
+                  etiqueta="Pagados"
+                  valor={String(deEstado('Pagado').length)}
+                  detalle={formatoMoneda(suma(deEstado('Pagado')))}
+                  onPress={() => setFiltro('Pagado')}
+                />
+              </Rejilla>
+            )}
             {/* En escritorio, filtros y búsqueda comparten una fila */}
             <View style={esEscritorio ? estilos.filtrosEscritorio : estilos.filtros}>
               <View style={esEscritorio ? { flex: 1.2 } : undefined}>
