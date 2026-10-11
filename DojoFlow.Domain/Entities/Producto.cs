@@ -5,9 +5,10 @@ using DojoFlow.Domain.Observers;
 
 namespace DojoFlow.Domain.Entities
 {
-    public class Producto
+    public class Producto : IPerteneceAAcademia
     {
         public Guid Id { get; set; }
+        public Guid AcademiaId { get; set; }
         public string Nombre { get; set; }
         public int StockActual { get; set; }
         public int StockMinimo { get; set; }

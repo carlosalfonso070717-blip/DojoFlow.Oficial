@@ -111,6 +111,49 @@ document.querySelectorAll('.sidebar a').forEach(link => {
 });
 
 // ==========================================
+// CLASES DE LA ACADEMIA (antes eran disciplinas fijas)
+// ==========================================
+async function cargarClases() {
+    const contenedor = document.getElementById('contenedor-disciplinas');
+    if (!contenedor) return;
+    try {
+        const res = await fetch(`${API_URL}/Clases`, { headers: obtenerHeaders() });
+        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        const clases = (await res.json()).filter(c => c.activa);
+        contenedor.innerHTML = clases.length === 0
+            ? '<span class="text-muted small">Tu academia aún no tiene clases registradas.</span>'
+            : clases.map((c, i) => `
+                <input type="checkbox" class="btn-check disciplina-check" id="clase-${i}" value="${c.nombre}">
+                <label class="btn btn-outline-danger" for="clase-${i}">${c.nombre}</label>
+            `).join('');
+    } catch (e) {
+        contenedor.innerHTML = '<span class="text-danger small">No se pudieron cargar las clases.</span>';
+    }
+}
+cargarClases();
+
+// ==========================================
+// KIOSCO: vincula este navegador a la academia y abre la terminal de asistencia
+// ==========================================
+const btnKiosco = document.getElementById('btnKiosco');
+if (btnKiosco) {
+    btnKiosco.addEventListener('click', async () => {
+        // La pestaña se abre antes del fetch para que el navegador no la bloquee como popup
+        const ventana = window.open('', '_blank');
+        try {
+            const res = await fetch(`${API_URL}/Asistencias/sesion-kiosco`, { method: 'POST', headers: obtenerHeaders() });
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            localStorage.setItem('kioscoToken', data.token);
+            ventana.location.href = 'kiosco.html';
+        } catch {
+            ventana?.close();
+            Swal.fire('Error', 'No se pudo abrir el kiosco.', 'error');
+        }
+    });
+}
+
+// ==========================================
 // MÓDULO 1: ALUMNOS
 // ==========================================
 const formRegistro = document.getElementById('registroForm');
@@ -118,7 +161,7 @@ if(formRegistro){
     formRegistro.addEventListener('submit', async (e) => {
         e.preventDefault();
         const disciplinas = Array.from(document.querySelectorAll('.disciplina-check:checked')).map(cb => cb.value);
-        if (disciplinas.length === 0) return Swal.fire('Error', 'Selecciona al menos una disciplina', 'error');
+        if (disciplinas.length === 0) return Swal.fire('Error', 'Selecciona al menos una clase', 'error');
 
         const data = { nombre: document.getElementById('nombre').value, apellido: document.getElementById('apellido').value, telefono: document.getElementById('telefono').value, disciplinas };
         
@@ -132,7 +175,7 @@ if(formRegistro){
             
             if (res.ok) {
                 Swal.fire({
-                    icon: 'success', title: 'Peleador Registrado',
+                    icon: 'success', title: 'Alumno registrado',
                     html: `Nombre: <b>${result.nombreCompleto}</b><br>PIN de Acceso: <b style="font-size:20px; color:#d90429;">${result.claveKioscoAsignada}</b><br>Cuota: $${result.costoMensualidadAsignado}`,
                     confirmButtonColor: '#d90429'
                 });

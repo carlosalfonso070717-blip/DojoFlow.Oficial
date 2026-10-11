@@ -31,7 +31,7 @@ function RootNavigator() {
 
       <Stack.Protected guard={!token}>
         <Stack.Screen name="login" />
-        <Stack.Screen name="registro" options={{ ...conEncabezado, title: 'Registro de coach' }} />
+        <Stack.Screen name="registro" options={{ ...conEncabezado, title: 'Crea tu academia' }} />
         <Stack.Screen name="recuperar" options={{ ...conEncabezado, title: 'Recuperar contraseña' }} />
       </Stack.Protected>
 

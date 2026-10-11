@@ -29,11 +29,16 @@ namespace DojoFlow.API.Controllers
     {
         private readonly IProductoRepository _productoRepository;
         private readonly IRegistroFinancieroRepository _registroFinancieroRepository;
+        private readonly ITenantContext _tenant;
 
-        public InventarioController(IProductoRepository productoRepository, IRegistroFinancieroRepository registroFinancieroRepository)
+        public InventarioController(
+            IProductoRepository productoRepository,
+            IRegistroFinancieroRepository registroFinancieroRepository,
+            ITenantContext tenant)
         {
             _productoRepository = productoRepository;
             _registroFinancieroRepository = registroFinancieroRepository;
+            _tenant = tenant;
         }
 
         [HttpGet]
@@ -45,7 +50,7 @@ namespace DojoFlow.API.Controllers
         [HttpGet("alertas")]
         public IActionResult ObtenerAlertas()
         {
-            return Ok(AlertaStockObserver.AlertasActivas);
+            return Ok(AlertaStockObserver.ObtenerAlertas(_tenant.AcademiaId));
         }
 
         [HttpPost]
@@ -85,6 +90,8 @@ namespace DojoFlow.API.Controllers
             producto.StockMinimo = request.NuevoStockMinimo;
             producto.ImagenUrl = request.ImagenUrl;
 
+            // Si se resurtió, la alerta deja de aplicar; si sigue bajo, ReducirStock(0) la regenera
+            AlertaStockObserver.QuitarAlertasDe(producto.AcademiaId, producto.Nombre);
             producto.ReducirStock(0);
 
             await _productoRepository.ActualizarAsync(producto);
@@ -101,7 +108,7 @@ namespace DojoFlow.API.Controllers
 
             await _productoRepository.EliminarAsync(producto);
 
-            AlertaStockObserver.AlertasActivas.RemoveAll(a => a.Contains($"'{producto.Nombre}'"));
+            AlertaStockObserver.QuitarAlertasDe(producto.AcademiaId, producto.Nombre);
 
             return Ok(new { Mensaje = $"El artículo '{producto.Nombre}' fue removido con éxito." });
         }

@@ -1,12 +1,10 @@
-using BCrypt.Net;
+using DojoFlow.API.Services;
 using DojoFlow.Application.Interfaces;
+using DojoFlow.Application.UseCases.Academias;
 using DojoFlow.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net.Mail;
-using System.Security.Claims;
-using System.Text;
 
 namespace DojoFlow.API.Controllers
 {
@@ -18,19 +16,25 @@ namespace DojoFlow.API.Controllers
 
         private readonly IUsuarioCoachRepository _usuarioRepository;
         private readonly IVerificacionEmailRepository _verificacionRepository;
+        private readonly IAcademiaRepository _academiaRepository;
         private readonly IEmailSender _emailSender;
-        private readonly IConfiguration _config;
+        private readonly RegistrarAcademiaUseCase _registrarAcademia;
+        private readonly GeneradorTokens _tokens;
 
         public AuthController(
             IUsuarioCoachRepository usuarioRepository,
             IVerificacionEmailRepository verificacionRepository,
+            IAcademiaRepository academiaRepository,
             IEmailSender emailSender,
-            IConfiguration config)
+            RegistrarAcademiaUseCase registrarAcademia,
+            GeneradorTokens tokens)
         {
             _usuarioRepository = usuarioRepository;
             _verificacionRepository = verificacionRepository;
+            _academiaRepository = academiaRepository;
             _emailSender = emailSender;
-            _config = config;
+            _registrarAcademia = registrarAcademia;
+            _tokens = tokens;
         }
 
         [HttpPost("enviar-verificacion")]
@@ -45,7 +49,7 @@ namespace DojoFlow.API.Controllers
 
             if (await _usuarioRepository.ObtenerPorEmailAsync(email) != null)
             {
-                return BadRequest(new { Error = "Ya existe un coach registrado con ese correo." });
+                return BadRequest(new { Error = "Ya existe una cuenta registrada con ese correo." });
             }
 
             string pin = Random.Shared.Next(100000, 1000000).ToString();
@@ -95,12 +99,18 @@ namespace DojoFlow.API.Controllers
             return Ok(new { Mensaje = "Correo verificado correctamente." });
         }
 
+        // Registro público: crea una academia nueva y a su dueño (requiere correo verificado)
         [HttpPost("signup")]
-        public async Task<IActionResult> RegistrarCoach([FromBody] RegistroRequest request)
+        public async Task<IActionResult> RegistrarAcademia([FromBody] RegistroRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Nombre) || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             {
                 return BadRequest(new { Error = "El nombre, correo y contraseña son obligatorios." });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.NombreAcademia))
+            {
+                return BadRequest(new { Error = "El nombre de tu academia es obligatorio." });
             }
 
             if (!EsEmailValido(request.Email))
@@ -113,17 +123,11 @@ namespace DojoFlow.API.Controllers
                 return BadRequest(new { Error = "La contraseña debe tener al menos 6 caracteres." });
             }
 
-            string codigoEsperado = _config["Registro:CodigoInvitacion"] ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(codigoEsperado) || request.CodigoInvitacion != codigoEsperado)
-            {
-                return BadRequest(new { Error = "El código de invitación es inválido." });
-            }
-
             string email = request.Email.Trim().ToLowerInvariant();
 
             if (await _usuarioRepository.ObtenerPorEmailAsync(email) != null)
             {
-                return BadRequest(new { Error = "Ya existe un coach registrado con ese correo." });
+                return BadRequest(new { Error = "Ya existe una cuenta registrada con ese correo." });
             }
 
             var verificacion = await _verificacionRepository.ObtenerPorEmailAsync(email);
@@ -132,18 +136,21 @@ namespace DojoFlow.API.Controllers
                 return BadRequest(new { Error = "Primero debes verificar tu correo con el código que te enviamos." });
             }
 
-            var nuevoCoach = new UsuarioCoach
-            {
-                Id = Guid.NewGuid(),
-                Nombre = request.Nombre.Trim(),
-                Email = email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
-            };
+            var (academia, dueno) = await _registrarAcademia.EjecutarAsync(new RegistrarAcademiaComando(
+                request.NombreAcademia,
+                request.TipoNegocio,
+                request.Nombre,
+                email,
+                BCrypt.Net.BCrypt.HashPassword(request.Password)));
 
-            await _usuarioRepository.AgregarAsync(nuevoCoach);
             await _verificacionRepository.EliminarAsync(verificacion);
 
-            return Ok(new { Mensaje = "Coach registrado exitosamente en DojoFlow." });
+            // Se devuelve el token para entrar directo al onboarding, sin pasar por el login
+            return Ok(new
+            {
+                Mensaje = $"¡Bienvenido a DojoFlow! {academia.Nombre} está lista.",
+                Token = _tokens.ParaUsuario(dueno)
+            });
         }
 
         [HttpPost("login")]
@@ -156,27 +163,43 @@ namespace DojoFlow.API.Controllers
                 return Unauthorized(new { Error = "Correo o contraseña incorrectos." });
             }
 
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            return Ok(new { Token = _tokens.ParaUsuario(coach), Mensaje = $"Bienvenido al panel, {coach.Nombre}." });
+        }
 
-            var claims = new[]
+        // Datos del usuario y de su academia para personalizar la app al abrirla
+        [Authorize]
+        [HttpGet("yo")]
+        public async Task<IActionResult> ObtenerPerfil()
+        {
+            var usuario = await ObtenerUsuarioActualAsync();
+            if (usuario == null) return Unauthorized();
+
+            var academia = await _academiaRepository.ObtenerPorIdAsync(usuario.AcademiaId);
+            if (academia == null) return Unauthorized();
+
+            return Ok(new
             {
-                new Claim(JwtRegisteredClaimNames.Sub, coach.Email),
-                new Claim("nombre", coach.Nombre),
-                new Claim("id", coach.Id.ToString()),
-                new Claim(ClaimTypes.Role, "Coach")
-            };
+                Usuario = new { usuario.Id, usuario.Nombre, usuario.Email, usuario.Rol, usuario.TourCompletado },
+                Academia = AcademiaController.AMarca(academia)
+            });
+        }
 
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(2),
-                signingCredentials: credentials);
+        [Authorize]
+        [HttpPost("tour-completado")]
+        public async Task<IActionResult> MarcarTourCompletado()
+        {
+            var usuario = await ObtenerUsuarioActualAsync();
+            if (usuario == null) return Unauthorized();
 
-            string tokenReal = new JwtSecurityTokenHandler().WriteToken(token);
+            usuario.TourCompletado = true;
+            await _usuarioRepository.ActualizarAsync(usuario);
+            return Ok(new { Mensaje = "Tour completado." });
+        }
 
-            return Ok(new { Token = tokenReal, Mensaje = $"Bienvenido al panel, {coach.Nombre}." });
+        private async Task<UsuarioCoach?> ObtenerUsuarioActualAsync()
+        {
+            var id = User.FindFirst("id")?.Value;
+            return Guid.TryParse(id, out var usuarioId) ? await _usuarioRepository.ObtenerPorIdAsync(usuarioId) : null;
         }
 
         [HttpPost("olvide-password")]
@@ -275,7 +298,8 @@ namespace DojoFlow.API.Controllers
         public string Nombre { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public string CodigoInvitacion { get; set; } = string.Empty;
+        public string NombreAcademia { get; set; } = string.Empty;
+        public string TipoNegocio { get; set; } = string.Empty;
     }
 
     public class LoginRequest

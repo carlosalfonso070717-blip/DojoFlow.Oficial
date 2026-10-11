@@ -19,6 +19,11 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
             return await _context.UsuariosCoach.FirstOrDefaultAsync(u => u.Email == emailNormalizado);
         }
 
+        public async Task<UsuarioCoach?> ObtenerPorIdAsync(Guid id)
+        {
+            return await _context.UsuariosCoach.FirstOrDefaultAsync(u => u.Id == id);
+        }
+
         public async Task AgregarAsync(UsuarioCoach usuario)
         {
             _context.UsuariosCoach.Add(usuario);

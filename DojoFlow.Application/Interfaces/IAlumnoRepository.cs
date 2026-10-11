@@ -7,6 +7,7 @@ namespace DojoFlow.Application.Interfaces
         Task<List<Alumno>> ObtenerTodosAsync();
         Task<Alumno?> ObtenerPorIdAsync(Guid id);
         Task<Alumno?> ObtenerPorPinAsync(int claveKiosco);
+        Task<bool> ExistePinAsync(int claveKiosco);
         Task GuardarAsync(Alumno alumno);
         Task ActualizarAsync(Alumno alumno);
         Task EliminarAsync(Alumno alumno);

@@ -3,9 +3,10 @@ using DojoFlow.Domain.States;
 
 namespace DojoFlow.Domain.Entities
 {
-    public class Mensualidad
+    public class Mensualidad : IPerteneceAAcademia
     {
         public Guid Id { get; set; }
+        public Guid AcademiaId { get; set; }
         public Guid AlumnoId { get; set; }
         public decimal Monto { get; set; }
         public DateTime FechaGeneracion { get; set; }

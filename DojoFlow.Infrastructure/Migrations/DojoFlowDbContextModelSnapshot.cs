@@ -23,10 +23,96 @@ namespace DojoFlow.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Academia", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ColorPrimario")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<string>("ColorSecundario")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<int>("DiaVencimiento")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<byte[]>("Logo")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("LogoContentType")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int>("LogoVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ModoCobro")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Moneda")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.PrimitiveCollection<List<decimal>>("PreciosPaquete")
+                        .IsRequired()
+                        .HasColumnType("numeric[]");
+
+                    b.Property<string>("TerminoAlumno")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("TipoNegocio")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Academias");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            ColorPrimario = "#d90429",
+                            ColorSecundario = "#111418",
+                            DiaVencimiento = 15,
+                            FechaCreacion = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            LogoVersion = 0,
+                            ModoCobro = "Paquete",
+                            Moneda = "MXN",
+                            Nombre = "Dominio Combat Club",
+                            PreciosPaquete = new List<decimal> { 850m, 1500m, 2400m, 3200m, 4000m },
+                            TerminoAlumno = "Peleador",
+                            TipoNegocio = "Artes marciales"
+                        });
+                });
+
             modelBuilder.Entity("DojoFlow.Domain.Entities.Alumno", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcademiaId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("Activo")
@@ -59,12 +145,15 @@ namespace DojoFlow.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AcademiaId", "ClaveKiosco");
+
                     b.ToTable("Alumnos");
 
                     b.HasData(
                         new
                         {
                             Id = new Guid("a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             Activo = true,
                             Apellido = "Llanes",
                             ClaveKiosco = 12345,
@@ -77,6 +166,7 @@ namespace DojoFlow.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             Activo = true,
                             Apellido = "Sosa",
                             ClaveKiosco = 98765,
@@ -88,10 +178,82 @@ namespace DojoFlow.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Clase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcademiaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<decimal>("Precio")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcademiaId", "Nombre");
+
+                    b.ToTable("Clases");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0a6f1c3e-1b2d-4e5f-8a9b-000000000001"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            Activa = true,
+                            Nombre = "MMA",
+                            Precio = 850m
+                        },
+                        new
+                        {
+                            Id = new Guid("0a6f1c3e-1b2d-4e5f-8a9b-000000000002"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            Activa = true,
+                            Nombre = "Boxeo",
+                            Precio = 850m
+                        },
+                        new
+                        {
+                            Id = new Guid("0a6f1c3e-1b2d-4e5f-8a9b-000000000003"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            Activa = true,
+                            Nombre = "JiuJitsu",
+                            Precio = 850m
+                        },
+                        new
+                        {
+                            Id = new Guid("0a6f1c3e-1b2d-4e5f-8a9b-000000000004"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            Activa = true,
+                            Nombre = "Kickboxing",
+                            Precio = 850m
+                        },
+                        new
+                        {
+                            Id = new Guid("0a6f1c3e-1b2d-4e5f-8a9b-000000000005"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
+                            Activa = true,
+                            Nombre = "Judo",
+                            Precio = 850m
+                        });
+                });
+
             modelBuilder.Entity("DojoFlow.Domain.Entities.Mensualidad", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcademiaId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("AlumnoId")
@@ -115,12 +277,15 @@ namespace DojoFlow.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AcademiaId");
+
                     b.ToTable("Mensualidades");
 
                     b.HasData(
                         new
                         {
                             Id = new Guid("c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             AlumnoId = new Guid("a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"),
                             EstadoActual = "Pendiente",
                             FechaGeneracion = new DateTime(2026, 5, 15, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -133,6 +298,9 @@ namespace DojoFlow.Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcademiaId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("ImagenUrl")
@@ -151,12 +319,15 @@ namespace DojoFlow.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AcademiaId");
+
                     b.ToTable("Productos");
 
                     b.HasData(
                         new
                         {
                             Id = new Guid("d4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f90"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             ImagenUrl = "",
                             Nombre = "Cinturón (Todos los colores)",
                             StockActual = 10,
@@ -165,6 +336,7 @@ namespace DojoFlow.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("e5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9001"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             ImagenUrl = "",
                             Nombre = "Guantes de 16 oz",
                             StockActual = 10,
@@ -173,6 +345,7 @@ namespace DojoFlow.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("f6a7b8c9-d0e1-2f3a-4b5c-6d7e8f900112"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             ImagenUrl = "",
                             Nombre = "Guantes de 14 oz",
                             StockActual = 10,
@@ -181,6 +354,7 @@ namespace DojoFlow.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("a7b8c9d0-e1f2-3a4b-5c6d-7e8f90011223"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             ImagenUrl = "",
                             Nombre = "Espinilleras Fighter Legend",
                             StockActual = 10,
@@ -189,6 +363,7 @@ namespace DojoFlow.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("b8c9d0e1-f2a3-4b5c-6d7e-8f9001122334"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             ImagenUrl = "",
                             Nombre = "Bucales de GuardPro",
                             StockActual = 10,
@@ -197,6 +372,7 @@ namespace DojoFlow.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("c9d0e1f2-a3b4-5c6d-7e8f-900112233445"),
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             ImagenUrl = "",
                             Nombre = "Aguas",
                             StockActual = 10,
@@ -211,6 +387,9 @@ namespace DojoFlow.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("AcademiaId")
+                        .HasColumnType("uuid");
 
                     b.Property<decimal>("IngresosMensualidades")
                         .HasColumnType("numeric");
@@ -227,7 +406,7 @@ namespace DojoFlow.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MesAnio")
+                    b.HasIndex("AcademiaId", "MesAnio")
                         .IsUnique();
 
                     b.ToTable("RegistrosFinancieros");
@@ -236,6 +415,7 @@ namespace DojoFlow.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             IngresosMensualidades = 15000m,
                             IngresosVentas = 4500m,
                             MesAnio = "04-2026",
@@ -244,6 +424,7 @@ namespace DojoFlow.Infrastructure.Migrations
                         new
                         {
                             Id = 2,
+                            AcademiaId = new Guid("5d1f0c2a-7b3e-4c8a-9f61-2a4e8b0c9d11"),
                             IngresosMensualidades = 18500m,
                             IngresosVentas = 3200m,
                             MesAnio = "05-2026",
@@ -255,6 +436,9 @@ namespace DojoFlow.Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcademiaId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Email")
@@ -275,7 +459,17 @@ namespace DojoFlow.Infrastructure.Migrations
                     b.Property<string>("ResetPinHash")
                         .HasColumnType("text");
 
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("TourCompletado")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AcademiaId");
 
                     b.ToTable("UsuariosCoach");
                 });
@@ -308,6 +502,60 @@ namespace DojoFlow.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("VerificacionesEmail");
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Alumno", b =>
+                {
+                    b.HasOne("DojoFlow.Domain.Entities.Academia", null)
+                        .WithMany()
+                        .HasForeignKey("AcademiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Clase", b =>
+                {
+                    b.HasOne("DojoFlow.Domain.Entities.Academia", null)
+                        .WithMany()
+                        .HasForeignKey("AcademiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Mensualidad", b =>
+                {
+                    b.HasOne("DojoFlow.Domain.Entities.Academia", null)
+                        .WithMany()
+                        .HasForeignKey("AcademiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Producto", b =>
+                {
+                    b.HasOne("DojoFlow.Domain.Entities.Academia", null)
+                        .WithMany()
+                        .HasForeignKey("AcademiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.RegistroFinanciero", b =>
+                {
+                    b.HasOne("DojoFlow.Domain.Entities.Academia", null)
+                        .WithMany()
+                        .HasForeignKey("AcademiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.UsuarioCoach", b =>
+                {
+                    b.HasOne("DojoFlow.Domain.Entities.Academia", null)
+                        .WithMany()
+                        .HasForeignKey("AcademiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

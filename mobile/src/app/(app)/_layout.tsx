@@ -9,7 +9,17 @@ function IconoTab({ simbolo, color }: { simbolo: string; color: ColorValue }) {
 
 export default function AppLayout() {
   const tema = useTema();
-  const { cerrarSesion } = useSesion();
+  const { cerrarSesion, vincularKiosco } = useSesion();
+
+  // Cada vez que se abre desde el panel se renueva el token de la tablet
+  async function abrirKiosco() {
+    try {
+      await vincularKiosco();
+      router.push('/kiosco');
+    } catch (e) {
+      Alert.alert('Error', (e as Error).message);
+    }
+  }
 
   function confirmarSalida() {
     Alert.alert('¿Cerrar sesión?', undefined, [
@@ -34,7 +44,7 @@ export default function AppLayout() {
           </Pressable>
         ),
         headerLeft: () => (
-          <Pressable onPress={() => router.push('/kiosco')} hitSlop={12} style={{ marginLeft: 16 }}>
+          <Pressable onPress={abrirKiosco} hitSlop={12} style={{ marginLeft: 16 }}>
             <Text style={{ color: tema.textMuted, fontWeight: '700' }}>Kiosco</Text>
           </Pressable>
         ),

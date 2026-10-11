@@ -15,10 +15,10 @@
     <div id="app-container" class="bg-white w-full max-w-lg rounded-xl shadow-lg border border-slate-200 p-8">
         <div class="text-center mb-8">
             <div class="flex justify-center mb-3">
-                <img src="logo.jpg" alt="Logo DojoFlow" class="h-20 rounded-lg shadow-sm object-contain">
+                <img id="logo-academia" src="logo.jpg" alt="Logo de la academia" class="h-20 rounded-lg shadow-sm object-contain">
             </div>
-            <h1 class="text-2xl font-bold text-slate-800 uppercase tracking-tight">DojoFlow</h1>
-            <p class="text-slate-500 text-sm mt-1">Terminal de Acceso de Peleadores</p>
+            <h1 id="nombre-academia" class="text-2xl font-bold text-slate-800 uppercase tracking-tight">DojoFlow</h1>
+            <p class="text-slate-500 text-sm mt-1">Terminal de acceso</p>
         </div>
 
         <div id="pin-display" class="bg-slate-100 h-20 flex items-center justify-center text-4xl font-mono text-slate-700 rounded-lg border border-slate-200 mb-8 tracking-[0.5em] font-bold">
@@ -51,6 +51,29 @@
 
     <script>
         const API_URL = "/api";
+        // Token de la academia generado desde el panel (botón "Kiosco")
+        const tokenKiosco = localStorage.getItem('kioscoToken');
+
+        if (!tokenKiosco) {
+            document.getElementById('app-container').innerHTML = `
+                <div class="text-center">
+                    <div class="text-5xl mb-4">🔒</div>
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Kiosco sin vincular</h2>
+                    <p class="text-slate-500">Inicia sesión en el panel y abre el kiosco con el botón "Kiosco".</p>
+                    <a href="login.html" class="inline-block mt-6 bg-red-600 text-white px-6 py-3 rounded-lg font-bold">Ir al panel</a>
+                </div>`;
+        } else {
+            // Pinta el kiosco con el nombre y logo de la academia
+            fetch(`${API_URL}/Academia/marca`, { headers: { 'Authorization': `Bearer ${tokenKiosco}` } })
+                .then(r => r.ok ? r.json() : null)
+                .then(marca => {
+                    if (!marca) return;
+                    document.getElementById('nombre-academia').innerText = marca.nombre;
+                    document.title = `Kiosco | ${marca.nombre}`;
+                    if (marca.logoUrl) document.getElementById('logo-academia').src = marca.logoUrl;
+                })
+                .catch(() => {});
+        }
         
         let currentPin = "";
         const display = document.getElementById('pin-display');
@@ -101,7 +124,7 @@
                 // Petición HTTP real al endpoint de C#
                 const response = await fetch(`${API_URL}/Asistencias/checar?pin=${currentPin}`, { 
                     method: "POST",
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${tokenKiosco}` }
                 });
                 
                 const data = await response.json();
@@ -141,7 +164,7 @@
                 content.innerHTML = `
                     <div class="text-red-500 text-6xl mb-4">⚠</div>
                     <h2 class="text-xl font-bold text-slate-800 mb-2">Error de Conexión</h2>
-                    <p class="text-slate-500 mb-6 text-sm">No se pudo contactar al servidor. Asegúrate de que la API está corriendo en Visual Studio.</p>
+                    <p class="text-slate-500 mb-6 text-sm">No se pudo contactar al servidor. Revisa la conexión a internet.</p>
                     <button onclick="closeModal()" class="w-full bg-slate-200 text-slate-700 py-3 rounded-lg font-bold hover:bg-slate-300 transition">CERRAR</button>
                 `;
             }

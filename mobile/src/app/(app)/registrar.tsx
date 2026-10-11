@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { DISCIPLINAS, registrarAlumno } from '@/api/endpoints';
-import { Boton, Campo, Tarjeta } from '@/components/ui';
+import { obtenerClases, registrarAlumno, type Clase } from '@/api/endpoints';
+import { Boton, Campo, Tarjeta, TextoVacio } from '@/components/ui';
+import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
 
 export default function RegistrarScreen() {
   const tema = useTema();
+  const { datos: clases, cargando: cargandoClases, error: errorClases } = useRecurso(obtenerClases, [] as Clase[]);
+  const clasesActivas = useMemo(() => clases.filter((c) => c.activa), [clases]);
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -18,14 +21,14 @@ export default function RegistrarScreen() {
 
   async function registrar() {
     if (disciplinas.length === 0) {
-      Alert.alert('Error', 'Selecciona al menos una disciplina');
+      Alert.alert('Error', 'Selecciona al menos una clase');
       return;
     }
     setCargando(true);
     try {
       const r = await registrarAlumno({ nombre, apellido, telefono, disciplinas });
       Alert.alert(
-        'Peleador registrado',
+        'Alumno registrado',
         `Nombre: ${r.nombreCompleto}\nPIN de acceso: ${r.claveKioscoAsignada}\nCuota: $${r.costoMensualidadAsignado}`,
       );
       setNombre('');
@@ -47,9 +50,12 @@ export default function RegistrarScreen() {
           <Campo etiqueta="Apellido" value={apellido} onChangeText={setApellido} autoCapitalize="words" />
           <Campo etiqueta="Teléfono" value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" />
 
-          <Text style={[estilos.etiqueta, { color: tema.textMuted }]}>Disciplinas</Text>
+          <Text style={[estilos.etiqueta, { color: tema.textMuted }]}>Clases</Text>
+          {clasesActivas.length === 0 && (
+            <TextoVacio error={errorClases} cargando={cargandoClases} texto="Tu academia aún no tiene clases." />
+          )}
           <View style={estilos.chips}>
-            {DISCIPLINAS.map((d) => {
+            {clasesActivas.map(({ nombre: d }) => {
               const activa = disciplinas.includes(d);
               return (
                 <Pressable
@@ -66,7 +72,7 @@ export default function RegistrarScreen() {
             })}
           </View>
 
-          <Boton titulo="Registrar peleador" onPress={registrar} cargando={cargando} />
+          <Boton titulo="Registrar alumno" onPress={registrar} cargando={cargando} />
         </Tarjeta>
       </ScrollView>
     </KeyboardAvoidingView>

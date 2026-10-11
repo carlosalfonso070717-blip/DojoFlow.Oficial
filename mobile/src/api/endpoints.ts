@@ -17,12 +17,48 @@ export const enviarVerificacion = (email: string) =>
 export const confirmarVerificacion = (email: string, pin: string) =>
   post<Mensaje>('/Auth/confirmar-verificacion', { email, pin });
 
-export const registrarCoach = (datos: {
+// Crea la academia y a su dueño; devuelve la sesión ya iniciada
+export const registrarAcademia = (datos: {
   nombre: string;
   email: string;
   password: string;
-  codigoInvitacion: string;
-}) => post<Mensaje>('/Auth/signup', datos);
+  nombreAcademia: string;
+  tipoNegocio: string;
+}) => post<LoginRespuesta>('/Auth/signup', datos);
+
+// ===== ACADEMIA =====
+export type MarcaAcademia = {
+  id: string;
+  nombre: string;
+  tipoNegocio: string;
+  colorPrimario: string;
+  colorSecundario: string;
+  terminoAlumno: string;
+  moneda: string;
+  logoUrl: string | null;
+};
+
+export type Perfil = {
+  usuario: { id: string; nombre: string; email: string; rol: 'Dueno' | 'Coach'; tourCompletado: boolean };
+  academia: MarcaAcademia;
+};
+
+export type TipoNegocio = {
+  tipoNegocio: string;
+  terminoAlumno: string;
+  colorPrimario: string;
+  colorSecundario: string;
+  clasesSugeridas: string[];
+};
+
+export const obtenerPerfil = () => api<Perfil>('/Auth/yo');
+
+export const obtenerTiposNegocio = () => api<TipoNegocio[]>('/Academia/tipos', { tokenPropio: null });
+
+// ===== CLASES =====
+export type Clase = { id: string; nombre: string; precio: number; activa: boolean };
+
+export const obtenerClases = () => api<Clase[]>('/Clases');
 
 export const olvidePassword = (email: string) => post<Mensaje>('/Auth/olvide-password', { email });
 
@@ -30,8 +66,6 @@ export const resetearPassword = (email: string, pin: string, nuevaPassword: stri
   post<Mensaje>('/Auth/resetear-password', { email, pin, nuevaPassword });
 
 // ===== ALUMNOS =====
-export const DISCIPLINAS = ['MMA', 'Boxeo', 'JiuJitsu', 'Kickboxing', 'Judo'] as const;
-
 export type Alumno = {
   id: string;
   nombre: string;
@@ -64,7 +98,7 @@ export const registrarAlumno = (alumno: NuevoAlumno) =>
 
 export const eliminarAlumno = (id: string) => api<void>(`/Alumnos/${id}`, { method: 'DELETE' });
 
-// ===== ASISTENCIAS (kiosco, no requiere token) =====
+// ===== KIOSCO (usa su propio token, ligado a la academia) =====
 export type ResultadoChequeo = {
   nombreCompleto: string;
   disciplinas: string[];
@@ -73,8 +107,16 @@ export type ResultadoChequeo = {
   permitirAcceso: boolean;
 };
 
-export const checarAsistencia = (pin: string) =>
-  post<ResultadoChequeo>(`/Asistencias/checar?pin=${encodeURIComponent(pin)}`);
+export const crearSesionKiosco = () => post<{ token: string }>('/Asistencias/sesion-kiosco');
+
+export const obtenerMarcaKiosco = (tokenKiosco: string) =>
+  api<MarcaAcademia>('/Academia/marca', { tokenPropio: tokenKiosco });
+
+export const checarAsistencia = (pin: string, tokenKiosco: string) =>
+  api<ResultadoChequeo>(`/Asistencias/checar?pin=${encodeURIComponent(pin)}`, {
+    method: 'POST',
+    tokenPropio: tokenKiosco,
+  });
 
 // ===== MENSUALIDADES =====
 export type EstadoMensualidad = 'Pagado' | 'Pendiente' | 'Vencido' | (string & {});

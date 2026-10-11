@@ -28,6 +28,11 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
             return await _context.Alumnos.AsNoTracking().FirstOrDefaultAsync(a => a.ClaveKiosco == claveKiosco);
         }
 
+        public async Task<bool> ExistePinAsync(int claveKiosco)
+        {
+            return await _context.Alumnos.AnyAsync(a => a.ClaveKiosco == claveKiosco);
+        }
+
         public async Task GuardarAsync(Alumno alumno)
         {
             _context.Alumnos.Add(alumno);

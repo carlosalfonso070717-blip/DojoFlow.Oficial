@@ -8,7 +8,7 @@ import { useTema } from '@/theme';
 
 export default function LoginScreen() {
   const tema = useTema();
-  const { iniciarSesion } = useSesion();
+  const { iniciarSesion, tokenKiosco } = useSesion();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [verPassword, setVerPassword] = useState(false);
@@ -36,7 +36,7 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={estilos.contenedor} keyboardShouldPersistTaps="handled">
           <View style={estilos.encabezado}>
             <Text style={[estilos.logo, { color: tema.primary }]}>🥋 DojoFlow</Text>
-            <Text style={{ color: tema.textMuted, fontSize: 15 }}>Dominio Combat Club · Panel del Coach</Text>
+            <Text style={{ color: tema.textMuted, fontSize: 15 }}>Gestión para academias</Text>
           </View>
 
           <Tarjeta style={{ gap: 16 }}>
@@ -70,12 +70,15 @@ export default function LoginScreen() {
                 ¿Olvidaste tu contraseña?
               </Text>
               <Text onPress={() => router.push('/registro')} style={{ color: tema.primary, fontWeight: '700' }}>
-                Crear cuenta
+                Crear mi academia
               </Text>
             </View>
           </Tarjeta>
 
-          <Boton titulo="Abrir modo Kiosco" variante="secundario" onPress={() => router.push('/kiosco')} />
+          {/* Solo en tablets que un coach ya vinculó a su academia */}
+          {tokenKiosco && (
+            <Boton titulo="Abrir modo Kiosco" variante="secundario" onPress={() => router.push('/kiosco')} />
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

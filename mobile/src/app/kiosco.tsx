@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { checarAsistencia, type ResultadoChequeo } from '@/api/endpoints';
+import { checarAsistencia, obtenerMarcaKiosco, type ResultadoChequeo } from '@/api/endpoints';
+import { useSesion } from '@/auth/session';
 import { Badge, Boton } from '@/components/ui';
 import { useTema } from '@/theme';
 
@@ -17,14 +18,23 @@ type Estado =
 
 export default function KioscoScreen() {
   const tema = useTema();
+  const { tokenKiosco } = useSesion();
   const [pin, setPin] = useState('');
   const [estado, setEstado] = useState<Estado>({ tipo: 'inactivo' });
+  const [nombreAcademia, setNombreAcademia] = useState('');
+
+  useEffect(() => {
+    if (!tokenKiosco) return;
+    obtenerMarcaKiosco(tokenKiosco)
+      .then((marca) => setNombreAcademia(marca.nombre))
+      .catch(() => setNombreAcademia(''));
+  }, [tokenKiosco]);
 
   async function validar() {
-    if (pin.length !== LARGO_PIN) return;
+    if (pin.length !== LARGO_PIN || !tokenKiosco) return;
     setEstado({ tipo: 'validando' });
     try {
-      setEstado({ tipo: 'resultado', data: await checarAsistencia(pin) });
+      setEstado({ tipo: 'resultado', data: await checarAsistencia(pin, tokenKiosco) });
     } catch (e) {
       setEstado({ tipo: 'error', mensaje: (e as Error).message });
     }
@@ -47,7 +57,21 @@ export default function KioscoScreen() {
         <Text style={{ color: tema.textMuted, fontWeight: '600' }}>✕ Salir</Text>
       </Pressable>
 
+      {!tokenKiosco ? (
+        <View style={estilos.centro}>
+          <Text style={{ fontSize: 48 }}>🔒</Text>
+          <Text style={[estilos.titulo, { color: tema.text }]}>Kiosco sin vincular</Text>
+          <Text style={{ color: tema.textMuted, fontSize: 16, textAlign: 'center' }}>
+            Inicia sesión en el panel y toca "Kiosco" para vincular esta tablet a tu academia.
+          </Text>
+        </View>
+      ) : (
       <View style={estilos.centro}>
+        {nombreAcademia ? (
+          <Text style={{ color: tema.primary, fontSize: 16, fontWeight: '800', textTransform: 'uppercase' }}>
+            {nombreAcademia}
+          </Text>
+        ) : null}
         <Text style={[estilos.titulo, { color: tema.text }]}>Registro de asistencia</Text>
         <Text style={{ color: tema.textMuted, fontSize: 16 }}>Ingresa tu PIN de 5 dígitos</Text>
 
@@ -84,6 +108,7 @@ export default function KioscoScreen() {
           })}
         </View>
       </View>
+      )}
 
       <Modal visible={estado.tipo !== 'inactivo'} transparent animationType="fade" onRequestClose={cerrar}>
         <View style={estilos.fondoModal}>
@@ -139,7 +164,7 @@ function ContenidoModal({ estado, onCerrar }: { estado: Estado; onCerrar: () => 
   return (
     <>
       <Text style={[estilos.icono, { color: tema.success }]}>✓</Text>
-      <Text style={[estilos.modalTitulo, { color: tema.text }]}>¡Bienvenido al Tatami!</Text>
+      <Text style={[estilos.modalTitulo, { color: tema.text }]}>¡Bienvenido!</Text>
       <Text style={[estilos.nombre, { color: tema.text }]}>{data.nombreCompleto}</Text>
       <Badge texto={pagado ? 'CUOTA CUBIERTA' : 'PAGO PENDIENTE'} color={pagado ? tema.success : '#d4a017'} />
       <Boton titulo="Cerrar" onPress={onCerrar} style={{ alignSelf: 'stretch' }} />

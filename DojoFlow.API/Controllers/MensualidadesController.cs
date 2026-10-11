@@ -33,7 +33,7 @@ namespace DojoFlow.API.Controllers
             {
                 var alumno = alumnos.FirstOrDefault(a => a.Id == m.AlumnoId);
 
-                string nombreAlumno = alumno != null ? $"{alumno.Nombre} {alumno.Apellido}" : "Peleador Desconocido";
+                string nombreAlumno = alumno != null ? $"{alumno.Nombre} {alumno.Apellido}" : "Alumno desconocido";
                 string claveKiosco = alumno != null ? alumno.ClaveKiosco.ToString() : "N/A";
 
                 return new

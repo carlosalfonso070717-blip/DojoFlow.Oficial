@@ -28,7 +28,7 @@ export default function AlumnosScreen() {
       keyExtractor={(a) => a.id}
       contentContainerStyle={estilos.lista}
       refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={tema.primary} />}
-      ListHeaderComponent={<Buscador value={busqueda} onChangeText={setBusqueda} placeholder="Buscar peleador..." />}
+      ListHeaderComponent={<Buscador value={busqueda} onChangeText={setBusqueda} placeholder="Buscar alumno..." />}
       ListEmptyComponent={<TextoVacio error={error} cargando={cargando} texto="No hay alumnos registrados." />}
       renderItem={({ item }) => (
         <Tarjeta style={{ gap: 10 }}>

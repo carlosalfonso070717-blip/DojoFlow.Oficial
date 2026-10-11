@@ -1,19 +1,40 @@
+using DojoFlow.API.Services;
 using DojoFlow.Application.Interfaces;
+using DojoFlow.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DojoFlow.API.Controllers
 {
+    [Authorize(Roles = Roles.Dueno + "," + Roles.Coach + "," + Roles.Kiosco)]
     [ApiController]
     [Route("api/[controller]")]
     public class AsistenciasController : ControllerBase
     {
         private readonly IAlumnoRepository _alumnoRepository;
         private readonly IMensualidadRepository _mensualidadRepository;
+        private readonly ITenantContext _tenant;
+        private readonly GeneradorTokens _tokens;
 
-        public AsistenciasController(IAlumnoRepository alumnoRepository, IMensualidadRepository mensualidadRepository)
+        public AsistenciasController(
+            IAlumnoRepository alumnoRepository,
+            IMensualidadRepository mensualidadRepository,
+            ITenantContext tenant,
+            GeneradorTokens tokens)
         {
             _alumnoRepository = alumnoRepository;
             _mensualidadRepository = mensualidadRepository;
+            _tenant = tenant;
+            _tokens = tokens;
+        }
+
+        // Vincula una tablet a la academia: un coach la activa y la tablet queda
+        // con un token que solo puede registrar asistencias
+        [Authorize(Roles = Roles.Dueno + "," + Roles.Coach)]
+        [HttpPost("sesion-kiosco")]
+        public IActionResult CrearSesionKiosco()
+        {
+            return Ok(new { Token = _tokens.ParaKiosco(_tenant.AcademiaId) });
         }
 
         [HttpPost("checar")]
@@ -27,7 +48,7 @@ namespace DojoFlow.API.Controllers
             var alumno = await _alumnoRepository.ObtenerPorPinAsync(pinNum);
             if (alumno == null)
             {
-                return NotFound(new { Error = "PIN incorrecto o peleador no registrado." });
+                return NotFound(new { Error = "PIN incorrecto o alumno no registrado." });
             }
 
             string estatusFinanciero = await ObtenerEstatusFinancieroAsync(alumno.Id);

@@ -329,11 +329,19 @@
 
         <!-- FORMULARIO DE REGISTRO (Oculto por defecto) -->
         <div id="signupSection" class="oculto">
-            <h2>Registrar Coach</h2>
-            <p class="subtitulo">Crea tu cuenta para empezar a administrar</p>
+            <h2>Crea tu academia</h2>
+            <p class="subtitulo">Registra tu negocio y empieza a administrarlo</p>
             <form id="signupForm">
                 <div class="form-group">
-                    <label for="signupNombre">Nombre</label>
+                    <label for="signupAcademia">Nombre de tu academia</label>
+                    <input type="text" id="signupAcademia" placeholder="Ej. Escuela de Ballet Swan" required autocomplete="organization">
+                </div>
+                <div class="form-group">
+                    <label for="signupTipo">Tipo de academia</label>
+                    <select id="signupTipo" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="signupNombre">Tu nombre</label>
                     <input type="text" id="signupNombre" placeholder="Ej. Carlos Llanes" required autocomplete="name">
                 </div>
                 <div class="form-group">
@@ -361,11 +369,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="signupCodigoInvitacion">Código de invitación</label>
-                    <input type="text" id="signupCodigoInvitacion" placeholder="Proporcionado por el administrador" required autocomplete="off">
-                </div>
-                <button type="submit" class="btn btn-primary">Crear Cuenta</button>
+                <button type="submit" class="btn btn-primary">Crear academia</button>
             </form>
             <div class="toggle-text" onclick="mostrarSeccion('loginSection')">Ya tengo cuenta. Volver al Login</div>
         </div>
@@ -497,7 +501,17 @@
             }
         });
 
-        // 2. REGISTRO DE COACH (requiere haber verificado el correo primero)
+        // Tipos de academia disponibles (Artes marciales, Danza, Música...)
+        fetch('/api/Academia/tipos')
+            .then(r => r.json())
+            .then(tipos => {
+                document.getElementById('signupTipo').innerHTML = tipos
+                    .map(t => `<option value="${t.tipoNegocio}">${t.tipoNegocio}</option>`)
+                    .join('');
+            })
+            .catch(() => console.error('No se pudieron cargar los tipos de academia'));
+
+        // 2. REGISTRO DE ACADEMIA (requiere haber verificado el correo primero)
         let correoVerificado = false;
         let correoVerificadoValor = '';
 
@@ -590,7 +604,8 @@
             const nombre = document.getElementById('signupNombre').value;
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
-            const codigoInvitacion = document.getElementById('signupCodigoInvitacion').value;
+            const nombreAcademia = document.getElementById('signupAcademia').value;
+            const tipoNegocio = document.getElementById('signupTipo').value;
 
             if (!correoVerificado || email.trim().toLowerCase() !== correoVerificadoValor) {
                 return mostrarError('Primero debes verificar tu correo con el botón "Verificar".');
@@ -600,23 +615,22 @@
                 const response = await fetch(`${API_URL}/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre, email, password, codigoInvitacion })
+                    body: JSON.stringify({ nombre, email, password, nombreAcademia, tipoNegocio })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
+                    // El registro ya devuelve sesión: se entra directo al panel de la academia nueva
+                    localStorage.setItem('coachToken', data.token);
                     Swal.fire({
                         icon: 'success',
-                        title: 'Registro Exitoso',
+                        title: '¡Academia creada!',
                         text: data.mensaje,
                         background: coloresSwal().background, color: coloresSwal().color,
                         confirmButtonColor: '#4CAF50'
                     }).then(() => {
-                        document.getElementById('signupForm').reset();
-                        reiniciarVerificacion();
-                        correoVerificadoValor = '';
-                        mostrarSeccion('loginSection');
+                        window.location.href = 'index.html';
                     });
                 } else {
                     mostrarError(data.error);

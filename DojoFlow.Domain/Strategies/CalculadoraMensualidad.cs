@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using DojoFlow.Domain.Entities;
 
 namespace DojoFlow.Domain.Strategies
 {
@@ -7,36 +10,52 @@ namespace DojoFlow.Domain.Strategies
         decimal CalcularCosto();
     }
 
-    // Estrategia 1 disciplina: $850 c/u
-    public class PrecioIndividualStrategy : ICalculoMensualidadStrategy { public decimal CalcularCosto() => 850.00m; }
+    // Estrategia por paquete: la academia define un precio por cantidad de clases
+    // (ej. Dominio Combat Club: 1 = $850, 2 = $1500, 3 = $2400...). Si el alumno toma
+    // más clases que paquetes definidos, se usa el paquete más grande.
+    public class PrecioPorPaqueteStrategy : ICalculoMensualidadStrategy
+    {
+        private readonly IReadOnlyList<decimal> _preciosPaquete;
+        private readonly int _cantidadClases;
 
-    // Estrategia 2 disciplinas: combo $1500
-    public class PrecioDobleStrategy : ICalculoMensualidadStrategy { public decimal CalcularCosto() => 1500.00m; }
+        public PrecioPorPaqueteStrategy(IReadOnlyList<decimal> preciosPaquete, int cantidadClases)
+        {
+            _preciosPaquete = preciosPaquete;
+            _cantidadClases = cantidadClases;
+        }
 
-    // Estrategia 3 disciplinas: combo $2400
-    public class PrecioTripleStrategy : ICalculoMensualidadStrategy { public decimal CalcularCosto() => 2400.00m; }
+        public decimal CalcularCosto()
+        {
+            if (_preciosPaquete.Count == 0 || _cantidadClases <= 0) return 0m;
+            int indice = Math.Min(_cantidadClases, _preciosPaquete.Count) - 1;
+            return _preciosPaquete[indice];
+        }
+    }
 
-    // Estrategia 4 disciplinas: combo $3200
-    public class PrecioCuadrupleStrategy : ICalculoMensualidadStrategy { public decimal CalcularCosto() => 3200.00m; }
+    // Estrategia por clase: se suma el precio individual de cada clase inscrita
+    public class PrecioPorClaseStrategy : ICalculoMensualidadStrategy
+    {
+        private readonly IEnumerable<Clase> _clases;
 
-    // Estrategia 5 disciplinas (Full Academy): combo $4000
-    public class PrecioFullAcademyStrategy : ICalculoMensualidadStrategy { public decimal CalcularCosto() => 4000.00m; }
+        public PrecioPorClaseStrategy(IEnumerable<Clase> clases)
+        {
+            _clases = clases;
+        }
+
+        public decimal CalcularCosto() => _clases.Sum(c => c.Precio);
+    }
 
     public class CalculadoraMensualidad
     {
         private readonly ICalculoMensualidadStrategy _estrategia;
 
-        public CalculadoraMensualidad(int cantidadDisciplinas)
+        public CalculadoraMensualidad(Academia academia, IReadOnlyCollection<Clase> clasesInscritas)
         {
-            // El contexto selecciona la estrategia adecuada según el tamaño de la lista
-            _estrategia = cantidadDisciplinas switch
+            // El contexto elige la estrategia según cómo cobra cada academia
+            _estrategia = academia.ModoCobro switch
             {
-                1 => new PrecioIndividualStrategy(),
-                2 => new PrecioDobleStrategy(),
-                3 => new PrecioTripleStrategy(),
-                4 => new PrecioCuadrupleStrategy(),
-                5 => new PrecioFullAcademyStrategy(),
-                _ => new PrecioIndividualStrategy() // Por si mandan un número inválido o 0
+                ModoCobro.Paquete => new PrecioPorPaqueteStrategy(academia.PreciosPaquete, clasesInscritas.Count),
+                _ => new PrecioPorClaseStrategy(clasesInscritas)
             };
         }
 

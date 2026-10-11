@@ -29,13 +29,26 @@ namespace DojoFlow.API.Controllers
     [Route("api/[controller]")]
     public class AlumnosController : ControllerBase
     {
+        private const int IntentosMaximosPin = 20;
+
         private readonly IAlumnoRepository _alumnoRepository;
         private readonly IMensualidadRepository _mensualidadRepository;
+        private readonly IAcademiaRepository _academiaRepository;
+        private readonly IClaseRepository _claseRepository;
+        private readonly ITenantContext _tenant;
 
-        public AlumnosController(IAlumnoRepository alumnoRepository, IMensualidadRepository mensualidadRepository)
+        public AlumnosController(
+            IAlumnoRepository alumnoRepository,
+            IMensualidadRepository mensualidadRepository,
+            IAcademiaRepository academiaRepository,
+            IClaseRepository claseRepository,
+            ITenantContext tenant)
         {
             _alumnoRepository = alumnoRepository;
             _mensualidadRepository = mensualidadRepository;
+            _academiaRepository = academiaRepository;
+            _claseRepository = claseRepository;
+            _tenant = tenant;
         }
 
         private static AlumnoVista AVista(Alumno a) => new AlumnoVista
@@ -58,25 +71,39 @@ namespace DojoFlow.API.Controllers
         [HttpPost]
         public async Task<IActionResult> RegistrarAlumno([FromBody] RegistrarAlumnoRequest request)
         {
+            var academia = await _academiaRepository.ObtenerPorIdAsync(_tenant.AcademiaId);
+            if (academia == null) return Unauthorized();
+
+            // Las clases elegidas deben existir y estar activas en esta academia
+            var clasesActivas = (await _claseRepository.ObtenerTodasAsync()).Where(c => c.Activa).ToList();
+            var nombresPedidos = request.Disciplinas.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var clasesInscritas = clasesActivas
+                .Where(c => nombresPedidos.Contains(c.Nombre, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+
+            if (nombresPedidos.Count == 0)
+                return BadRequest(new { Error = "Selecciona al menos una clase." });
+            if (clasesInscritas.Count != nombresPedidos.Count)
+                return BadRequest(new { Error = "Alguna de las clases seleccionadas no existe o está inactiva." });
+
             try
             {
                 Alumno nuevoAlumno = new Alumno.Builder()
                     .ConNombre(request.Nombre)
                     .ConApellido(request.Apellido)
                     .ConTelefono(request.Telefono)
-                    .ConDisciplinas(request.Disciplinas)
+                    .ConDisciplinas(clasesInscritas.Select(c => c.Nombre).ToList())
                     .Build();
 
-                var calculadora = new CalculadoraMensualidad(nuevoAlumno.Disciplinas.Count);
+                nuevoAlumno.ClaveKiosco = await GenerarPinDisponibleAsync(nuevoAlumno.ClaveKiosco);
+
+                var calculadora = new CalculadoraMensualidad(academia, clasesInscritas);
                 decimal costoMensualidad = calculadora.ObtenerCostoMensual();
                 nuevoAlumno.CostoMensualidad = costoMensualidad;
 
                 await _alumnoRepository.GuardarAsync(nuevoAlumno);
 
-                DateTime hoy = DateTime.UtcNow;
-                DateTime fechaVencimiento = new DateTime(hoy.Year, hoy.Month, 15);
-                if (hoy.Day > 15) fechaVencimiento = fechaVencimiento.AddMonths(1);
-
+                var fechaVencimiento = academia.CalcularPrimerVencimiento(DateTime.UtcNow);
                 var primeraMensualidad = new Mensualidad(nuevoAlumno.Id, costoMensualidad, fechaVencimiento);
                 await _mensualidadRepository.AgregarAsync(primeraMensualidad);
 
@@ -87,7 +114,7 @@ namespace DojoFlow.API.Controllers
                     NombreCompleto = $"{nuevoAlumno.Nombre} {nuevoAlumno.Apellido}",
                     ClaveKioscoAsignada = nuevoAlumno.ClaveKiosco,
                     DisciplinasInscritas = nuevoAlumno.Disciplinas,
-                    CostoMensualidadAsignado = $"{costoMensualidad} MXN"
+                    CostoMensualidadAsignado = $"{costoMensualidad} {academia.Moneda}"
                 });
             }
             catch (ArgumentException ex)
@@ -96,18 +123,30 @@ namespace DojoFlow.API.Controllers
             }
         }
 
+        // El PIN debe ser único dentro de la academia para que el kiosco identifique a una sola persona
+        private async Task<int> GenerarPinDisponibleAsync(int propuesto)
+        {
+            int pin = propuesto;
+            for (int intento = 0; intento < IntentosMaximosPin; intento++)
+            {
+                if (!await _alumnoRepository.ExistePinAsync(pin)) return pin;
+                pin = Random.Shared.Next(10000, 100000);
+            }
+            throw new ArgumentException("No se pudo generar un PIN disponible. Intenta de nuevo.");
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> EliminarAlumno(Guid id)
         {
             var alumno = await _alumnoRepository.ObtenerPorIdAsync(id);
 
             if (alumno == null)
-                return NotFound(new { Error = "Peleador no encontrado en el sistema." });
+                return NotFound(new { Error = "Alumno no encontrado en el sistema." });
 
             await _alumnoRepository.EliminarAsync(alumno);
             await _mensualidadRepository.EliminarPorAlumnoIdAsync(id);
 
-            return Ok(new { Mensaje = "El peleador y sus recibos han sido eliminados correctamente." });
+            return Ok(new { Mensaje = "El alumno y sus recibos han sido eliminados correctamente." });
         }
     }
 }

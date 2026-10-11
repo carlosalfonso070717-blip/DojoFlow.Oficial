@@ -3,9 +3,10 @@ using System.Collections.Generic;
 
 namespace DojoFlow.Domain.Entities
 {
-    public class Alumno
+    public class Alumno : IPerteneceAAcademia
     {
         public Guid Id { get;  set; }
+        public Guid AcademiaId { get; set; }
         public string Nombre { get;  set; } = string.Empty;
         public string Apellido { get;  set; } = string.Empty;
         public string Telefono { get; set; } = string.Empty;

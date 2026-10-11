@@ -1,7 +1,11 @@
 import Constants from 'expo-constants';
 
+// EXPO_PUBLIC_API_URL permite apuntar a una API local mientras se desarrolla
+// (p. ej. EXPO_PUBLIC_API_URL=http://192.168.1.96:5199/api npx expo start)
 export const API_URL: string =
-  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? 'https://dojoflow.club/api';
+  process.env.EXPO_PUBLIC_API_URL ??
+  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
+  'https://dojoflow.club/api';
 
 let token: string | null = null;
 let alExpirarSesion: (() => void) | null = null;
@@ -21,14 +25,20 @@ export class ApiError extends Error {
   }
 }
 
+type Opciones = RequestInit & {
+  // Para usar otro token que el de la sesión (p. ej. el del kiosco)
+  tokenPropio?: string | null;
+};
+
 // Equivalente a obtenerHeaders() + fetch del frontend web
-export async function api<T>(ruta: string, opciones: RequestInit = {}): Promise<T> {
+export async function api<T>(ruta: string, { tokenPropio, ...opciones }: Opciones = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
     ...(opciones.headers as Record<string, string>),
   };
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const tokenUsado = tokenPropio === undefined ? token : tokenPropio;
+  if (tokenUsado) headers.Authorization = `Bearer ${tokenUsado}`;
 
   let res: Response;
   try {
@@ -37,7 +47,8 @@ export async function api<T>(ruta: string, opciones: RequestInit = {}): Promise<
     throw new ApiError('No se pudo contactar al servidor de DojoFlow.', 0);
   }
 
-  if (res.status === 401 && token) {
+  // Solo un 401 con el token de la sesión significa que la sesión expiró
+  if (res.status === 401 && tokenPropio === undefined && token) {
     alExpirarSesion?.();
     throw new ApiError('Sesión expirada', 401);
   }
