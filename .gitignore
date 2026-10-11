@@ -363,6 +363,11 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # Copia del frontend generada en build (ver target CopyFrontend en DojoFlow.API.csproj)
+DojoFlow.API/wwwroot/clasico/
+DojoFlow.API/wwwroot/_expo/
+DojoFlow.API/wwwroot/assets/
+DojoFlow.API/wwwroot/favicon.ico
+DojoFlow.API/wwwroot/metadata.json
 DojoFlow.API/wwwroot/index.html
 DojoFlow.API/wwwroot/login.html
 DojoFlow.API/wwwroot/kiosco.html

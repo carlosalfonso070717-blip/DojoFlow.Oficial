@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
 import { School } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert } from 'react-native';
 import { actualizarMarca } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { PantallaSecundaria } from '@/components/PantallaSecundaria';
 import { SelectorColores } from '@/components/SelectorColores';
 import { Boton, Campo, Credencial, DatoCredencial } from '@/components/ui';
 import { plural } from '@/utils/texto';
+import { alerta } from '@/utils/alerta';
 
 export default function MarcaScreen() {
   const { perfil, recargarPerfil } = useSesion();
@@ -34,7 +34,7 @@ export default function MarcaScreen() {
       await recargarPerfil();
       router.back();
     } catch (e) {
-      Alert.alert('No se pudieron guardar los cambios', (e as Error).message);
+      alerta('No se pudieron guardar los cambios', (e as Error).message);
     } finally {
       setGuardando(false);
     }

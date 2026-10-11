@@ -8,3 +8,6 @@ DojoFlow.Tests/
 ADRs/
 Arq_Views/
 *.md
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/

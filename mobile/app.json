@@ -19,7 +19,12 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "name": "DojoFlow",
+      "shortName": "DojoFlow",
+      "themeColor": "#151619",
+      "backgroundColor": "#f4f4f5"
     },
     "scheme": "dojoflow",
     "experiments": {

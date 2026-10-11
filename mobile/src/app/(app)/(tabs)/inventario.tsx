@@ -1,6 +1,6 @@
 import { Package, PackagePlus, SearchX, ShoppingCart, TriangleAlert, WifiOff } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Alert, FlatList, RefreshControl, Share, StyleSheet, Switch, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   agregarProducto,
@@ -38,6 +38,8 @@ import { useSesion } from '@/auth/session';
 import { useTema } from '@/theme';
 import { useObjetivoTour } from '@/tour/Tour';
 import { cantidad } from '@/utils/texto';
+import { alerta } from '@/utils/alerta';
+import { compartirEnlace } from '@/utils/compartir';
 
 type DatosInventario = { productos: Producto[]; alertas: string[] };
 
@@ -78,13 +80,13 @@ export default function InventarioScreen() {
       setModo({ tipo: 'compartir', url });
     } catch (e) {
       setModo(null);
-      Alert.alert('No se pudo obtener el enlace', (e as Error).message);
+      alerta('No se pudo obtener el enlace', (e as Error).message);
     }
   }
 
   async function compartir(url: string) {
     const nombre = perfil?.academia.nombre ?? 'la academia';
-    await Share.share({ message: `Mira el catálogo de ${nombre}: ${url}`, url });
+    await compartirEnlace(`Mira el catálogo de ${nombre}: ${url}`, url);
   }
 
   function renovar() {
@@ -142,7 +144,7 @@ export default function InventarioScreen() {
       setModo(null);
       recargar();
     } catch (e) {
-      Alert.alert('No se pudo guardar', (e as Error).message);
+      alerta('No se pudo guardar', (e as Error).message);
     } finally {
       setGuardando(false);
     }

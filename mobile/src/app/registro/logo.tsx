@@ -2,12 +2,13 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { ImagePlus } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Boton, Presionable, Texto } from '@/components/ui';
 import { PantallaPaso } from '@/onboarding/PantallaPaso';
 import { useRegistro } from '@/onboarding/RegistroContexto';
 import { useTema } from '@/theme';
 import { elegirLogo } from '@/utils/logo';
+import { alerta } from '@/utils/alerta';
 
 export default function PasoLogo() {
   const { color } = useTema();
@@ -20,7 +21,7 @@ export default function PasoLogo() {
       const logo = await elegirLogo();
       if (logo) actualizar({ logo });
     } catch (e) {
-      Alert.alert('No se pudo usar esa imagen', (e as Error).message);
+      alerta('No se pudo usar esa imagen', (e as Error).message);
     } finally {
       setCargando(false);
     }

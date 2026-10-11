@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { BookOpen, Compass, Palette, Tablet } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { obtenerClases, obtenerConfiguracion, quitarLogo, subirLogo, type Clase, type ConfiguracionAcademia } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { IconoCerrarSesion, IconoPagos } from '@/components/iconos/Iconly';
@@ -12,6 +12,7 @@ import { useTema } from '@/theme';
 import { useTour } from '@/tour/Tour';
 import { elegirLogo } from '@/utils/logo';
 import { plural } from '@/utils/texto';
+import { alerta } from '@/utils/alerta';
 
 type Datos = { config: ConfiguracionAcademia | null; clases: Clase[] };
 
@@ -44,7 +45,7 @@ export default function AjustesScreen() {
       }
       setHojaLogo(false);
     } catch (e) {
-      Alert.alert('No se pudo subir el logo', (e as Error).message);
+      alerta('No se pudo subir el logo', (e as Error).message);
     } finally {
       setSubiendo(false);
     }
@@ -63,7 +64,7 @@ export default function AjustesScreen() {
       await vincularKiosco();
       router.push('/kiosco');
     } catch (e) {
-      Alert.alert('No se pudo abrir el kiosco', (e as Error).message);
+      alerta('No se pudo abrir el kiosco', (e as Error).message);
     }
   }
 

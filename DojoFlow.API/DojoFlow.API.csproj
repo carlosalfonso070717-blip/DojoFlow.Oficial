@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -34,12 +34,12 @@
     <Folder Include="Data\" />
   </ItemGroup>
 
-  <!-- Copia el frontend estático a wwwroot para que la API lo sirva desde el mismo origen (sin CORS, sin URL fija) -->
+  <!-- La web anterior (HTML + JS) queda como respaldo en /clasico; la web principal es la app de mobile/ compilada para navegador -->
   <Target Name="CopyFrontend" BeforeTargets="Build;Publish">
     <ItemGroup>
       <FrontendFiles Include="..\frontend\**\*.*" />
     </ItemGroup>
-    <Copy SourceFiles="@(FrontendFiles)" DestinationFolder="$(MSBuildProjectDirectory)\wwwroot\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(FrontendFiles)" DestinationFolder="$(MSBuildProjectDirectory)\wwwroot\clasico\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

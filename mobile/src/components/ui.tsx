@@ -1,4 +1,4 @@
-import { Alert } from 'react-native';
+import { alerta } from '@/utils/alerta';
 
 export { Boton } from './Boton';
 export { Campo } from './Campo';
@@ -18,13 +18,13 @@ export function confirmar(
   accion: () => Promise<unknown>,
   destructivo = true,
 ) {
-  Alert.alert(titulo, mensaje, [
+  alerta(titulo, mensaje, [
     { text: 'Cancelar', style: 'cancel' },
     {
       text: textoConfirmar,
       style: destructivo ? 'destructive' : 'default',
       onPress: () => {
-        accion().catch((e: Error) => Alert.alert('No se pudo completar', e.message));
+        accion().catch((e: Error) => alerta('No se pudo completar', e.message));
       },
     },
   ]);

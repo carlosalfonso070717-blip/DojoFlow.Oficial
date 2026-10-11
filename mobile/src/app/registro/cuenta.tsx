@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { Mail, UserRound } from 'lucide-react-native';
 import { useRef, useState } from 'react';
-import { Alert, TextInput } from 'react-native';
+import { TextInput } from 'react-native';
 import { enviarVerificacion } from '@/api/endpoints';
 import { IconoCandado, IconoCandadoAbierto } from '@/components/iconos/Iconly';
 import { Campo } from '@/components/ui';
 import { PantallaPaso } from '@/onboarding/PantallaPaso';
 import { useRegistro } from '@/onboarding/RegistroContexto';
+import { alerta } from '@/utils/alerta';
 
 const correoValido = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
@@ -24,7 +25,7 @@ export default function PasoCuenta() {
       await enviarVerificacion(borrador.email.trim());
       router.push('/registro/verificar');
     } catch (e) {
-      Alert.alert('No se pudo enviar el código', (e as Error).message);
+      alerta('No se pudo enviar el código', (e as Error).message);
     } finally {
       setEnviando(false);
     }

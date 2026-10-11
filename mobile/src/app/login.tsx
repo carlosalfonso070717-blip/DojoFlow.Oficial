@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Mail, Tablet } from 'lucide-react-native';
 import { useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { Easing, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSesion } from '@/auth/session';
@@ -10,6 +10,7 @@ import { Marca, Monograma } from '@/components/Logo';
 import { Boton, Campo, Texto } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useTema } from '@/theme';
+import { alerta } from '@/utils/alerta';
 
 // Entrada escalonada: una sola secuencia al abrir la pantalla
 const entrada = (orden: number) => FadeInDown.delay(80 + orden * 70).duration(520).easing(Easing.out(Easing.cubic));
@@ -25,7 +26,7 @@ export default function LoginScreen() {
 
   async function entrar() {
     if (!email.trim() || !password) {
-      Alert.alert('Faltan datos', 'Escribe tu correo y tu contraseña.');
+      alerta('Faltan datos', 'Escribe tu correo y tu contraseña.');
       return;
     }
     setCargando(true);
@@ -33,7 +34,7 @@ export default function LoginScreen() {
       // Al guardar el token, Stack.Protected lleva solo al panel
       await iniciarSesion(email.trim(), password);
     } catch (e) {
-      Alert.alert('No se pudo iniciar sesión', (e as Error).message);
+      alerta('No se pudo iniciar sesión', (e as Error).message);
     } finally {
       setCargando(false);
     }

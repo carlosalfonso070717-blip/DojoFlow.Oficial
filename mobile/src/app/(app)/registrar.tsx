@@ -1,13 +1,14 @@
 import { router, Stack } from 'expo-router';
 import { BookOpen, CircleCheck, Phone } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { obtenerClases, registrarAlumno, type AlumnoRegistrado, type Clase } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { Boton, Campo, Chip, EstadoVacio, Superficie, Texto } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
+import { alerta } from '@/utils/alerta';
 
 export default function InscribirScreen() {
   const { color, espacio, radio } = useTema();
@@ -29,18 +30,18 @@ export default function InscribirScreen() {
 
   async function inscribir() {
     if (!nombre.trim() || !apellido.trim()) {
-      Alert.alert('Faltan datos', 'Escribe nombre y apellido.');
+      alerta('Faltan datos', 'Escribe nombre y apellido.');
       return;
     }
     if (elegidas.length === 0) {
-      Alert.alert('Faltan datos', 'Elige al menos una clase.');
+      alerta('Faltan datos', 'Elige al menos una clase.');
       return;
     }
     setEnviando(true);
     try {
       setResultado(await registrarAlumno({ nombre: nombre.trim(), apellido: apellido.trim(), telefono: telefono.trim(), disciplinas: elegidas }));
     } catch (e) {
-      Alert.alert('No se pudo inscribir', (e as Error).message);
+      alerta('No se pudo inscribir', (e as Error).message);
     } finally {
       setEnviando(false);
     }

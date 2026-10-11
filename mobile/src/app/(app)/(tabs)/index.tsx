@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { CircleCheck, Tablet, TriangleAlert } from 'lucide-react-native';
 import { useEffect, useRef } from 'react';
-import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { obtenerAlertasInventario, obtenerAlumnos, obtenerFinanzas, obtenerMensualidades } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
@@ -13,6 +13,7 @@ import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
 import { useObjetivoTour, useTour } from '@/tour/Tour';
 import { cantidad, plural, saludo } from '@/utils/texto';
+import { alerta } from '@/utils/alerta';
 
 // Mismo formato que guarda la API: "10-2026"
 const mesActual = () => {
@@ -72,7 +73,7 @@ export default function InicioScreen() {
       await vincularKiosco();
       router.push('/kiosco');
     } catch (e) {
-      Alert.alert('No se pudo abrir el kiosco', (e as Error).message);
+      alerta('No se pudo abrir el kiosco', (e as Error).message);
     }
   }
 

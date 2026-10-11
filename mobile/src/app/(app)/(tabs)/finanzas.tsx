@@ -1,6 +1,6 @@
 import { WifiOff } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { eliminarMesFinanzas, obtenerFinanzas, type RegistroFinanciero } from '@/api/endpoints';
 import { useEspacioBarra } from '@/components/BarraLiquida';
@@ -12,6 +12,7 @@ import { useSesion } from '@/auth/session';
 import { useTema } from '@/theme';
 import { descargarReporte, type FormatoReporte } from '@/utils/descargas';
 import { useObjetivoTour } from '@/tour/Tour';
+import { alerta } from '@/utils/alerta';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
@@ -37,7 +38,7 @@ export default function FinanzasScreen() {
     try {
       await descargarReporte(registro.mesAnio, formato, `${perfil?.academia.nombre ?? 'DojoFlow'} ${nombreMes(registro.mesAnio)}`);
     } catch (e) {
-      Alert.alert('No se pudo descargar el reporte', (e as Error).message);
+      alerta('No se pudo descargar el reporte', (e as Error).message);
     } finally {
       setDescargando(null);
     }

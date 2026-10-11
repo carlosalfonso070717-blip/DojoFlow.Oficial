@@ -1,12 +1,13 @@
 import { BookOpen, Plus } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, Switch, View } from 'react-native';
+import { Switch, View } from 'react-native';
 import { crearClase, editarClase, eliminarClase, obtenerClases, type Clase } from '@/api/endpoints';
 import { IconoEliminar } from '@/components/iconos/Iconly';
 import { PantallaSecundaria } from '@/components/PantallaSecundaria';
 import { Boton, BotonIcono, Campo, confirmar, EstadoVacio, Fila, formatoMoneda, Grupo, Hoja, Insignia, ParDato, Texto } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
+import { alerta } from '@/utils/alerta';
 
 type Edicion = { clase: Clase | null; nombre: string; precio: string; activa: boolean };
 
@@ -28,7 +29,7 @@ export default function ClasesScreen() {
       setEdicion(null);
       recargar();
     } catch (e) {
-      Alert.alert('No se pudo guardar la clase', (e as Error).message);
+      alerta('No se pudo guardar la clase', (e as Error).message);
     } finally {
       setGuardando(false);
     }

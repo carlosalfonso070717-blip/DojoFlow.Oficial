@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { Minus, Plus, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { configurarCobro, obtenerConfiguracion, type ModoCobro } from '@/api/endpoints';
 import { PantallaSecundaria } from '@/components/PantallaSecundaria';
 import { Segmentos } from '@/components/Segmentos';
 import { Boton, Grupo, ParDato, Texto } from '@/components/ui';
 import { useTema } from '@/theme';
+import { alerta } from '@/utils/alerta';
 
 export default function CobroScreen() {
   const { color, tipografia } = useTema();
@@ -29,7 +30,7 @@ export default function CobroScreen() {
   async function guardar() {
     const precios = paquetes.map((p) => parseFloat(p) || 0);
     if (modo === 'Paquete' && precios.length === 0) {
-      Alert.alert('Falta un paquete', 'Agrega al menos el precio de 1 clase.');
+      alerta('Falta un paquete', 'Agrega al menos el precio de 1 clase.');
       return;
     }
     setGuardando(true);
@@ -37,7 +38,7 @@ export default function CobroScreen() {
       await configurarCobro({ modoCobro: modo, preciosPaquete: precios, diaVencimiento: dia });
       router.back();
     } catch (e) {
-      Alert.alert('No se pudo guardar', (e as Error).message);
+      alerta('No se pudo guardar', (e as Error).message);
     } finally {
       setGuardando(false);
     }

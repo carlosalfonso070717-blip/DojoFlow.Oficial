@@ -117,13 +117,39 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Enlaces de la web anterior: llevan a la pantalla equivalente de la web nueva
+var redireccionesWebAnterior = new Dictionary<string, string>
+{
+    ["/login.html"] = "/login",
+    ["/index.html"] = "/",
+    ["/kiosco.html"] = "/kiosco",
+};
+app.Use(async (contexto, siguiente) =>
+{
+    if (redireccionesWebAnterior.TryGetValue(contexto.Request.Path.Value ?? "", out var destino))
+    {
+        contexto.Response.Redirect(destino);
+        return;
+    }
+    await siguiente();
+});
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
+// El ruteo va después de los archivos estáticos: si no, la ruta de respaldo de la web (index.html)
+// se elegiría antes y ningún archivo (JS, imágenes, /clasico) llegaría a servirse
+app.UseRouting();
 
 app.UseCors("PermitirTodo");
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// La web es una app de una sola página: cualquier ruta que no sea de la API ni un archivo
+// (p. ej. /alumnos o /registro/tipo) devuelve index.html y el enrutador de la app la resuelve
+app.MapFallbackToFile("{**ruta:regex(^(?!api/|catalogo/|swagger).*$)}", "index.html");
 
 app.Run();

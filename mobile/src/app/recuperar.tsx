@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Mail } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { Easing, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { olvidePassword, resetearPassword } from '@/api/endpoints';
@@ -11,6 +11,7 @@ import { Boton, Campo, Texto } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { CodigoVerificacion } from '@/onboarding/CodigoVerificacion';
 import { useTema } from '@/theme';
+import { alerta } from '@/utils/alerta';
 
 const entrada = FadeInDown.duration(420).easing(Easing.out(Easing.cubic));
 
@@ -28,7 +29,7 @@ export default function RecuperarScreen() {
     try {
       await fn();
     } catch (e) {
-      Alert.alert('Revisa los datos', (e as Error).message);
+      alerta('Revisa los datos', (e as Error).message);
     } finally {
       setCargando(false);
     }
@@ -43,7 +44,7 @@ export default function RecuperarScreen() {
   const restablecer = () =>
     ejecutar(async () => {
       const r = await resetearPassword(email.trim(), pin.trim(), nueva);
-      Alert.alert('Contraseña actualizada', r.mensaje, [{ text: 'Iniciar sesión', onPress: () => router.back() }]);
+      alerta('Contraseña actualizada', r.mensaje, [{ text: 'Iniciar sesión', onPress: () => router.back() }]);
     });
 
   return (

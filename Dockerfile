@@ -1,3 +1,15 @@
+# Web: la app de mobile/ compilada para navegador (misma app que en el celular)
+FROM node:24-slim AS web
+WORKDIR /mobile
+COPY mobile/package.json mobile/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY mobile/ ./
+# En la web la API está en el mismo dominio
+ENV EXPO_PUBLIC_API_URL=/api
+RUN npx expo export --platform web --output-dir /web
+# En modo SPA Expo genera index.html en inglés: la app es en español
+RUN sed -i 's/<html lang="en"/<html lang="es"/' /web/index.html
+
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
@@ -18,6 +30,7 @@ RUN dotnet publish DojoFlow.API/DojoFlow.API.csproj -c Release -o /app/publish -
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+COPY --from=web /web ./wwwroot
 
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080

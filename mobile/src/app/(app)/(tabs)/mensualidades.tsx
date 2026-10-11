@@ -1,6 +1,6 @@
 import { CircleCheck, Clock, TriangleAlert, WifiOff } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { obtenerMensualidades, pagarMensualidad, type Mensualidad } from '@/api/endpoints';
 import { useEspacioBarra } from '@/components/BarraLiquida';
@@ -26,6 +26,7 @@ import { useRecurso } from '@/hooks/useRecurso';
 import { useTema, type Tema } from '@/theme';
 import { useObjetivoTour } from '@/tour/Tour';
 import { fechaCorta } from '@/utils/texto';
+import { alerta } from '@/utils/alerta';
 
 type Filtro = 'todos' | 'Pendiente' | 'Vencido' | 'Pagado';
 
@@ -75,7 +76,7 @@ export default function CobrosScreen() {
       setSeleccionado(null);
       await recargar();
     } catch (e) {
-      Alert.alert('No se pudo registrar el pago', (e as Error).message);
+      alerta('No se pudo registrar el pago', (e as Error).message);
     } finally {
       setCobrando(false);
     }
