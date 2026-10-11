@@ -1,51 +1,78 @@
+import { BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque/600SemiBold';
+import { BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque/700Bold';
+import { Figtree_400Regular } from '@expo-google-fonts/figtree/400Regular';
+import { Figtree_500Medium } from '@expo-google-fonts/figtree/500Medium';
+import { Figtree_600SemiBold } from '@expo-google-fonts/figtree/600SemiBold';
+import { Figtree_700Bold } from '@expo-google-fonts/figtree/700Bold';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SessionProvider, useSesion } from '@/auth/session';
-import { useTema } from '@/theme';
+import { ProveedorTema, useTema } from '@/theme';
+
+// La splash se queda hasta tener fuentes y sesión: así la app abre ya con los colores de la academia
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootNavigator() {
   const { token, cargando } = useSesion();
-  const tema = useTema();
+  const { color, oscuro, tipografia } = useTema();
+  const [fuentesListas, errorFuentes] = useFonts({
+    BricolageGrotesque_600SemiBold,
+    BricolageGrotesque_700Bold,
+    Figtree_400Regular,
+    Figtree_500Medium,
+    Figtree_600SemiBold,
+    Figtree_700Bold,
+  });
+  const listo = !cargando && (fuentesListas || !!errorFuentes);
 
-  if (cargando) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', backgroundColor: tema.background }}>
-        <ActivityIndicator color={tema.primary} size="large" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    if (listo) SplashScreen.hideAsync().catch(() => {});
+  }, [listo]);
+
+  if (!listo) return null;
 
   const conEncabezado = {
     headerShown: true,
-    headerStyle: { backgroundColor: tema.card },
-    headerTintColor: tema.text,
+    headerStyle: { backgroundColor: color.fondo },
+    headerTintColor: color.texto,
+    headerTitleStyle: { fontFamily: tipografia.subtitulo.fontFamily },
+    headerShadowVisible: false,
     headerBackTitle: 'Atrás',
   };
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: tema.background } }}>
-      <Stack.Protected guard={!!token}>
-        <Stack.Screen name="(app)" />
-      </Stack.Protected>
+    <>
+      <StatusBar style={oscuro ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.fondo } }}>
+        <Stack.Protected guard={!!token}>
+          <Stack.Screen name="(app)" />
+        </Stack.Protected>
 
-      <Stack.Protected guard={!token}>
-        <Stack.Screen name="login" />
-        <Stack.Screen name="registro" options={{ ...conEncabezado, title: 'Crea tu academia' }} />
-        <Stack.Screen name="recuperar" options={{ ...conEncabezado, title: 'Recuperar contraseña' }} />
-      </Stack.Protected>
+        <Stack.Protected guard={!token}>
+          <Stack.Screen name="login" />
+          <Stack.Screen name="registro" options={{ ...conEncabezado, title: 'Crea tu academia' }} />
+          <Stack.Screen name="recuperar" options={{ ...conEncabezado, title: 'Recuperar contraseña' }} />
+        </Stack.Protected>
 
-      {/* El kiosco es público: lo usan los alumnos en la tablet de recepción */}
-      <Stack.Screen name="kiosco" options={{ presentation: 'fullScreenModal' }} />
-    </Stack>
+        {/* El kiosco usa su propio token: funciona con o sin sesión de coach */}
+        <Stack.Screen name="kiosco" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+      </Stack>
+    </>
   );
 }
 
 export default function RootLayout() {
   return (
-    <SessionProvider>
-      <StatusBar style="auto" />
-      <RootNavigator />
-    </SessionProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SessionProvider>
+        <ProveedorTema>
+          <RootNavigator />
+        </ProveedorTema>
+      </SessionProvider>
+    </GestureHandlerRootView>
   );
 }

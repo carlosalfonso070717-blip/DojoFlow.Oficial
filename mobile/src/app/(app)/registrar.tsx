@@ -1,87 +1,141 @@
+import { router, Stack } from 'expo-router';
+import { BookOpen, CircleCheck, Phone } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { obtenerClases, registrarAlumno, type Clase } from '@/api/endpoints';
-import { Boton, Campo, Tarjeta, TextoVacio } from '@/components/ui';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { ZoomIn } from 'react-native-reanimated';
+import { obtenerClases, registrarAlumno, type AlumnoRegistrado, type Clase } from '@/api/endpoints';
+import { useSesion } from '@/auth/session';
+import { Boton, Campo, Chip, EstadoVacio, Superficie, Texto } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
 
-export default function RegistrarScreen() {
-  const tema = useTema();
-  const { datos: clases, cargando: cargandoClases, error: errorClases } = useRecurso(obtenerClases, [] as Clase[]);
+export default function InscribirScreen() {
+  const { color, espacio, radio } = useTema();
+  const { perfil } = useSesion();
+  const termino = (perfil?.academia.terminoAlumno || 'Alumno').toLowerCase();
+  const { datos: clases, cargando: cargandoClases } = useRecurso(obtenerClases, [] as Clase[]);
   const clasesActivas = useMemo(() => clases.filter((c) => c.activa), [clases]);
+
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [telefono, setTelefono] = useState('');
-  const [disciplinas, setDisciplinas] = useState<string[]>([]);
-  const [cargando, setCargando] = useState(false);
+  const [elegidas, setElegidas] = useState<string[]>([]);
+  const [enviando, setEnviando] = useState(false);
+  const [resultado, setResultado] = useState<AlumnoRegistrado | null>(null);
 
-  function alternar(d: string) {
-    setDisciplinas((sel) => (sel.includes(d) ? sel.filter((x) => x !== d) : [...sel, d]));
+  function alternar(clase: string) {
+    setElegidas((sel) => (sel.includes(clase) ? sel.filter((x) => x !== clase) : [...sel, clase]));
   }
 
-  async function registrar() {
-    if (disciplinas.length === 0) {
-      Alert.alert('Error', 'Selecciona al menos una clase');
+  async function inscribir() {
+    if (!nombre.trim() || !apellido.trim()) {
+      Alert.alert('Faltan datos', 'Escribe nombre y apellido.');
       return;
     }
-    setCargando(true);
-    try {
-      const r = await registrarAlumno({ nombre, apellido, telefono, disciplinas });
-      Alert.alert(
-        'Alumno registrado',
-        `Nombre: ${r.nombreCompleto}\nPIN de acceso: ${r.claveKioscoAsignada}\nCuota: $${r.costoMensualidadAsignado}`,
-      );
-      setNombre('');
-      setApellido('');
-      setTelefono('');
-      setDisciplinas([]);
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    } finally {
-      setCargando(false);
+    if (elegidas.length === 0) {
+      Alert.alert('Faltan datos', 'Elige al menos una clase.');
+      return;
     }
+    setEnviando(true);
+    try {
+      setResultado(await registrarAlumno({ nombre: nombre.trim(), apellido: apellido.trim(), telefono: telefono.trim(), disciplinas: elegidas }));
+    } catch (e) {
+      Alert.alert('No se pudo inscribir', (e as Error).message);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  function otraInscripcion() {
+    setResultado(null);
+    setNombre('');
+    setApellido('');
+    setTelefono('');
+    setElegidas([]);
+  }
+
+  const titulo = <Stack.Screen options={{ title: `Inscribir ${termino}` }} />;
+
+  // Confirmación: el PIN es lo que la persona necesita llevarse
+  if (resultado) {
+    return (
+      <View style={[estilos.exito, { padding: espacio.xl }]}>
+        {titulo}
+        <Animated.View entering={ZoomIn.springify().damping(14)}>
+          <CircleCheck size={56} color={color.exito} />
+        </Animated.View>
+        <View style={{ alignItems: 'center', gap: 4 }}>
+          <Texto variante="encabezado" style={{ textAlign: 'center' }}>
+            Inscripción lista
+          </Texto>
+          <Texto variante="cuerpo" tono="suave" style={{ textAlign: 'center' }}>
+            {resultado.nombreCompleto}
+          </Texto>
+        </View>
+        <Superficie style={{ alignItems: 'center', gap: 6, alignSelf: 'stretch', borderRadius: radio.xl }}>
+          <Texto variante="detalle" tono="suave">
+            PIN para el kiosco
+          </Texto>
+          <Texto variante="cifra" cifras style={{ fontSize: 48, lineHeight: 54, letterSpacing: 6 }} selectable>
+            {resultado.claveKioscoAsignada}
+          </Texto>
+          <Texto variante="detalle" tono="suave">
+            Cuota mensual: {resultado.costoMensualidadAsignado}
+          </Texto>
+        </Superficie>
+        <View style={{ alignSelf: 'stretch', gap: 10 }}>
+          <Boton titulo="Listo" onPress={() => router.back()} />
+          <Boton titulo={`Inscribir otro ${termino}`} variante="contorno" onPress={otraInscripcion} />
+        </View>
+      </View>
+    );
   }
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={estilos.contenedor} keyboardShouldPersistTaps="handled">
-        <Tarjeta style={{ gap: 16 }}>
-          <Campo etiqueta="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="words" />
-          <Campo etiqueta="Apellido" value={apellido} onChangeText={setApellido} autoCapitalize="words" />
-          <Campo etiqueta="Teléfono" value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" />
-
-          <Text style={[estilos.etiqueta, { color: tema.textMuted }]}>Clases</Text>
-          {clasesActivas.length === 0 && (
-            <TextoVacio error={errorClases} cargando={cargandoClases} texto="Tu academia aún no tiene clases." />
-          )}
-          <View style={estilos.chips}>
-            {clasesActivas.map(({ nombre: d }) => {
-              const activa = disciplinas.includes(d);
-              return (
-                <Pressable
-                  key={d}
-                  onPress={() => alternar(d)}
-                  style={[
-                    estilos.chip,
-                    { borderColor: tema.primary, backgroundColor: activa ? tema.primary : 'transparent' },
-                  ]}
-                >
-                  <Text style={{ color: activa ? '#fff' : tema.primary, fontWeight: '700' }}>{d}</Text>
-                </Pressable>
-              );
-            })}
+      {titulo}
+      <ScrollView contentContainerStyle={[estilos.contenido, { padding: espacio.l }]} keyboardShouldPersistTaps="handled">
+        <View style={{ gap: 14 }}>
+          <View style={estilos.fila}>
+            <View style={{ flex: 1 }}>
+              <Campo etiqueta="Nombre" value={nombre} onChangeText={setNombre} autoCapitalize="words" autoFocus />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Campo etiqueta="Apellido" value={apellido} onChangeText={setApellido} autoCapitalize="words" />
+            </View>
           </View>
+          <Campo
+            etiqueta="Teléfono"
+            value={telefono}
+            onChangeText={setTelefono}
+            keyboardType="phone-pad"
+            icono={Phone}
+            ayuda="Opcional, para contactarle sobre sus pagos."
+          />
+        </View>
 
-          <Boton titulo="Registrar alumno" onPress={registrar} cargando={cargando} />
-        </Tarjeta>
+        <View style={{ gap: 10 }}>
+          <Texto variante="subtitulo">Clases</Texto>
+          {clasesActivas.length === 0 && !cargandoClases ? (
+            <EstadoVacio icono={BookOpen} titulo="Tu academia aún no tiene clases" mensaje="Agrégalas en Ajustes para poder inscribir." />
+          ) : (
+            <View style={estilos.chips}>
+              {clasesActivas.map((c) => (
+                <Chip key={c.id} texto={c.nombre} activo={elegidas.includes(c.nombre)} onPress={() => alternar(c.nombre)} />
+              ))}
+            </View>
+          )}
+        </View>
+
+        <Boton titulo={`Inscribir ${termino}`} onPress={inscribir} cargando={enviando} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const estilos = StyleSheet.create({
-  contenedor: { padding: 16, maxWidth: 600, width: '100%', alignSelf: 'center' },
-  etiqueta: { fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  contenido: { gap: 28, paddingBottom: 40 },
+  fila: { flexDirection: 'row', gap: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8 },
+  exito: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20 },
 });

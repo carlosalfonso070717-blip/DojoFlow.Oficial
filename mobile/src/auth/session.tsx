@@ -1,7 +1,7 @@
-import * as SecureStore from 'expo-secure-store';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onSesionExpirada, setToken } from '@/api/client';
 import { crearSesionKiosco, login, obtenerPerfil, type Perfil } from '@/api/endpoints';
+import { almacen } from './almacen';
 
 // Mismas llaves que usa el frontend web en localStorage
 const LLAVE_TOKEN = 'coachToken';
@@ -32,7 +32,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const guardar = useCallback(async (nuevo: string | null) => {
     setToken(nuevo);
     if (nuevo) {
-      await SecureStore.setItemAsync(LLAVE_TOKEN, nuevo);
+      await almacen.guardar(LLAVE_TOKEN, nuevo);
       // El perfil se carga antes de exponer el token para que la app ya se pinte con la academia
       try {
         setPerfil(await obtenerPerfil());
@@ -40,7 +40,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setPerfil(null);
       }
     } else {
-      await SecureStore.deleteItemAsync(LLAVE_TOKEN);
+      await almacen.borrar(LLAVE_TOKEN);
       setPerfil(null);
     }
     setTokenState(nuevo);
@@ -49,8 +49,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       const [guardado, kiosco] = await Promise.all([
-        SecureStore.getItemAsync(LLAVE_TOKEN),
-        SecureStore.getItemAsync(LLAVE_KIOSCO),
+        almacen.leer(LLAVE_TOKEN),
+        almacen.leer(LLAVE_KIOSCO),
       ]);
       setTokenKiosco(kiosco);
       if (guardado) await guardar(guardado);
@@ -80,7 +80,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const vincularKiosco = useCallback(async () => {
     const { token: nuevo } = await crearSesionKiosco();
-    await SecureStore.setItemAsync(LLAVE_KIOSCO, nuevo);
+    await almacen.guardar(LLAVE_KIOSCO, nuevo);
     setTokenKiosco(nuevo);
   }, []);
 

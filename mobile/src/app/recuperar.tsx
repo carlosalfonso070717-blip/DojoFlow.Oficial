@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
+import { KeyRound, Lock, Mail } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { olvidePassword, resetearPassword } from '@/api/endpoints';
-import { Boton, Campo, Tarjeta } from '@/components/ui';
+import { Boton, Campo, Texto } from '@/components/ui';
 import { useTema } from '@/theme';
 
 export default function RecuperarScreen() {
-  const tema = useTema();
+  const { espacio } = useTema();
   const [email, setEmail] = useState('');
   const [pin, setPin] = useState('');
   const [nueva, setNueva] = useState('');
@@ -18,7 +19,7 @@ export default function RecuperarScreen() {
     try {
       await fn();
     } catch (e) {
-      Alert.alert('Atención', (e as Error).message);
+      Alert.alert('Revisa los datos', (e as Error).message);
     } finally {
       setCargando(false);
     }
@@ -26,63 +27,50 @@ export default function RecuperarScreen() {
 
   const pedirPin = () =>
     ejecutar(async () => {
-      const r = await olvidePassword(email.trim());
+      await olvidePassword(email.trim());
       setPinEnviado(true);
-      Alert.alert('Revisa tu correo', r.mensaje);
     });
 
   const restablecer = () =>
     ejecutar(async () => {
       const r = await resetearPassword(email.trim(), pin.trim(), nueva);
-      Alert.alert('¡Listo!', r.mensaje, [{ text: 'Iniciar sesión', onPress: () => router.back() }]);
+      Alert.alert('Contraseña actualizada', r.mensaje, [{ text: 'Iniciar sesión', onPress: () => router.back() }]);
     });
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={estilos.contenedor} keyboardShouldPersistTaps="handled">
-        <Tarjeta style={{ gap: 16 }}>
-          <Text style={{ color: tema.textMuted }}>
-            {pinEnviado
-              ? 'Escribe el PIN que te llegó por correo y tu nueva contraseña.'
-              : 'Te enviaremos un PIN a tu correo para restablecer tu contraseña.'}
-          </Text>
+      <ScrollView contentContainerStyle={[estilos.contenedor, { padding: espacio.xl }]} keyboardShouldPersistTaps="handled">
+        <Texto variante="cuerpo" tono="suave">
+          {pinEnviado
+            ? `Si ${email.trim()} tiene una cuenta, te llegó un código de 6 dígitos. Escríbelo junto con tu nueva contraseña.`
+            : 'Te enviaremos un código a tu correo para que elijas una contraseña nueva.'}
+        </Texto>
 
-          <Campo
-            etiqueta="Correo"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={!pinEnviado}
-          />
+        <Campo
+          etiqueta="Correo"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          icono={Mail}
+          editable={!pinEnviado}
+        />
 
-          {pinEnviado ? (
-            <>
-              <Campo etiqueta="PIN" value={pin} onChangeText={setPin} keyboardType="number-pad" maxLength={6} />
-              <Campo
-                etiqueta="Nueva contraseña"
-                value={nueva}
-                onChangeText={setNueva}
-                secureTextEntry
-                placeholder="Mínimo 6 caracteres"
-              />
-              <Boton titulo="Restablecer contraseña" onPress={restablecer} cargando={cargando} />
-              <Text
-                onPress={() => setPinEnviado(false)}
-                style={{ color: tema.primary, fontWeight: '600', textAlign: 'center' }}
-              >
-                Usar otro correo / reenviar PIN
-              </Text>
-            </>
-          ) : (
-            <Boton titulo="Enviar PIN" onPress={pedirPin} cargando={cargando} />
-          )}
-        </Tarjeta>
+        {pinEnviado ? (
+          <View style={{ gap: 14 }}>
+            <Campo etiqueta="Código" value={pin} onChangeText={setPin} keyboardType="number-pad" maxLength={6} icono={KeyRound} autoFocus />
+            <Campo etiqueta="Nueva contraseña" value={nueva} onChangeText={setNueva} secureTextEntry icono={Lock} ayuda="Mínimo 6 caracteres." />
+            <Boton titulo="Cambiar contraseña" onPress={restablecer} cargando={cargando} />
+            <Boton titulo="Usar otro correo" variante="fantasma" tamano="compacto" onPress={() => setPinEnviado(false)} />
+          </View>
+        ) : (
+          <Boton titulo="Enviar código" onPress={pedirPin} cargando={cargando} />
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const estilos = StyleSheet.create({
-  contenedor: { padding: 24, maxWidth: 480, width: '100%', alignSelf: 'center' },
+  contenedor: { gap: 20, maxWidth: 480, width: '100%', alignSelf: 'center' },
 });
