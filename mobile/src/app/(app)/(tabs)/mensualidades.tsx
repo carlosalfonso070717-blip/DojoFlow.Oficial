@@ -24,6 +24,7 @@ import {
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema, type Tema } from '@/theme';
+import { useObjetivoTour } from '@/tour/Tour';
 import { fechaCorta } from '@/utils/texto';
 
 type Filtro = 'todos' | 'Pendiente' | 'Vencido' | 'Pagado';
@@ -43,6 +44,7 @@ function coloresEstado(tono: TonoInsignia, color: Tema['color']) {
 }
 
 export default function CobrosScreen() {
+  const refTour = useObjetivoTour('cobros');
   const { color } = useTema();
   const { margen, maximo } = useDiseno();
   const espacioBarra = useEspacioBarra();
@@ -99,7 +101,7 @@ export default function CobrosScreen() {
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
-          <View style={estilos.cabecera}>
+          <View style={estilos.cabecera} ref={refTour} collapsable={false}>
             <Encabezado titulo="Cobros" detalle={porCobrar > 0 ? `${formatoMoneda(porCobrar)} por cobrar` : 'Todo cobrado'} />
             <Segmentos<Filtro>
               icono={IconoFiltro}

@@ -1,4 +1,5 @@
 import * as Haptics from 'expo-haptics';
+import { router, type Href } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, FadeIn, useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -12,9 +13,10 @@ import { plural } from '@/utils/texto';
 type Medida = { x: number; y: number; w: number; h: number };
 type Medible = { measureInWindow: (cb: (x: number, y: number, w: number, h: number) => void) => void };
 
-export type IdObjetivo = 'credencial' | 'pendiente' | 'inscribir' | 'barra' | 'ajustes';
+export type IdObjetivo = 'credencial' | 'pendiente' | 'inscribir' | 'barra' | 'ajustes' | 'alumnos' | 'cobros' | 'inventario' | 'finanzas';
 
-type Paso = { id: IdObjetivo; titulo: string; texto: string };
+// `ruta`: sección a la que el tour lleva antes de iluminar el elemento
+type Paso = { id: IdObjetivo; titulo: string; texto: string; ruta?: Href };
 
 type Contexto = {
   registrar: (id: IdObjetivo, nodo: Medible | null) => void;
@@ -49,8 +51,32 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
       titulo: `Inscribe a tu primer ${termino.toLowerCase()}`,
       texto: 'Cada inscripción genera un PIN para el kiosco y su primer recibo.',
     },
-    { id: 'barra', titulo: 'Todo a un toque', texto: `Cambia entre ${plural(termino).toLowerCase()}, cobros, inventario y finanzas desde esta barra.` },
-    { id: 'ajustes', titulo: 'Hazla tuya', texto: 'En Ajustes cambias colores, logo, clases, precios y la forma de cobro.' },
+    { id: 'barra', titulo: 'Todo a un toque', texto: 'Desde esta barra cambias de sección. Vamos a recorrerlas.' },
+    {
+      id: 'alumnos',
+      ruta: '/alumnos',
+      titulo: plural(termino),
+      texto: `Aquí está la lista de tus ${plural(termino).toLowerCase()}. Busca por nombre o PIN y toca a alguien para ver su ficha, su cuota o darle de baja.`,
+    },
+    {
+      id: 'cobros',
+      ruta: '/mensualidades',
+      titulo: 'Cobros',
+      texto: 'Los recibos de cada mes. Filtra los vencidos y toca uno para registrar el pago; el siguiente aparece solo.',
+    },
+    {
+      id: 'inventario',
+      ruta: '/inventario',
+      titulo: 'Inventario',
+      texto: 'Lo que vendes en recepción. Te avisamos cuando algo llega a su mínimo y cada venta se suma a tus finanzas.',
+    },
+    {
+      id: 'finanzas',
+      ruta: '/finanzas',
+      titulo: 'Finanzas',
+      texto: 'Cuánto entra cada mes, separado entre cuotas y ventas, con el historial completo.',
+    },
+    { id: 'ajustes', ruta: '/', titulo: 'Hazla tuya', texto: 'En Ajustes cambias colores, logo, clases, precios y la forma de cobro.' },
   ];
   const paso = pasos[indice];
 
@@ -61,12 +87,20 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
 
   const medir = useCallback((id: IdObjetivo) => {
     const nodo = objetivos.current.get(id);
-    if (!nodo) return setMedida(null);
+    if (!nodo) return setMedida({ x: 0, y: 0, w: 0, h: 0 });
     nodo.measureInWindow((x, y, w, h) => setMedida({ x, y, w, h }));
   }, []);
 
   useEffect(() => {
-    if (activo && paso) medir(paso.id);
+    if (!activo || !paso) return;
+    // Si el paso está en otra sección, primero se navega y se espera a que la pantalla se pinte
+    if (paso.ruta) {
+      setMedida(null);
+      router.navigate(paso.ruta);
+      const t = setTimeout(() => medir(paso.id), 550);
+      return () => clearTimeout(t);
+    }
+    medir(paso.id);
     // `paso` y `medir` dependen solo de `indice`, que ya está en la lista
   }, [activo, indice]);
 
@@ -77,6 +111,7 @@ export function ProveedorTour({ children }: { children: ReactNode }) {
 
   async function terminar() {
     setActivo(false);
+    router.navigate('/');
     if (perfil && !perfil.usuario.tourCompletado) {
       await marcarTourCompletado().catch(() => {});
       await recargarPerfil().catch(() => {});
@@ -134,6 +169,12 @@ function Capa({
   const h = useSharedValue(medida.h + HOLGURA * 2);
 
   useEffect(() => {
+    if (medida.w === 0) {
+      // Sin elemento que iluminar: el hueco se cierra en el centro
+      w.value = withTiming(0, { duration: 200 });
+      h.value = withTiming(0, { duration: 200 });
+      return;
+    }
     const animar = { duration: DURACION, easing: Easing.inOut(Easing.cubic) };
     x.value = withTiming(medida.x - HOLGURA, animar);
     y.value = withTiming(medida.y - HOLGURA, animar);
@@ -144,12 +185,15 @@ function Capa({
   // El hueco es un rectángulo redondeado recortado del velo con una máscara
   const hueco = useAnimatedProps(() => ({ x: x.value, y: y.value, width: w.value, height: h.value }));
 
-  // La tarjeta va debajo del elemento si cabe; si no, arriba
+  // La tarjeta va debajo del elemento si cabe; si no, arriba. Sin elemento, al centro.
+  const sinObjetivo = medida.w === 0;
   const abajoDelObjetivo = medida.y + medida.h + HOLGURA + 220 < height;
   const anchoTarjeta = Math.min(width - 32, 420);
-  const posicion = abajoDelObjetivo
-    ? { top: medida.y + medida.h + HOLGURA + 14 }
-    : { bottom: height - medida.y + HOLGURA + 14 };
+  const posicion = sinObjetivo
+    ? { top: height / 2 - 110 }
+    : abajoDelObjetivo
+      ? { top: medida.y + medida.h + HOLGURA + 14 }
+      : { bottom: height - medida.y + HOLGURA + 14 };
   const velo = 'rgba(6,7,10,0.72)';
 
   return (
@@ -162,7 +206,9 @@ function Capa({
           </Mask>
         </Defs>
         <Rect x={0} y={0} width={width} height={height} fill={velo} mask="url(#velo-tour)" />
-        <RectAnimado animatedProps={hueco} rx={RADIO_HUECO} ry={RADIO_HUECO} fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth={2} />
+        {!sinObjetivo && (
+          <RectAnimado animatedProps={hueco} rx={RADIO_HUECO} ry={RADIO_HUECO} fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth={2} />
+        )}
       </Svg>
 
       <Animated.View

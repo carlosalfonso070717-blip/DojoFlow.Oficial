@@ -9,6 +9,7 @@ import { Boton, confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, Grupo, 
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
+import { useObjetivoTour } from '@/tour/Tour';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
@@ -20,6 +21,7 @@ function nombreMes(mesAnio: string) {
 }
 
 export default function FinanzasScreen() {
+  const refTour = useObjetivoTour('finanzas');
   const { color, radio } = useTema();
   const { margen, maximo } = useDiseno();
   const espacioBarra = useEspacioBarra();
@@ -46,7 +48,7 @@ export default function FinanzasScreen() {
         contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingBottom: espacioBarra, maxWidth: maximo + margen * 2 }]}
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
-          <View style={estilos.cabecera}>
+          <View style={estilos.cabecera} ref={refTour} collapsable={false}>
             <Encabezado titulo="Finanzas" />
 
             {actual && (

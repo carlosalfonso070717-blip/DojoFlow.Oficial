@@ -28,9 +28,11 @@ import {
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
+import { useObjetivoTour } from '@/tour/Tour';
 import { plural } from '@/utils/texto';
 
 export default function AlumnosScreen() {
+  const refTour = useObjetivoTour('alumnos');
   const { color } = useTema();
   const { margen, maximo } = useDiseno();
   const espacioBarra = useEspacioBarra();
@@ -78,7 +80,7 @@ export default function AlumnosScreen() {
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
         ListHeaderComponent={
-          <View style={estilos.cabecera}>
+          <View style={estilos.cabecera} ref={refTour} collapsable={false}>
             <Encabezado
               titulo={plural(termino)}
               detalle={alumnos.length ? `${alumnos.length} en total` : undefined}

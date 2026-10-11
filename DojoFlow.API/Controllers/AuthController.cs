@@ -60,15 +60,12 @@ namespace DojoFlow.API.Controllers
             verificacion.Verificado = false;
             await _verificacionRepository.GuardarAsync(verificacion);
 
-            string cuerpo = $@"
-                <div style='font-family:sans-serif;'>
-                    <h2 style='color:#e53935;'>DojoFlow</h2>
-                    <p>Tu código para verificar tu correo es:</p>
-                    <p style='font-size:28px; font-weight:bold; letter-spacing:4px;'>{pin}</p>
-                    <p>Este código es válido por {MinutosValidezPin} minutos.</p>
-                </div>";
-
-            await _emailSender.EnviarAsync(email, "Verifica tu correo - DojoFlow", cuerpo);
+            string cuerpo = PlantillasCorreo.Codigo(
+                "Verifica tu correo",
+                "Escribe este código en DojoFlow para continuar con tu registro.",
+                pin,
+                MinutosValidezPin);
+            await _emailSender.EnviarAsync(email, $"{pin} es tu código de DojoFlow", cuerpo);
 
             return Ok(new { Mensaje = "Te enviamos un código de verificación a tu correo." });
         }
@@ -234,15 +231,13 @@ namespace DojoFlow.API.Controllers
                 coach.ResetPinExpiracion = DateTime.UtcNow.AddMinutes(MinutosValidezPin);
                 await _usuarioRepository.ActualizarAsync(coach);
 
-                string cuerpo = $@"
-                    <div style='font-family:sans-serif;'>
-                        <h2 style='color:#e53935;'>DojoFlow</h2>
-                        <p>Hola {coach.Nombre}, tu PIN para restablecer la contraseña es:</p>
-                        <p style='font-size:28px; font-weight:bold; letter-spacing:4px;'>{pin}</p>
-                        <p>Este PIN es válido por {MinutosValidezPin} minutos. Si tú no solicitaste este cambio, ignora este correo.</p>
-                    </div>";
-
-                await _emailSender.EnviarAsync(coach.Email, "Recuperación de contraseña - DojoFlow", cuerpo);
+                string cuerpo = PlantillasCorreo.Codigo(
+                    "Restablece tu contraseña",
+                    $"Hola {coach.Nombre}, usa este código para elegir una contraseña nueva.",
+                    pin,
+                    MinutosValidezPin,
+                    "Si tú no lo pediste, ignora este correo: tu contraseña no cambia.");
+                await _emailSender.EnviarAsync(coach.Email, $"{pin} es tu código para restablecer tu contraseña", cuerpo);
             }
 
             return Ok(new { Mensaje = "Si el correo está registrado, te enviamos un PIN para restablecer tu contraseña." });
