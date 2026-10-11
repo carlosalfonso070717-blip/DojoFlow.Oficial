@@ -95,8 +95,9 @@ export function Avatar({ nombre, logoUrl, tamano = 44 }: { nombre: string; logoU
 }
 
 // La API devuelve el logo como ruta relativa (/api/Academia/{id}/logo?v=2)
+// (las imágenes locales recién elegidas —file:, blob:, data:— se usan tal cual)
 export function urlAbsoluta(ruta: string) {
-  if (ruta.startsWith('http')) return ruta;
+  if (!ruta.startsWith('/')) return ruta;
   return API_URL.replace(/\/api\/?$/, '') + ruta;
 }
 

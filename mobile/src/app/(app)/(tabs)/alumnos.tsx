@@ -19,7 +19,7 @@ import {
 } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema } from '@/theme';
-import { cantidad, plural } from '@/utils/texto';
+import { plural } from '@/utils/texto';
 
 export default function AlumnosScreen() {
   const { color, espacio } = useTema();
@@ -66,7 +66,7 @@ export default function AlumnosScreen() {
           <View style={estilos.cabecera}>
             <Encabezado
               titulo={plural(termino)}
-              detalle={alumnos.length ? `${cantidad(alumnos.length, 'inscrito', 'inscritos')}` : undefined}
+              detalle={alumnos.length ? `${alumnos.length} en total` : undefined}
               acciones={
                 <BotonIcono
                   destacado

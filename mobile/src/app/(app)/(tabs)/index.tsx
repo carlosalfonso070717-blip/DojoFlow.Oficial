@@ -95,7 +95,7 @@ export default function InicioScreen() {
         </View>
 
         <Credencial academia={academia}>
-          <DatoCredencial valor={String(datos.alumnos)} etiqueta={`${plural(termino)} inscritos`} fondo={academia.colorSecundario} />
+          <DatoCredencial valor={String(datos.alumnos)} etiqueta={plural(termino)} fondo={academia.colorSecundario} />
           <DatoCredencial valor={formatoCorto(datos.ingresosMes)} etiqueta="Ingresos del mes" fondo={academia.colorSecundario} />
         </Credencial>
 

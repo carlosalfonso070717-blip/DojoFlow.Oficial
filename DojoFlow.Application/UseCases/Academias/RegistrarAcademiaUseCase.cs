@@ -3,12 +3,19 @@ using DojoFlow.Domain.Entities;
 
 namespace DojoFlow.Application.UseCases.Academias
 {
+    public record ClaseInicial(string Nombre, decimal Precio);
+
+    // Lo que no se mande (colores, término, clases) se toma de la plantilla del tipo de negocio
     public record RegistrarAcademiaComando(
         string NombreAcademia,
         string TipoNegocio,
         string NombreDueno,
         string Email,
-        string PasswordHash);
+        string PasswordHash,
+        string? ColorPrimario = null,
+        string? ColorSecundario = null,
+        string? TerminoAlumno = null,
+        IReadOnlyList<ClaseInicial>? Clases = null);
 
     public class RegistrarAcademiaUseCase
     {
@@ -29,18 +36,30 @@ namespace DojoFlow.Application.UseCases.Academias
             var academia = new Academia
             {
                 Id = Guid.NewGuid(),
-                Nombre = comando.NombreAcademia.Trim(),
                 TipoNegocio = plantilla.TipoNegocio,
-                ColorPrimario = plantilla.ColorPrimario,
-                ColorSecundario = plantilla.ColorSecundario,
-                TerminoAlumno = plantilla.TerminoAlumno,
                 ModoCobro = ModoCobro.PorClase,
                 FechaCreacion = DateTime.UtcNow
             };
+            // Valida colores y nombre con las mismas reglas que Ajustes
+            academia.ActualizarMarca(
+                comando.NombreAcademia,
+                comando.ColorPrimario ?? plantilla.ColorPrimario,
+                comando.ColorSecundario ?? plantilla.ColorSecundario,
+                comando.TerminoAlumno ?? plantilla.TerminoAlumno);
 
-            // Las clases sugeridas nacen con precio 0 para que el dueño los ajuste en el onboarding
-            var clases = plantilla.ClasesSugeridas
-                .Select(nombre => new Clase(nombre, 0m) { AcademiaId = academia.Id })
+            var clasesIniciales = comando.Clases
+                ?? plantilla.ClasesSugeridas.Select(nombre => new ClaseInicial(nombre, 0m)).ToList();
+
+            var repetidas = clasesIniciales
+                .GroupBy(c => c.Nombre.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+            if (repetidas.Count > 0)
+                throw new ArgumentException($"La clase '{repetidas[0]}' está repetida.");
+
+            var clases = clasesIniciales
+                .Select(c => new Clase(c.Nombre, c.Precio) { AcademiaId = academia.Id })
                 .ToList();
 
             var dueno = new UsuarioCoach

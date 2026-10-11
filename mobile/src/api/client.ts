@@ -33,10 +33,11 @@ type Opciones = RequestInit & {
 // Equivalente a obtenerHeaders() + fetch del frontend web
 export async function api<T>(ruta: string, { tokenPropio, ...opciones }: Opciones = {}): Promise<T> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
     ...(opciones.headers as Record<string, string>),
   };
+  // Con FormData (subir logo) el propio fetch pone el Content-Type con su boundary
+  if (!(opciones.body instanceof FormData)) headers['Content-Type'] = 'application/json';
   const tokenUsado = tokenPropio === undefined ? token : tokenPropio;
   if (tokenUsado) headers.Authorization = `Bearer ${tokenUsado}`;
 

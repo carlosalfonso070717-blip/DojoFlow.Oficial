@@ -1,3 +1,4 @@
+import { aFormData, type ArchivoLogo } from '@/utils/logo';
 import { api } from './client';
 
 // ===== AUTH =====
@@ -17,14 +18,22 @@ export const enviarVerificacion = (email: string) =>
 export const confirmarVerificacion = (email: string, pin: string) =>
   post<Mensaje>('/Auth/confirmar-verificacion', { email, pin });
 
-// Crea la academia y a su dueño; devuelve la sesión ya iniciada
+// Crea la academia y a su dueño; devuelve la sesión ya iniciada.
+// Lo opcional que no se mande se toma de la plantilla del tipo de negocio.
 export const registrarAcademia = (datos: {
   nombre: string;
   email: string;
   password: string;
   nombreAcademia: string;
   tipoNegocio: string;
+  colorPrimario?: string;
+  colorSecundario?: string;
+  terminoAlumno?: string;
+  clases?: { nombre: string; precio: number }[];
 }) => post<LoginRespuesta>('/Auth/signup', datos);
+
+export const subirLogo = async (archivo: ArchivoLogo, tokenPropio?: string) =>
+  api<MarcaAcademia>('/Academia/logo', { method: 'PUT', body: await aFormData(archivo), tokenPropio });
 
 // ===== ACADEMIA =====
 export type MarcaAcademia = {

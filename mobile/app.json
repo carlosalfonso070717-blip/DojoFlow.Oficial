@@ -27,7 +27,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "DojoFlow usa tus fotos para que elijas el logo de tu academia."
+        }
+      ]
     ],
     "extra": {
       "apiUrl": "https://dojoflow.club/api"

@@ -136,12 +136,25 @@ namespace DojoFlow.API.Controllers
                 return BadRequest(new { Error = "Primero debes verificar tu correo con el código que te enviamos." });
             }
 
-            var (academia, dueno) = await _registrarAcademia.EjecutarAsync(new RegistrarAcademiaComando(
-                request.NombreAcademia,
-                request.TipoNegocio,
-                request.Nombre,
-                email,
-                BCrypt.Net.BCrypt.HashPassword(request.Password)));
+            Academia academia;
+            UsuarioCoach dueno;
+            try
+            {
+                (academia, dueno) = await _registrarAcademia.EjecutarAsync(new RegistrarAcademiaComando(
+                    request.NombreAcademia,
+                    request.TipoNegocio,
+                    request.Nombre,
+                    email,
+                    BCrypt.Net.BCrypt.HashPassword(request.Password),
+                    request.ColorPrimario,
+                    request.ColorSecundario,
+                    request.TerminoAlumno,
+                    request.Clases?.Select(c => new ClaseInicial(c.Nombre, c.Precio)).ToList()));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
 
             await _verificacionRepository.EliminarAsync(verificacion);
 
@@ -300,6 +313,18 @@ namespace DojoFlow.API.Controllers
         public string Password { get; set; } = string.Empty;
         public string NombreAcademia { get; set; } = string.Empty;
         public string TipoNegocio { get; set; } = string.Empty;
+
+        // Opcionales: personalización elegida en el asistente de registro de la app
+        public string? ColorPrimario { get; set; }
+        public string? ColorSecundario { get; set; }
+        public string? TerminoAlumno { get; set; }
+        public List<ClaseRegistroRequest>? Clases { get; set; }
+    }
+
+    public class ClaseRegistroRequest
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public decimal Precio { get; set; }
     }
 
     public class LoginRequest

@@ -86,7 +86,7 @@ export default function LoginScreen() {
 
           <View style={{ gap: 10 }}>
             <Boton titulo="Iniciar sesión" onPress={entrar} cargando={cargando} />
-            <Boton titulo="Crear mi academia" variante="contorno" onPress={() => router.push('/registro')} />
+            <Boton titulo="Crear cuenta" variante="contorno" onPress={() => router.push('/registro')} />
           </View>
 
           {/* Solo en tablets que un coach ya vinculó a su academia */}
