@@ -138,8 +138,22 @@ app.Use(async (contexto, siguiente) =>
     await siguiente();
 });
 
+// index.html siempre se revalida (si no, el celular sigue mostrando una versión vieja tras un deploy);
+// los JS de /_expo llevan un hash en el nombre, así que pueden guardarse en caché un año
+var archivosWeb = new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var headers = ctx.Context.Response.Headers;
+        if (ctx.File.Name.EndsWith(".html", StringComparison.OrdinalIgnoreCase))
+            headers.CacheControl = "no-cache, must-revalidate";
+        else if (ctx.Context.Request.Path.StartsWithSegments("/_expo"))
+            headers.CacheControl = "public, max-age=31536000, immutable";
+    }
+};
+
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(archivosWeb);
 
 // El ruteo va después de los archivos estáticos: si no, la ruta de respaldo de la web (index.html)
 // se elegiría antes y ningún archivo (JS, imágenes, /clasico) llegaría a servirse
@@ -153,6 +167,6 @@ app.MapControllers();
 
 // La web es una app de una sola página: cualquier ruta que no sea de la API ni un archivo
 // (p. ej. /alumnos o /registro/tipo) devuelve index.html y el enrutador de la app la resuelve
-app.MapFallbackToFile("{**ruta:regex(^(?!api/|catalogo/|swagger).*$)}", "index.html");
+app.MapFallbackToFile("{**ruta:regex(^(?!api/|catalogo/|swagger).*$)}", "index.html", archivosWeb);
 
 app.Run();
