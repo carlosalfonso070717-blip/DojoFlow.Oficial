@@ -12,8 +12,9 @@ namespace DojoFlow.API.Services
         public VerificadorGoogle(IConfiguration config)
         {
             // Google:ClientIds admite varios separados por coma (web, iOS, Android).
-            // Si no está, usa GOOGLE_WEB_CLIENT_ID: la misma variable con la que se compila la web.
-            _clientIds = (config["Google:ClientIds"] ?? config["GOOGLE_WEB_CLIENT_ID"] ?? string.Empty)
+            // Una variable de entorno vacía no debe tapar el valor de appsettings.json.
+            var ids = new[] { config["GOOGLE_WEB_CLIENT_ID"], config["Google:ClientIds"] }.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
+            _clientIds = (ids ?? string.Empty)
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         }
 

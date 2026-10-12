@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ClipboardCheck, Mail, Package, Tablet, UsersRound, Wallet, type LucideIcon } from 'lucide-react-native';
+import { Mail, Tablet } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -21,12 +21,8 @@ import { alerta } from '@/utils/alerta';
 // Entrada escalonada: una sola secuencia al abrir la pantalla
 const entrada = (orden: number) => FadeInDown.delay(80 + orden * 70).duration(520).easing(Easing.out(Easing.cubic));
 
-const FUNCIONES: { icono: LucideIcon; titulo: string; detalle: string }[] = [
-  { icono: UsersRound, titulo: 'Alumnos', detalle: 'Inscripciones, clases y expedientes' },
-  { icono: Wallet, titulo: 'Cobros', detalle: 'Mensualidades, recibos y adeudos' },
-  { icono: ClipboardCheck, titulo: 'Asistencias', detalle: 'Registro con PIN desde la recepción' },
-  { icono: Package, titulo: 'Inventario y finanzas', detalle: 'Ventas, existencias y reportes' },
-];
+// Ancho máximo del formulario; con él se ubica el crédito en el hueco junto al panel
+const ANCHO_FORMULARIO = 420;
 
 export default function LoginScreen() {
   const { color } = useTema();
@@ -36,6 +32,9 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [cargando, setCargando] = useState(false);
   const refPassword = useRef<TextInput>(null);
+  const [anchoColumna, setAnchoColumna] = useState(0);
+  const hueco = (anchoColumna - ANCHO_FORMULARIO) / 2;
+  const creditoAlLado = hueco >= 104;
 
   async function entrar() {
     if (!email.trim() || !password) {
@@ -140,9 +139,9 @@ export default function LoginScreen() {
     </View>
   );
 
-  const credito = (
+  const credito = (apilado?: boolean) => (
     <Animated.View entering={FadeIn.delay(700).duration(600)} style={estilos.credito}>
-      <CreditoSolullan />
+      <CreditoSolullan apilado={apilado} />
     </Animated.View>
   );
 
@@ -168,10 +167,14 @@ export default function LoginScreen() {
           // En tableta y escritorio: presentación a la izquierda, formulario a la derecha
           <View style={estilos.dividido}>
             <Presentacion />
-            <ScrollView contentContainerStyle={[estilos.ladoFormulario, { paddingHorizontal: margen }]} keyboardShouldPersistTaps="handled">
-              <View style={estilos.centro}>{formulario}</View>
-              {credito}
-            </ScrollView>
+            <View style={{ flex: 1 }} onLayout={(e) => setAnchoColumna(e.nativeEvent.layout.width)}>
+              <ScrollView contentContainerStyle={[estilos.ladoFormulario, { paddingHorizontal: margen }]} keyboardShouldPersistTaps="handled">
+                <View style={estilos.centro}>{formulario}</View>
+                {!creditoAlLado && credito()}
+              </ScrollView>
+              {/* Con espacio de sobra, el crédito va en el hueco entre el panel y el formulario */}
+              {creditoAlLado && <View style={[estilos.creditoAlLado, { width: hueco }]}>{credito(true)}</View>}
+            </View>
           </View>
         ) : (
           <ScrollView
@@ -180,7 +183,7 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={estilos.centro}>{formulario}</View>
-            {credito}
+            {credito()}
           </ScrollView>
         )}
       </KeyboardAvoidingView>
@@ -229,40 +232,16 @@ function Presentacion() {
         </Texto>
       </View>
 
-      <View style={{ gap: 36, maxWidth: 460 }}>
-        <View style={{ gap: 16 }}>
-          <Texto variante="pequeno" style={{ color: suave, letterSpacing: 1.6, textTransform: 'uppercase', fontFamily: 'Figtree_600SemiBold' }}>
-            Gestión para academias
-          </Texto>
-          <Texto variante="gigante" style={{ color: tinta, fontSize: 56, lineHeight: 58, letterSpacing: -2 }}>
-            Tu academia,{'\n'}en orden.
-          </Texto>
-          <Texto variante="cuerpo" style={{ color: suave, fontSize: 17, lineHeight: 26 }}>
-            Artes marciales, danza, música y más. Todo lo de tu academia en un solo lugar, desde cualquier dispositivo.
-          </Texto>
-        </View>
-
-        <View style={[estilos.funciones, { borderColor: linea }]}>
-          {FUNCIONES.map(({ icono: Icono, titulo, detalle }, i) => (
-            <Animated.View
-              key={titulo}
-              entering={FadeInDown.delay(250 + i * 80).duration(500).easing(Easing.out(Easing.cubic))}
-              style={[estilos.funcion, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth * 2, borderColor: linea }]}
-            >
-              <View style={[estilos.iconoFuncion, { backgroundColor: conAlfa(tinta, 0.08) }]}>
-                <Icono size={18} color={tinta} strokeWidth={1.8} />
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Texto variante="cuerpoFuerte" style={{ color: tinta }}>
-                  {titulo}
-                </Texto>
-                <Texto variante="detalle" style={{ color: suave }}>
-                  {detalle}
-                </Texto>
-              </View>
-            </Animated.View>
-          ))}
-        </View>
+      <View style={{ gap: 16, maxWidth: 460 }}>
+        <Texto variante="pequeno" style={{ color: suave, letterSpacing: 1.6, textTransform: 'uppercase', fontFamily: 'Figtree_600SemiBold' }}>
+          Gestión para academias
+        </Texto>
+        <Texto variante="gigante" style={{ color: tinta, fontSize: 56, lineHeight: 58, letterSpacing: -2 }}>
+          Tu academia,{'\n'}en orden.
+        </Texto>
+        <Texto variante="cuerpo" style={{ color: suave, fontSize: 17, lineHeight: 26 }}>
+          Artes marciales, danza, música y más. Todo lo de tu academia en un solo lugar, desde cualquier dispositivo.
+        </Texto>
       </View>
     </Animated.View>
   );
@@ -271,13 +250,14 @@ function Presentacion() {
 const estilos = StyleSheet.create({
   movil: { flexGrow: 1, paddingTop: 32, paddingBottom: 16, gap: 40 },
   centro: { flexGrow: 1, justifyContent: 'center' },
-  formulario: { gap: 32, width: '100%', maxWidth: 420, alignSelf: 'center' },
+  formulario: { gap: 32, width: '100%', maxWidth: ANCHO_FORMULARIO, alignSelf: 'center' },
   alternativa: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   credito: { alignItems: 'center', paddingTop: 8 },
+  creditoAlLado: { position: 'absolute', left: 0, bottom: 28, alignItems: 'center' },
   dividido: { flex: 1, flexDirection: 'row' },
   panel: {
     flex: 1,
-    maxWidth: 720,
+    maxWidth: 620,
     margin: 16,
     borderRadius: 32,
     borderWidth: StyleSheet.hairlineWidth * 2,
@@ -288,9 +268,6 @@ const estilos = StyleSheet.create({
   reticula: { position: 'absolute', top: -330, right: -330, width: 660, height: 660, alignItems: 'center', justifyContent: 'center' },
   anillo: { position: 'absolute', borderWidth: StyleSheet.hairlineWidth * 2 },
   encabezadoPanel: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  funciones: { borderWidth: StyleSheet.hairlineWidth * 2, borderRadius: 22, paddingHorizontal: 18 },
-  funcion: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
-  iconoFuncion: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   ladoFormulario: { flexGrow: 1, paddingTop: 48, paddingBottom: 24, gap: 40 },
   kiosco: {
     position: 'absolute',

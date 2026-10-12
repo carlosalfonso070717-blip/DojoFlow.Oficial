@@ -41,7 +41,8 @@
       ]
     ],
     "extra": {
-      "apiUrl": "https://dojoflow.club/api"
+      "apiUrl": "https://dojoflow.club/api",
+      "googleWebClientId": "437528191351-ua04nl20r2b6i3m8oqkjcfi2udrkgoan.apps.googleusercontent.com"
     }
   }
 }

@@ -18,14 +18,14 @@ const enlace =
     ? ({ href: SITIO, hrefAttrs: { target: '_blank', rel: 'noopener' } } as object)
     : { onPress: () => Linking.openURL(SITIO) };
 
-// `sobreOscuro` fuerza los colores invertidos (p. ej. encima de una foto)
-export function CreditoSolullan({ sobreOscuro }: { sobreOscuro?: boolean }) {
+// `sobreOscuro` fuerza los colores invertidos; `apilado` pone el logotipo debajo del texto (para espacios angostos)
+export function CreditoSolullan({ sobreOscuro, apilado }: { sobreOscuro?: boolean; apilado?: boolean }) {
   const { color, oscuro } = useTema();
   const invertido = sobreOscuro ?? oscuro;
   const textoSuave = sobreOscuro ? 'rgba(255,255,255,0.6)' : color.textoTenue;
 
   return (
-    <View style={estilos.fila}>
+    <View style={[estilos.fila, apilado && estilos.apilado]}>
       <Text style={[estilos.prefijo, { color: textoSuave }]}>Desarrollado por</Text>
       <Pressable
         {...enlace}
@@ -54,6 +54,7 @@ export function CreditoSolullan({ sobreOscuro }: { sobreOscuro?: boolean }) {
 
 const estilos = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  apilado: { flexDirection: 'column', gap: 6 },
   prefijo: { fontFamily: 'Figtree_500Medium', fontSize: 12, letterSpacing: 0.2 },
   marca: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   isotipo: { width: 17, height: 18 },
