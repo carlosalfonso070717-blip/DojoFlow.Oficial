@@ -12,10 +12,12 @@ type Props = TextInputProps & {
   icono?: ComponentType<PropsIcono>;
   // En contraseñas: ícono mientras el texto está visible (p. ej. candado abierto)
   iconoVisible?: ComponentType<PropsIcono>;
+  // Sin etiqueta visible y un poco más bajo (pantallas que deben caber sin scroll); la etiqueta sigue para accesibilidad
+  compacto?: boolean;
 };
 
 export const Campo = forwardRef<TextInput, Props>(function Campo(
-  { etiqueta, ayuda, error, icono, iconoVisible, secureTextEntry, style, onFocus, onBlur, ...props },
+  { etiqueta, ayuda, error, icono, iconoVisible, compacto, secureTextEntry, style, onFocus, onBlur, ...props },
   ref,
 ) {
   const { color, radio, tipografia } = useTema();
@@ -28,12 +30,15 @@ export const Campo = forwardRef<TextInput, Props>(function Campo(
 
   return (
     <View style={{ gap: 8 }}>
-      <Texto variante="detalle" tono="suave">
-        {etiqueta}
-      </Texto>
+      {!compacto && (
+        <Texto variante="detalle" tono="suave">
+          {etiqueta}
+        </Texto>
+      )}
       <View
         style={[
           estilos.caja,
+          compacto && { minHeight: 50 },
           {
             backgroundColor: color.superficie,
             borderColor: colorBorde,
@@ -58,7 +63,7 @@ export const Campo = forwardRef<TextInput, Props>(function Campo(
             onBlur?.(e);
           }}
           {...props}
-          style={[tipografia.cuerpo, estilos.input, { color: color.texto }, sinContornoWeb, style]}
+          style={[tipografia.cuerpo, estilos.input, compacto && { paddingVertical: 11 }, { color: color.texto }, sinContornoWeb, style]}
         />
         {esPassword && (
           <Pressable

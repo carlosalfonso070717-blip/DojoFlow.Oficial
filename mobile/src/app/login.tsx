@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Mail, Tablet } from 'lucide-react-native';
 import { useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, Rect, RadialGradient, Stop } from 'react-native-svg';
@@ -27,6 +27,11 @@ const ANCHO_FORMULARIO = 420;
 export default function LoginScreen() {
   const { color } = useTema();
   const { esTableta, margen } = useDiseno();
+  const { height: alto } = useWindowDimensions();
+  // En el celular todo debe caber sin scroll: los espacios y el título se ajustan a la altura disponible
+  const compacto = !esTableta;
+  const bajo = compacto && alto < 640;
+  const separacion = !compacto ? 32 : bajo ? 14 : alto < 760 ? 20 : 26;
   const { iniciarSesion, entrarConGoogle, tokenKiosco } = useSesion();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -66,35 +71,42 @@ export default function LoginScreen() {
   }
 
   const formulario = (
-    <View style={estilos.formulario}>
+    <View style={[estilos.formulario, { gap: separacion }]}>
       {!esTableta && (
         <Animated.View entering={entrada(0)}>
           <Marca />
         </Animated.View>
       )}
 
-      <Animated.View entering={entrada(1)} style={{ gap: 10 }}>
-        <Texto variante="gigante" accessibilityRole="header">
+      <Animated.View entering={entrada(1)} style={{ gap: compacto ? 6 : 10 }}>
+        <Texto
+          variante="gigante"
+          accessibilityRole="header"
+          style={compacto && { fontSize: bajo ? 28 : 32, lineHeight: bajo ? 32 : 36, letterSpacing: -0.9 }}
+        >
           Bienvenido de vuelta
         </Texto>
-        <Texto variante="cuerpo" tono="suave">
-          Entra al panel de tu academia.
-        </Texto>
+        {!bajo && (
+          <Texto variante="cuerpo" tono="suave">
+            Entra al panel de tu academia.
+          </Texto>
+        )}
       </Animated.View>
 
       {googleDisponible && (
-        <Animated.View entering={entrada(2)} style={{ gap: 24 }}>
+        <Animated.View entering={entrada(2)} style={{ gap: compacto ? 14 : 24 }}>
           <BotonGoogle onToken={conGoogle} />
           <Separador texto="o con tu correo" />
         </Animated.View>
       )}
 
-      <Animated.View entering={entrada(3)} style={{ gap: 16 }}>
+      <Animated.View entering={entrada(3)} style={{ gap: compacto ? 12 : 16 }}>
         <Campo
           etiqueta="Correo"
+          compacto={compacto}
           value={email}
           onChangeText={setEmail}
-          placeholder="tu@academia.com"
+          placeholder={compacto ? 'Correo' : 'tu@academia.com'}
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
@@ -102,10 +114,12 @@ export default function LoginScreen() {
           returnKeyType="next"
           onSubmitEditing={() => refPassword.current?.focus()}
         />
-        <View style={{ gap: 10 }}>
+        <View style={{ gap: compacto ? 8 : 10 }}>
           <Campo
             ref={refPassword}
             etiqueta="Contraseña"
+            compacto={compacto}
+            placeholder={compacto ? 'Contraseña' : undefined}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -123,8 +137,14 @@ export default function LoginScreen() {
         </View>
       </Animated.View>
 
-      <Animated.View entering={entrada(4)} style={{ gap: 20 }}>
-        <Boton titulo="Iniciar sesión" icono={IconoIniciarSesion} onPress={entrar} cargando={cargando} />
+      <Animated.View entering={entrada(4)} style={{ gap: compacto ? 14 : 20 }}>
+        <Boton
+          titulo="Iniciar sesión"
+          icono={IconoIniciarSesion}
+          onPress={entrar}
+          cargando={cargando}
+          style={compacto && { minHeight: 50 }}
+        />
         <View style={estilos.alternativa}>
           <Texto variante="detalle" tono="suave">
             ¿Aún no tienes cuenta?
@@ -189,7 +209,7 @@ export default function LoginScreen() {
           </View>
         ) : (
           <ScrollView
-            contentContainerStyle={[estilos.movil, { paddingHorizontal: margen }]}
+            contentContainerStyle={[estilos.movil, { paddingHorizontal: margen, paddingTop: bajo ? 12 : 24 }]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
@@ -259,9 +279,9 @@ function Presentacion() {
 }
 
 const estilos = StyleSheet.create({
-  movil: { flexGrow: 1, paddingTop: 32, paddingBottom: 16, gap: 40 },
+  movil: { flexGrow: 1, paddingBottom: 12, gap: 16 },
   centro: { flexGrow: 1, justifyContent: 'center' },
-  formulario: { gap: 32, width: '100%', maxWidth: ANCHO_FORMULARIO, alignSelf: 'center' },
+  formulario: { width: '100%', maxWidth: ANCHO_FORMULARIO, alignSelf: 'center' },
   enlaceLegal: { textDecorationLine: 'underline' },
   alternativa: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   credito: { alignItems: 'center', paddingTop: 8 },
