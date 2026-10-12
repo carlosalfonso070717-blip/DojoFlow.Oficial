@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Mail, Tablet } from 'lucide-react-native';
+import { Mail } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -32,7 +32,7 @@ export default function LoginScreen() {
   const compacto = !esTableta;
   const bajo = compacto && alto < 640;
   const separacion = !compacto ? 32 : bajo ? 14 : alto < 760 ? 20 : 26;
-  const { iniciarSesion, entrarConGoogle, tokenKiosco } = useSesion();
+  const { iniciarSesion, entrarConGoogle } = useSesion();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [cargando, setCargando] = useState(false);
@@ -178,21 +178,6 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: color.fondo }} edges={['top', 'bottom']}>
-      {/* El kiosco solo aparece en tablets que un coach ya vinculó a su academia */}
-      {tokenKiosco && (
-        <Pressable
-          onPress={() => router.push('/kiosco')}
-          style={[estilos.kiosco, { borderColor: color.borde, backgroundColor: color.superficie }]}
-          accessibilityRole="button"
-          accessibilityLabel="Abrir registrador de asistencias"
-        >
-          <Tablet size={16} color={color.texto} />
-          <Texto variante="pequeno" style={{ fontFamily: 'Figtree_600SemiBold' }}>
-            Asistencias
-          </Texto>
-        </Pressable>
-      )}
-
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {esTableta ? (
           // En tableta y escritorio: presentación a la izquierda, formulario a la derecha
@@ -301,17 +286,4 @@ const estilos = StyleSheet.create({
   anillo: { position: 'absolute', borderWidth: StyleSheet.hairlineWidth * 2 },
   encabezadoPanel: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   ladoFormulario: { flexGrow: 1, paddingTop: 48, paddingBottom: 24, gap: 40 },
-  kiosco: {
-    position: 'absolute',
-    top: 56,
-    right: 20,
-    zIndex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-  },
 });
