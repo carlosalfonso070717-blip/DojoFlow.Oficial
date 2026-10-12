@@ -12,6 +12,13 @@ const post = <T>(ruta: string, body?: unknown) =>
 export const login = (email: string, password: string) =>
   post<LoginRespuesta>('/Auth/login', { email, password });
 
+// "Continuar con Google": si ya tiene cuenta trae la sesión; si no, sus datos para registrarse
+export type RespuestaGoogle =
+  | { registrado: true; token: string; mensaje: string }
+  | { registrado: false; email: string; nombre: string };
+
+export const continuarConGoogle = (idToken: string) => post<RespuestaGoogle>('/Auth/google', { idToken });
+
 export const enviarVerificacion = (email: string) =>
   post<Mensaje>('/Auth/enviar-verificacion', { email });
 
@@ -20,10 +27,12 @@ export const confirmarVerificacion = (email: string, pin: string) =>
 
 // Crea la academia y a su dueño; devuelve la sesión ya iniciada.
 // Lo opcional que no se mande se toma de la plantilla del tipo de negocio.
+// Con googleIdToken la cuenta se crea con Google y no lleva correo ni contraseña.
 export const registrarAcademia = (datos: {
   nombre: string;
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
+  googleIdToken?: string;
   nombreAcademia: string;
   tipoNegocio: string;
   colorPrimario?: string;

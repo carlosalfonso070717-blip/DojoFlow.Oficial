@@ -80,7 +80,7 @@ namespace DojoFlow.API.Services
                         if (d.Movimientos.Count == 0)
                         {
                             col.Item().Background("#f4f4f5").Padding(14).Text(
-                                "Este mes no tiene detalle de movimientos: se registró antes de que DojoFlow guardara cada cobro y venta. Los totales de arriba sí son correctos.")
+                                "Este mes no tiene detalle de movimientos: se registró antes de que GestAcademy guardara cada cobro y venta. Los totales de arriba sí son correctos.")
                                 .FontColor(Suave);
                             return;
                         }
@@ -126,14 +126,14 @@ namespace DojoFlow.API.Services
                         if (sinDetalle > 0)
                         {
                             col.Item().Text(
-                                $"{Dinero(sinDetalle)} de este mes se registraron antes de que DojoFlow guardara cada movimiento, por eso no aparecen en la tabla. El total del mes sí los incluye.")
+                                $"{Dinero(sinDetalle)} de este mes se registraron antes de que GestAcademy guardara cada movimiento, por eso no aparecen en la tabla. El total del mes sí los incluye.")
                                 .FontSize(9).FontColor(Suave);
                         }
                     });
 
                     pagina.Footer().Row(fila =>
                     {
-                        fila.RelativeItem().Text($"Generado con DojoFlow el {DateTime.Now.ToString("d 'de' MMMM 'de' yyyy", Mx)}").FontSize(8).FontColor(Suave);
+                        fila.RelativeItem().Text($"Generado con GestAcademy el {DateTime.Now.ToString("d 'de' MMMM 'de' yyyy", Mx)}").FontSize(8).FontColor(Suave);
                         fila.ConstantItem(80).AlignRight().Text(t =>
                         {
                             t.DefaultTextStyle(s => s.FontSize(8).FontColor(Suave));
@@ -228,13 +228,13 @@ namespace DojoFlow.API.Services
                 var sinDetalle = r.Total - d.Movimientos.Sum(m => m.Monto);
                 if (sinDetalle > 0)
                 {
-                    hoja.Cell(total + 2, 1).Value = $"Sin detalle: {sinDetalle.ToString("C2", Mx)} de este mes se registraron antes de que DojoFlow guardara cada movimiento.";
+                    hoja.Cell(total + 2, 1).Value = $"Sin detalle: {sinDetalle.ToString("C2", Mx)} de este mes se registraron antes de que GestAcademy guardara cada movimiento.";
                     hoja.Cell(total + 2, 1).Style.Font.SetFontColor(XLColor.FromHtml(Suave));
                 }
             }
             else
             {
-                hoja.Cell(2, 1).Value = "Este mes se registró antes de que DojoFlow guardara el detalle de cada movimiento.";
+                hoja.Cell(2, 1).Value = "Este mes se registró antes de que GestAcademy guardara el detalle de cada movimiento.";
             }
 
             hoja.SheetView.FreezeRows(1);

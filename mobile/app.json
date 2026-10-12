@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "DojoFlow",
+    "name": "GestAcademy",
     "slug": "dojoflow",
     "version": "1.0.0",
     "orientation": "default",
@@ -21,8 +21,8 @@
     "web": {
       "favicon": "./assets/favicon.png",
       "output": "single",
-      "name": "DojoFlow",
-      "shortName": "DojoFlow",
+      "name": "GestAcademy",
+      "shortName": "GestAcademy",
       "themeColor": "#151619",
       "backgroundColor": "#f4f4f5"
     },
@@ -36,7 +36,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "DojoFlow usa tus fotos para que elijas el logo de tu academia."
+          "photosPermission": "GestAcademy usa tus fotos para que elijas el logo de tu academia."
         }
       ]
     ],

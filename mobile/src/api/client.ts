@@ -47,7 +47,7 @@ export async function api<T>(ruta: string, { tokenPropio, ...opciones }: Opcione
   try {
     res = await fetch(`${API_URL}${ruta}`, { ...opciones, headers });
   } catch {
-    throw new ApiError('No se pudo contactar al servidor de DojoFlow.', 0);
+    throw new ApiError('No se pudo contactar al servidor de GestAcademy.', 0);
   }
 
   // Solo un 401 con el token de la sesión significa que la sesión expiró

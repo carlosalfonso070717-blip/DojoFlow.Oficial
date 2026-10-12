@@ -38,7 +38,7 @@ export default function FinanzasScreen() {
   async function descargar(registro: RegistroFinanciero, formato: FormatoReporte) {
     setDescargando(formato);
     try {
-      await descargarReporte(registro.mesAnio, formato, `${perfil?.academia.nombre ?? 'DojoFlow'} ${nombreMes(registro.mesAnio)}`);
+      await descargarReporte(registro.mesAnio, formato, `${perfil?.academia.nombre ?? 'GestAcademy'} ${nombreMes(registro.mesAnio)}`);
     } catch (e) {
       alerta('No se pudo descargar el reporte', (e as Error).message);
     } finally {

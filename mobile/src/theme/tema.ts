@@ -7,7 +7,7 @@ export type Marca = {
   secundario: string;
 };
 
-// Identidad de DojoFlow (logo, splash). La app sin academia (login, registro) usa el tema neutro.
+// Identidad de GestAcademy (logo, splash). La app sin academia (login, registro) usa el tema neutro.
 export const MARCA_DOJOFLOW: Marca = { primario: '#d90429', secundario: '#14161a' };
 
 // Neutro: tinta sobre gris frío. Se usa cuando todavía no hay academia que dé color

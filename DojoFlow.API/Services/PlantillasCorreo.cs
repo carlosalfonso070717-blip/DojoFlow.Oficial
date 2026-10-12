@@ -21,7 +21,7 @@ namespace DojoFlow.API.Services
   <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f4f4f5;padding:40px 16px;"">
     <tr><td align=""center"">
       <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""max-width:480px;background:#ffffff;border-radius:20px;padding:40px 32px;"">
-        <tr><td style=""font-size:15px;font-weight:700;letter-spacing:-0.2px;padding-bottom:32px;"">DojoFlow</td></tr>
+        <tr><td style=""font-size:15px;font-weight:700;letter-spacing:-0.2px;padding-bottom:32px;"">GestAcademy</td></tr>
         <tr><td style=""font-size:26px;line-height:32px;font-weight:700;letter-spacing:-0.5px;padding-bottom:12px;"">{t}</td></tr>
         <tr><td style=""font-size:16px;line-height:24px;color:#5b5e66;padding-bottom:28px;"">{m}</td></tr>
         <tr><td align=""center"" style=""background:#f4f4f5;border-radius:14px;padding:22px 12px;font-size:36px;font-weight:700;letter-spacing:6px;font-variant-numeric:tabular-nums;"">{legible}</td></tr>

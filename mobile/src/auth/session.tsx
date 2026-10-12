@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onSesionExpirada, setToken } from '@/api/client';
-import { crearSesionKiosco, login, obtenerPerfil, type Perfil } from '@/api/endpoints';
+import { continuarConGoogle, crearSesionKiosco, login, obtenerPerfil, type Perfil } from '@/api/endpoints';
 import { almacen } from './almacen';
 
 // Mismas llaves que usa el frontend web en localStorage
@@ -14,6 +14,8 @@ type Sesion = {
   // Token de la tablet de recepción; sobrevive al cierre de sesión del coach
   tokenKiosco: string | null;
   iniciarSesion: (email: string, password: string) => Promise<string>;
+  // Entra si el correo de Google ya tiene cuenta; si no, devuelve sus datos para registrarse
+  entrarConGoogle: (idToken: string) => Promise<{ registrado: true } | { registrado: false; email: string; nombre: string }>;
   // Para entrar directo con el token que devuelve el registro de academia
   entrarConToken: (token: string) => Promise<void>;
   cerrarSesion: () => Promise<void>;
@@ -70,6 +72,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [guardar],
   );
 
+  const entrarConGoogle = useCallback(
+    async (idToken: string) => {
+      const r = await continuarConGoogle(idToken);
+      if (!r.registrado) return r;
+      await guardar(r.token);
+      return { registrado: true as const };
+    },
+    [guardar],
+  );
+
   const entrarConToken = useCallback((nuevo: string) => guardar(nuevo), [guardar]);
 
   const cerrarSesion = useCallback(() => guardar(null), [guardar]);
@@ -92,6 +104,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         cargando,
         tokenKiosco,
         iniciarSesion,
+        entrarConGoogle,
         entrarConToken,
         cerrarSesion,
         recargarPerfil,

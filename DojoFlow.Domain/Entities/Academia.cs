@@ -13,7 +13,7 @@ namespace DojoFlow.Domain.Entities
         PorClase
     }
 
-    // El negocio que usa DojoFlow (academia de combate, ballet, danza, música, etc.)
+    // El negocio que usa GestAcademy (academia de combate, ballet, danza, música, etc.)
     public class Academia
     {
         public Guid Id { get; set; }

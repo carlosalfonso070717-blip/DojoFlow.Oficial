@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { confirmarVerificacion, enviarVerificacion, registrarAcademia, subirLogo } from '@/api/endpoints';
+import { confirmarVerificacion, enviarVerificacion } from '@/api/endpoints';
 import { Boton, Texto } from '@/components/ui';
 import { CodigoVerificacion } from '@/onboarding/CodigoVerificacion';
+import { crearAcademia } from '@/onboarding/crearAcademia';
 import { PantallaPaso } from '@/onboarding/PantallaPaso';
 import { useRegistro } from '@/onboarding/RegistroContexto';
 import { useTema } from '@/theme';
@@ -38,19 +39,7 @@ export default function PasoVerificar() {
 
     setEtapa('creando');
     try {
-      const { token } = await registrarAcademia({
-        nombre: borrador.nombre.trim(),
-        email: borrador.email.trim(),
-        password: borrador.password,
-        nombreAcademia: borrador.nombreAcademia.trim(),
-        tipoNegocio: borrador.tipoNegocio,
-        colorPrimario: borrador.colorPrimario,
-        colorSecundario: borrador.colorSecundario,
-        terminoAlumno: borrador.terminoAlumno.trim(),
-        clases: borrador.clases.map((c) => ({ nombre: c.nombre, precio: parseFloat(c.precio) || 0 })),
-      });
-      // El logo es opcional: si falla la subida, la academia ya existe y se puede subir en Ajustes
-      if (borrador.logo) await subirLogo(borrador.logo, token).catch(() => {});
+      const token = await crearAcademia(borrador);
       setToken(token);
       router.replace('/registro/listo');
     } catch (e) {

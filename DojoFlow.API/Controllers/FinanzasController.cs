@@ -39,7 +39,7 @@ namespace DojoFlow.API.Controllers
 
             var movimientos = await _registroFinancieroRepository.ObtenerTransaccionesAsync(mesAnio);
             var datos = new DatosReporte(academia.Nombre, academia.Moneda, academia.ColorPrimario, mesAnio, registro, movimientos);
-            string nombre = $"DojoFlow {academia.Nombre} {GeneradorReportes.NombreMes(mesAnio)}";
+            string nombre = $"GestAcademy {academia.Nombre} {GeneradorReportes.NombreMes(mesAnio)}";
 
             try
             {

@@ -9,9 +9,9 @@ export default function Root({ children }: PropsWithChildren) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
-        <meta name="description" content="DojoFlow: alumnos, cobros, inventario y finanzas de tu academia en un solo lugar." />
+        <meta name="description" content="GestAcademy: alumnos, cobros, inventario y finanzas de tu academia en un solo lugar." />
         <meta name="theme-color" content="#151619" />
-        <meta property="og:title" content="DojoFlow" />
+        <meta property="og:title" content="GestAcademy" />
         <meta property="og:description" content="Gestión para academias de artes marciales, danza, música y más." />
         <ScrollViewStyleReset />
         {/* Fondo correcto desde el primer cuadro, antes de que cargue la app (evita el destello blanco en modo oscuro) */}

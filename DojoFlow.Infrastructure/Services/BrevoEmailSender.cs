@@ -30,7 +30,7 @@ namespace DojoFlow.Infrastructure.Services
             {
                 // Para que llegue a la bandeja, el remitente debe ser de un dominio autenticado en Brevo
                 // (p. ej. no-reply@dojoflow.club); un remitente @gmail.com falla la verificación DMARC
-                sender = new { email = remitente, name = _config["Brevo:SenderName"] ?? "DojoFlow" },
+                sender = new { email = remitente, name = _config["Brevo:SenderName"] ?? "GestAcademy" },
                 to = new[] { new { email = destinatario } },
                 subject = asunto,
                 htmlContent = cuerpoHtml

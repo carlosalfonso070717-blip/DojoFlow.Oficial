@@ -39,6 +39,7 @@ builder.Services.AddDbContext<DojoFlowDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContextHttp>();
 builder.Services.AddSingleton<GeneradorTokens>();
+builder.Services.AddSingleton<VerificadorGoogle>();
 
 // INYECCIONES DE DEPENDENCIAS
 builder.Services.AddScoped<IAcademiaRepository, EfAcademiaRepository>();

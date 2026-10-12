@@ -50,7 +50,7 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -f Dockerfile .
+          docker build --build-arg GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}" -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -f Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
@@ -75,6 +75,7 @@ jobs:
               -e Jwt__Audience="DojoFlowFrontend" \
               -e Brevo__ApiKey="${{ secrets.BREVO_API_KEY }}" \
               -e Brevo__SenderEmail="${{ secrets.BREVO_SENDER_EMAIL }}" \
+              -e Google__ClientIds="${{ secrets.GOOGLE_WEB_CLIENT_ID }}" \
               -e Registro__CodigoInvitacion="${{ secrets.REGISTRO_CODIGO_INVITACION }}" \
               ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
             docker image prune -f

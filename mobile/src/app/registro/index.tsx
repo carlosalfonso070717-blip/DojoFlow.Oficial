@@ -12,7 +12,12 @@ export default function PasoNombre() {
     <PantallaPaso
       paso="index"
       titulo="¿Cómo se llama tu academia?"
-      descripcion="Así la verán tus alumnos al registrar su asistencia y en sus recibos."
+      descripcion={
+        // Viene del login con una cuenta de Google que aún no tiene academia
+        borrador.google
+          ? `Hola, ${borrador.google.nombre.split(' ')[0]}. Aún no tienes una academia en GestAcademy: vamos a crearla.`
+          : 'Así la verán tus alumnos al registrar su asistencia y en sus recibos.'
+      }
       continuar={{ onPress: () => router.push('/registro/tipo'), deshabilitado: !valido }}
     >
       <Campo

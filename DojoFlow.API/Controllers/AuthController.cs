@@ -21,6 +21,7 @@ namespace DojoFlow.API.Controllers
         private readonly RegistrarAcademiaUseCase _registrarAcademia;
         private readonly GeneradorTokens _tokens;
         private readonly IImagenRepository _imagenRepository;
+        private readonly VerificadorGoogle _google;
 
         public AuthController(
             IUsuarioCoachRepository usuarioRepository,
@@ -29,8 +30,10 @@ namespace DojoFlow.API.Controllers
             IEmailSender emailSender,
             RegistrarAcademiaUseCase registrarAcademia,
             GeneradorTokens tokens,
-            IImagenRepository imagenRepository)
+            IImagenRepository imagenRepository,
+            VerificadorGoogle google)
         {
+            _google = google;
             _imagenRepository = imagenRepository;
             _usuarioRepository = usuarioRepository;
             _verificacionRepository = verificacionRepository;
@@ -65,10 +68,10 @@ namespace DojoFlow.API.Controllers
 
             string cuerpo = PlantillasCorreo.Codigo(
                 "Verifica tu correo",
-                "Escribe este código en DojoFlow para continuar con tu registro.",
+                "Escribe este código en GestAcademy para continuar con tu registro.",
                 pin,
                 MinutosValidezPin);
-            await _emailSender.EnviarAsync(email, $"{pin} es tu código de DojoFlow", cuerpo);
+            await _emailSender.EnviarAsync(email, $"{pin} es tu código de GestAcademy", cuerpo);
 
             return Ok(new { Mensaje = "Te enviamos un código de verificación a tu correo." });
         }
@@ -99,41 +102,65 @@ namespace DojoFlow.API.Controllers
             return Ok(new { Mensaje = "Correo verificado correctamente." });
         }
 
-        // Registro público: crea una academia nueva y a su dueño (requiere correo verificado)
+        // Registro público: crea una academia nueva y a su dueño.
+        // Con correo y contraseña requiere el PIN verificado; con Google, el correo ya viene verificado por Google.
         [HttpPost("signup")]
         public async Task<IActionResult> RegistrarAcademia([FromBody] RegistroRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Nombre) || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            {
-                return BadRequest(new { Error = "El nombre, correo y contraseña son obligatorios." });
-            }
-
             if (string.IsNullOrWhiteSpace(request.NombreAcademia))
             {
                 return BadRequest(new { Error = "El nombre de tu academia es obligatorio." });
             }
 
-            if (!EsEmailValido(request.Email))
-            {
-                return BadRequest(new { Error = "El correo no tiene un formato válido." });
-            }
+            string email;
+            string nombre;
+            string passwordHash;
+            VerificacionEmail? verificacion = null;
 
-            if (request.Password.Length < 6)
+            if (!string.IsNullOrWhiteSpace(request.GoogleIdToken))
             {
-                return BadRequest(new { Error = "La contraseña debe tener al menos 6 caracteres." });
-            }
+                var cuenta = await _google.ValidarAsync(request.GoogleIdToken);
+                if (cuenta == null)
+                {
+                    return BadRequest(new { Error = "No pudimos confirmar tu cuenta de Google. Vuelve a intentarlo." });
+                }
 
-            string email = request.Email.Trim().ToLowerInvariant();
+                email = cuenta.Email;
+                nombre = string.IsNullOrWhiteSpace(request.Nombre) ? cuenta.Nombre : request.Nombre.Trim();
+                // Sin contraseña: entra con Google (puede crear una después con "¿Olvidaste tu contraseña?")
+                passwordHash = string.Empty;
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(request.Nombre) || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+                {
+                    return BadRequest(new { Error = "El nombre, correo y contraseña son obligatorios." });
+                }
+
+                if (!EsEmailValido(request.Email))
+                {
+                    return BadRequest(new { Error = "El correo no tiene un formato válido." });
+                }
+
+                if (request.Password.Length < 6)
+                {
+                    return BadRequest(new { Error = "La contraseña debe tener al menos 6 caracteres." });
+                }
+
+                email = request.Email.Trim().ToLowerInvariant();
+                nombre = request.Nombre;
+                passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+                verificacion = await _verificacionRepository.ObtenerPorEmailAsync(email);
+                if (verificacion == null || !verificacion.Verificado)
+                {
+                    return BadRequest(new { Error = "Primero debes verificar tu correo con el código que te enviamos." });
+                }
+            }
 
             if (await _usuarioRepository.ObtenerPorEmailAsync(email) != null)
             {
                 return BadRequest(new { Error = "Ya existe una cuenta registrada con ese correo." });
-            }
-
-            var verificacion = await _verificacionRepository.ObtenerPorEmailAsync(email);
-            if (verificacion == null || !verificacion.Verificado)
-            {
-                return BadRequest(new { Error = "Primero debes verificar tu correo con el código que te enviamos." });
             }
 
             Academia academia;
@@ -143,9 +170,9 @@ namespace DojoFlow.API.Controllers
                 (academia, dueno) = await _registrarAcademia.EjecutarAsync(new RegistrarAcademiaComando(
                     request.NombreAcademia,
                     request.TipoNegocio,
-                    request.Nombre,
+                    nombre,
                     email,
-                    BCrypt.Net.BCrypt.HashPassword(request.Password),
+                    passwordHash,
                     request.ColorPrimario,
                     request.ColorSecundario,
                     request.TerminoAlumno,
@@ -156,12 +183,14 @@ namespace DojoFlow.API.Controllers
                 return BadRequest(new { Error = ex.Message });
             }
 
-            await _verificacionRepository.EliminarAsync(verificacion);
+            // También se limpia un PIN pendiente si empezó con correo y terminó con Google
+            verificacion ??= await _verificacionRepository.ObtenerPorEmailAsync(email);
+            if (verificacion != null) await _verificacionRepository.EliminarAsync(verificacion);
 
             // Se devuelve el token para entrar directo al onboarding, sin pasar por el login
             return Ok(new
             {
-                Mensaje = $"¡Bienvenido a DojoFlow! {academia.Nombre} está lista.",
+                Mensaje = $"¡Bienvenido a GestAcademy! {academia.Nombre} está lista.",
                 Token = _tokens.ParaUsuario(dueno)
             });
         }
@@ -171,12 +200,48 @@ namespace DojoFlow.API.Controllers
         {
             var coach = await _usuarioRepository.ObtenerPorEmailAsync(request.Email);
 
+            // Las cuentas creadas con Google no tienen contraseña hasta que elijan una
+            if (coach != null && string.IsNullOrEmpty(coach.PasswordHash))
+            {
+                return Unauthorized(new { Error = "Esta cuenta entra con Google. Usa \"Continuar con Google\" o crea una contraseña en \"¿Olvidaste tu contraseña?\"." });
+            }
+
             if (coach == null || !BCrypt.Net.BCrypt.Verify(request.Password, coach.PasswordHash))
             {
                 return Unauthorized(new { Error = "Correo o contraseña incorrectos." });
             }
 
             return Ok(new { Token = _tokens.ParaUsuario(coach), Mensaje = $"Bienvenido al panel, {coach.Nombre}." });
+        }
+
+        // "Continuar con Google": si el correo ya tiene cuenta, inicia sesión;
+        // si no, devuelve sus datos para que la app siga con el registro de la academia
+        [HttpPost("google")]
+        public async Task<IActionResult> ContinuarConGoogle([FromBody] GoogleRequest request)
+        {
+            if (!_google.Configurado)
+            {
+                return BadRequest(new { Error = "El acceso con Google no está disponible por ahora." });
+            }
+
+            var cuenta = await _google.ValidarAsync(request.IdToken);
+            if (cuenta == null)
+            {
+                return Unauthorized(new { Error = "No pudimos confirmar tu cuenta de Google. Vuelve a intentarlo." });
+            }
+
+            var coach = await _usuarioRepository.ObtenerPorEmailAsync(cuenta.Email);
+            if (coach == null)
+            {
+                return Ok(new { Registrado = false, cuenta.Email, cuenta.Nombre });
+            }
+
+            return Ok(new
+            {
+                Registrado = true,
+                Token = _tokens.ParaUsuario(coach),
+                Mensaje = $"Bienvenido al panel, {coach.Nombre}."
+            });
         }
 
         // Datos del usuario y de su academia para personalizar la app al abrirla
@@ -348,6 +413,9 @@ namespace DojoFlow.API.Controllers
         public string NombreAcademia { get; set; } = string.Empty;
         public string TipoNegocio { get; set; } = string.Empty;
 
+        // Si viene, la cuenta se crea con Google: se ignoran Email y Password
+        public string? GoogleIdToken { get; set; }
+
         // Opcionales: personalización elegida en el asistente de registro de la app
         public string? ColorPrimario { get; set; }
         public string? ColorSecundario { get; set; }
@@ -365,6 +433,11 @@ namespace DojoFlow.API.Controllers
     {
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+    }
+
+    public class GoogleRequest
+    {
+        public string IdToken { get; set; } = string.Empty;
     }
 
     public class OlvidePasswordRequest

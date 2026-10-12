@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { obtenerTiposNegocio, type MarcaAcademia, type TipoNegocio } from '@/api/endpoints';
 import type { ArchivoLogo } from '@/utils/logo';
+import { cuentaGooglePendiente, type CuentaGoogle } from './googlePendiente';
 
 export type ClaseBorrador = { nombre: string; precio: string };
 
@@ -15,6 +16,8 @@ export type Borrador = {
   nombre: string;
   email: string;
   password: string;
+  // Si eligió Google: se crea la cuenta con su token, sin contraseña ni código por correo
+  google: CuentaGoogle | null;
 };
 
 const INICIAL: Borrador = {
@@ -28,6 +31,7 @@ const INICIAL: Borrador = {
   nombre: '',
   email: '',
   password: '',
+  google: null,
 };
 
 // Orden de las pantallas del asistente; la barra de progreso se calcula con esto
@@ -49,7 +53,11 @@ type Contexto = {
 const RegistroContext = createContext<Contexto | null>(null);
 
 export function ProveedorRegistro({ children }: { children: ReactNode }) {
-  const [borrador, setBorrador] = useState<Borrador>(INICIAL);
+  // Si viene del login con una cuenta de Google nueva, ya trae nombre y correo
+  const [borrador, setBorrador] = useState<Borrador>(() => {
+    const google = cuentaGooglePendiente();
+    return google ? { ...INICIAL, google, nombre: google.nombre, email: google.email } : INICIAL;
+  });
   const [tipos, setTipos] = useState<TipoNegocio[]>([]);
   const [token, setToken] = useState<string | null>(null);
 
