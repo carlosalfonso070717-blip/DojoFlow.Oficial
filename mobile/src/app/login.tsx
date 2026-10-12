@@ -135,6 +135,17 @@ export default function LoginScreen() {
             </Texto>
           </Pressable>
         </View>
+        <Texto variante="pequeno" tono="tenue" style={{ textAlign: 'center' }}>
+          Al continuar aceptas los{' '}
+          <Texto variante="pequeno" tono="suave" onPress={() => router.push('/terminos')} accessibilityRole="link" style={estilos.enlaceLegal}>
+            Términos
+          </Texto>{' '}
+          y el{' '}
+          <Texto variante="pequeno" tono="suave" onPress={() => router.push('/privacidad')} accessibilityRole="link" style={estilos.enlaceLegal}>
+            Aviso de privacidad
+          </Texto>
+          .
+        </Texto>
       </Animated.View>
     </View>
   );
@@ -251,6 +262,7 @@ const estilos = StyleSheet.create({
   movil: { flexGrow: 1, paddingTop: 32, paddingBottom: 16, gap: 40 },
   centro: { flexGrow: 1, justifyContent: 'center' },
   formulario: { gap: 32, width: '100%', maxWidth: ANCHO_FORMULARIO, alignSelf: 'center' },
+  enlaceLegal: { textDecorationLine: 'underline' },
   alternativa: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   credito: { alignItems: 'center', paddingTop: 8 },
   creditoAlLado: { position: 'absolute', left: 0, bottom: 28, alignItems: 'center' },

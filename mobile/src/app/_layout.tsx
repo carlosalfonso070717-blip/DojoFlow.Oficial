@@ -58,6 +58,10 @@ function RootNavigator() {
 
         {/* El kiosco usa su propio token: funciona con o sin sesión de coach */}
         <Stack.Screen name="kiosco" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+
+        {/* Páginas legales: públicas, con o sin sesión (Google las pide para el acceso con su cuenta) */}
+        <Stack.Screen name="privacidad" options={{ animation: 'fade' }} />
+        <Stack.Screen name="terminos" options={{ animation: 'fade' }} />
       </Stack>
     </>
   );
