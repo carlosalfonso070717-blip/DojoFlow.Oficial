@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import Animated, { Easing, FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, Rect, RadialGradient, Stop } from 'react-native-svg';
+import type { CredencialGoogle } from '@/auth/google';
 import { useSesion } from '@/auth/session';
 import { BotonGoogle, googleDisponible } from '@/components/BotonGoogle';
 import { CreditoSolullan } from '@/components/CreditoSolullan';
@@ -38,8 +39,10 @@ export default function LoginScreen() {
   const [cargando, setCargando] = useState(false);
   const refPassword = useRef<TextInput>(null);
   const [anchoColumna, setAnchoColumna] = useState(0);
+  const [anchoCredito, setAnchoCredito] = useState(0);
+  // En tableta y escritorio el crédito va abajo, en una línea, centrado en el hueco junto al panel (o pegado a él si no cabe)
   const hueco = (anchoColumna - ANCHO_FORMULARIO) / 2;
-  const creditoAlLado = hueco >= 104;
+  const izquierdaCredito = Math.max(24, (hueco - anchoCredito) / 2);
 
   async function entrar() {
     if (!email.trim() || !password) {
@@ -58,10 +61,10 @@ export default function LoginScreen() {
   }
 
   // Con cuenta: entra directo. Sin cuenta: el registro sigue con su Google, sin pedir correo ni contraseña
-  async function conGoogle(idToken: string) {
-    const r = await entrarConGoogle(idToken);
+  async function conGoogle(credencial: CredencialGoogle) {
+    const r = await entrarConGoogle(credencial);
     if (r.registrado) return;
-    dejarCuentaGoogle({ idToken, email: r.email, nombre: r.nombre });
+    dejarCuentaGoogle({ credencial, email: r.email, nombre: r.nombre });
     router.push('/registro');
   }
 
@@ -142,7 +145,7 @@ export default function LoginScreen() {
         {googleDisponible && (
           <View style={{ gap: compacto ? 12 : 16 }}>
             <Separador texto="o inicia con" />
-            <BotonGoogle onToken={conGoogle} />
+            <BotonGoogle onToken={conGoogle} style={compacto && { minHeight: 50 }} />
           </View>
         )}
         <View style={estilos.alternativa}>
@@ -170,9 +173,9 @@ export default function LoginScreen() {
     </View>
   );
 
-  const credito = (apilado?: boolean) => (
+  const credito = (
     <Animated.View entering={FadeIn.delay(700).duration(600)} style={estilos.credito}>
-      <CreditoSolullan apilado={apilado} />
+      <CreditoSolullan />
     </Animated.View>
   );
 
@@ -186,10 +189,13 @@ export default function LoginScreen() {
             <View style={{ flex: 1 }} onLayout={(e) => setAnchoColumna(e.nativeEvent.layout.width)}>
               <ScrollView contentContainerStyle={[estilos.ladoFormulario, { paddingHorizontal: margen }]} keyboardShouldPersistTaps="handled">
                 <View style={estilos.centro}>{formulario}</View>
-                {!creditoAlLado && credito()}
               </ScrollView>
-              {/* Con espacio de sobra, el crédito va en el hueco entre el panel y el formulario */}
-              {creditoAlLado && <View style={[estilos.creditoAlLado, { width: hueco }]}>{credito(true)}</View>}
+              <View
+                style={[estilos.creditoAlLado, { left: izquierdaCredito, opacity: anchoCredito ? 1 : 0 }]}
+                onLayout={(e) => setAnchoCredito(e.nativeEvent.layout.width)}
+              >
+                {credito}
+              </View>
             </View>
           </View>
         ) : (
@@ -199,7 +205,7 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={estilos.centro}>{formulario}</View>
-            {credito()}
+            {credito}
           </ScrollView>
         )}
       </KeyboardAvoidingView>
@@ -270,7 +276,7 @@ const estilos = StyleSheet.create({
   enlaceLegal: { textDecorationLine: 'underline' },
   alternativa: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   credito: { alignItems: 'center', paddingTop: 8 },
-  creditoAlLado: { position: 'absolute', left: 0, bottom: 28, alignItems: 'center' },
+  creditoAlLado: { position: 'absolute', bottom: 28 },
   dividido: { flex: 1, flexDirection: 'row' },
   panel: {
     flex: 1,
@@ -285,5 +291,5 @@ const estilos = StyleSheet.create({
   reticula: { position: 'absolute', top: -330, right: -330, width: 660, height: 660, alignItems: 'center', justifyContent: 'center' },
   anillo: { position: 'absolute', borderWidth: StyleSheet.hairlineWidth * 2 },
   encabezadoPanel: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  ladoFormulario: { flexGrow: 1, paddingTop: 48, paddingBottom: 24, gap: 40 },
+  ladoFormulario: { flexGrow: 1, paddingTop: 48, paddingBottom: 72, gap: 40 },
 });

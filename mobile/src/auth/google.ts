@@ -7,5 +7,8 @@ const extra = Constants.expoConfig?.extra as Record<string, string | undefined> 
 export const GOOGLE_WEB_CLIENT_ID: string | undefined =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || extra?.googleWebClientId || undefined;
 
+// Lo que entrega "Continuar con Google": ID token en la app nativa, access token en la web
+export type CredencialGoogle = { idToken: string } | { accessToken: string };
+
 export const GOOGLE_IOS_CLIENT_ID: string | undefined =
   process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || extra?.googleIosClientId || undefined;

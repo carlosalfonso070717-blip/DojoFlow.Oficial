@@ -1,15 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { GOOGLE_WEB_CLIENT_ID } from '@/auth/google';
-import { useTema } from '@/theme';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { GOOGLE_WEB_CLIENT_ID, type CredencialGoogle } from '@/auth/google';
 import { alerta } from '@/utils/alerta';
+import { Boton } from './Boton';
+import { LogoGoogle } from './iconos/LogoGoogle';
 
-// En el navegador se usa el botón oficial de Google Identity Services: entrega el ID token directo
+// En el navegador se usa el flujo OAuth de Google Identity Services con ventana emergente:
+// el botón es nuestro (nunca muestra la cuenta) y Google entrega un access token que la API valida
+type ClienteToken = { requestAccessToken: (opciones?: { prompt?: string }) => void };
+type RespuestaToken = { access_token?: string; error?: string; error_description?: string };
 type Gis = {
   accounts: {
-    id: {
-      initialize: (opciones: { client_id: string; callback: (r: { credential: string }) => void; ux_mode?: 'popup' }) => void;
-      renderButton: (contenedor: HTMLElement, opciones: Record<string, unknown>) => void;
+    oauth2: {
+      initTokenClient: (opciones: {
+        client_id: string;
+        scope: string;
+        callback: (r: RespuestaToken) => void;
+        error_callback?: (e: { type?: string; message?: string }) => void;
+      }) => ClienteToken;
     };
   };
 };
@@ -33,66 +41,56 @@ function cargarGis(): Promise<Gis> {
 
 export const googleDisponible = !!GOOGLE_WEB_CLIENT_ID;
 
-type Props = { onToken: (idToken: string) => Promise<void> };
+type Props = {
+  onToken: (credencial: CredencialGoogle) => Promise<void>;
+  style?: StyleProp<ViewStyle>;
+};
 
-// Siempre es el botón de solo ícono: nunca muestra el nombre ni el correo de la cuenta de Google
-export function BotonGoogle({ onToken }: Props) {
-  const { oscuro } = useTema();
-  const contenedor = useRef<View>(null);
-  const [ancho, setAncho] = useState(0);
+export function BotonGoogle({ onToken, style }: Props) {
   const [cargando, setCargando] = useState(false);
-  // El callback de Google se registra una vez; así siempre llama a la versión actual de onToken
+  const cliente = useRef<ClienteToken | null>(null);
+  // El callback se registra una vez; así siempre llama a la versión actual de onToken
   const alRecibir = useRef(onToken);
   useEffect(() => {
     alRecibir.current = onToken;
   }, [onToken]);
 
+  // El cliente se prepara antes del clic: el navegador solo permite abrir la ventana durante el clic mismo
   useEffect(() => {
-    const nodo = contenedor.current as unknown as HTMLElement | null;
-    if (!GOOGLE_WEB_CLIENT_ID || !nodo || !ancho) return;
-    let vigente = true;
-
+    if (!GOOGLE_WEB_CLIENT_ID) return;
     cargarGis()
       .then((gis) => {
-        if (!vigente) return;
-        gis.accounts.id.initialize({
+        cliente.current = gis.accounts.oauth2.initTokenClient({
           client_id: GOOGLE_WEB_CLIENT_ID!,
-          ux_mode: 'popup',
-          callback: ({ credential }) => {
-            setCargando(true);
+          scope: 'openid email profile',
+          callback: (r) => {
+            if (!r.access_token) {
+              setCargando(false);
+              if (r.error !== 'access_denied') alerta('No se pudo continuar con Google', r.error_description ?? 'Vuelve a intentarlo.');
+              return;
+            }
             alRecibir
-              .current(credential)
+              .current({ accessToken: r.access_token })
               .catch((e: Error) => alerta('No se pudo continuar con Google', e.message))
               .finally(() => setCargando(false));
           },
-        });
-        nodo.innerHTML = '';
-        gis.accounts.id.renderButton(nodo, {
-          type: 'icon',
-          theme: oscuro ? 'filled_black' : 'outline',
-          size: 'large',
-          shape: 'circle',
-          locale: 'es',
+          // Cerró la ventana o el navegador la bloqueó
+          error_callback: () => setCargando(false),
         });
       })
       .catch(() => {});
-
-    return () => {
-      vigente = false;
-    };
-  }, [ancho, oscuro]);
+  }, []);
 
   if (!GOOGLE_WEB_CLIENT_ID) return null;
 
-  return (
-    <View style={estilos.marco} onLayout={(e) => setAncho(e.nativeEvent.layout.width)}>
-      <View ref={contenedor} style={[estilos.boton, cargando && { opacity: 0.4 }]} pointerEvents={cargando ? 'none' : 'auto'} />
-      {cargando && <ActivityIndicator style={StyleSheet.absoluteFill} />}
-    </View>
-  );
-}
+  function presionar() {
+    if (!cliente.current) {
+      alerta('Un momento', 'El acceso con Google aún se está cargando. Vuelve a intentarlo en unos segundos.');
+      return;
+    }
+    setCargando(true);
+    cliente.current.requestAccessToken({ prompt: 'select_account' });
+  }
 
-const estilos = StyleSheet.create({
-  marco: { width: '100%', minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  boton: { alignItems: 'center' },
-});
+  return <Boton titulo="Continuar con Google" variante="contorno" icono={LogoGoogle} onPress={presionar} cargando={cargando} style={style} />;
+}

@@ -4,8 +4,11 @@ import type { Borrador } from './RegistroContexto';
 // Crea la academia con lo elegido en el asistente y devuelve el token de su dueño.
 // Con Google no se mandan correo ni contraseña: la API los toma del token de Google.
 export async function crearAcademia(borrador: Borrador): Promise<string> {
-  const cuenta = borrador.google
-    ? { googleIdToken: borrador.google.idToken }
+  const credencial = borrador.google?.credencial;
+  const cuenta = credencial
+    ? 'idToken' in credencial
+      ? { googleIdToken: credencial.idToken }
+      : { googleAccessToken: credencial.accessToken }
     : { email: borrador.email.trim(), password: borrador.password };
 
   const { token } = await registrarAcademia({

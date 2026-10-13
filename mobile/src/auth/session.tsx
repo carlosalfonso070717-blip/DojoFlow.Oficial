@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onSesionExpirada, setToken } from '@/api/client';
+import type { CredencialGoogle } from './google';
 import { continuarConGoogle, crearSesionKiosco, login, obtenerPerfil, type Perfil } from '@/api/endpoints';
 import { almacen } from './almacen';
 
@@ -15,7 +16,7 @@ type Sesion = {
   tokenKiosco: string | null;
   iniciarSesion: (email: string, password: string) => Promise<string>;
   // Entra si el correo de Google ya tiene cuenta; si no, devuelve sus datos para registrarse
-  entrarConGoogle: (idToken: string) => Promise<{ registrado: true } | { registrado: false; email: string; nombre: string }>;
+  entrarConGoogle: (credencial: CredencialGoogle) => Promise<{ registrado: true } | { registrado: false; email: string; nombre: string }>;
   // Para entrar directo con el token que devuelve el registro de academia
   entrarConToken: (token: string) => Promise<void>;
   cerrarSesion: () => Promise<void>;
@@ -73,8 +74,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const entrarConGoogle = useCallback(
-    async (idToken: string) => {
-      const r = await continuarConGoogle(idToken);
+    async (credencial: CredencialGoogle) => {
+      const r = await continuarConGoogle(credencial);
       if (!r.registrado) return r;
       await guardar(r.token);
       return { registrado: true as const };

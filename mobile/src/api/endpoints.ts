@@ -1,3 +1,4 @@
+import type { CredencialGoogle } from '@/auth/google';
 import { aFormData, type ArchivoLogo } from '@/utils/logo';
 import { api } from './client';
 
@@ -17,7 +18,7 @@ export type RespuestaGoogle =
   | { registrado: true; token: string; mensaje: string }
   | { registrado: false; email: string; nombre: string };
 
-export const continuarConGoogle = (idToken: string) => post<RespuestaGoogle>('/Auth/google', { idToken });
+export const continuarConGoogle = (credencial: CredencialGoogle) => post<RespuestaGoogle>('/Auth/google', credencial);
 
 export const enviarVerificacion = (email: string) =>
   post<Mensaje>('/Auth/enviar-verificacion', { email });
@@ -27,12 +28,13 @@ export const confirmarVerificacion = (email: string, pin: string) =>
 
 // Crea la academia y a su dueño; devuelve la sesión ya iniciada.
 // Lo opcional que no se mande se toma de la plantilla del tipo de negocio.
-// Con googleIdToken la cuenta se crea con Google y no lleva correo ni contraseña.
+// Con la credencial de Google la cuenta se crea sin correo ni contraseña.
 export const registrarAcademia = (datos: {
   nombre: string;
   email?: string;
   password?: string;
   googleIdToken?: string;
+  googleAccessToken?: string;
   nombreAcademia: string;
   tipoNegocio: string;
   colorPrimario?: string;

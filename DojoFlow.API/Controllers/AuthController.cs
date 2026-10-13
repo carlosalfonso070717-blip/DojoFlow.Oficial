@@ -117,9 +117,9 @@ namespace DojoFlow.API.Controllers
             string passwordHash;
             VerificacionEmail? verificacion = null;
 
-            if (!string.IsNullOrWhiteSpace(request.GoogleIdToken))
+            if (!string.IsNullOrWhiteSpace(request.GoogleIdToken) || !string.IsNullOrWhiteSpace(request.GoogleAccessToken))
             {
-                var cuenta = await _google.ValidarAsync(request.GoogleIdToken);
+                var cuenta = await _google.ValidarAsync(request.GoogleIdToken, request.GoogleAccessToken);
                 if (cuenta == null)
                 {
                     return BadRequest(new { Error = "No pudimos confirmar tu cuenta de Google. Vuelve a intentarlo." });
@@ -224,7 +224,7 @@ namespace DojoFlow.API.Controllers
                 return BadRequest(new { Error = "El acceso con Google no está disponible por ahora." });
             }
 
-            var cuenta = await _google.ValidarAsync(request.IdToken);
+            var cuenta = await _google.ValidarAsync(request.IdToken, request.AccessToken);
             if (cuenta == null)
             {
                 return Unauthorized(new { Error = "No pudimos confirmar tu cuenta de Google. Vuelve a intentarlo." });
@@ -413,8 +413,9 @@ namespace DojoFlow.API.Controllers
         public string NombreAcademia { get; set; } = string.Empty;
         public string TipoNegocio { get; set; } = string.Empty;
 
-        // Si viene, la cuenta se crea con Google: se ignoran Email y Password
+        // Si viene alguno, la cuenta se crea con Google: se ignoran Email y Password
         public string? GoogleIdToken { get; set; }
+        public string? GoogleAccessToken { get; set; }
 
         // Opcionales: personalización elegida en el asistente de registro de la app
         public string? ColorPrimario { get; set; }
@@ -435,9 +436,11 @@ namespace DojoFlow.API.Controllers
         public string Password { get; set; } = string.Empty;
     }
 
+    // Una de las dos: ID token (app nativa) o access token (web)
     public class GoogleRequest
     {
-        public string IdToken { get; set; } = string.Empty;
+        public string? IdToken { get; set; }
+        public string? AccessToken { get; set; }
     }
 
     public class OlvidePasswordRequest

@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet } from 'react-native';
-import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@/auth/google';
-import { useTema } from '@/theme';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID, type CredencialGoogle } from '@/auth/google';
 import { alerta } from '@/utils/alerta';
+import { Boton } from './Boton';
 import { LogoGoogle } from './iconos/LogoGoogle';
-import { Presionable } from './Presionable';
 
 type ModuloGoogle = typeof import('@react-native-google-signin/google-signin');
 
@@ -22,12 +21,14 @@ if (GOOGLE_WEB_CLIENT_ID) {
 
 export const googleDisponible = !!google;
 
-// Recibe el ID token de Google; la pantalla decide si inicia sesión o registra
-type Props = { onToken: (idToken: string) => Promise<void> };
+type Props = {
+  // Recibe la credencial de Google; la pantalla decide si inicia sesión o registra
+  onToken: (credencial: CredencialGoogle) => Promise<void>;
+  style?: StyleProp<ViewStyle>;
+};
 
-// Botón redondo de solo ícono: nunca muestra el nombre ni el correo de la cuenta de Google
-export function BotonGoogle({ onToken }: Props) {
-  const { color } = useTema();
+// Botón del ancho completo, como los demás; nunca muestra el nombre ni el correo de la cuenta
+export function BotonGoogle({ onToken, style }: Props) {
   const [cargando, setCargando] = useState(false);
   if (!google) return null;
   const { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } = google;
@@ -41,7 +42,7 @@ export function BotonGoogle({ onToken }: Props) {
       // Se cierra la sesión de Google en el dispositivo para que la próxima vez pueda elegir otra cuenta
       GoogleSignin.signOut().catch(() => {});
       if (!respuesta.data.idToken) throw new Error('Google no devolvió la credencial. Vuelve a intentarlo.');
-      await onToken(respuesta.data.idToken);
+      await onToken({ idToken: respuesta.data.idToken });
     } catch (e) {
       if (isErrorWithCode(e) && e.code === statusCodes.IN_PROGRESS) return;
       alerta('No se pudo continuar con Google', (e as Error).message);
@@ -50,19 +51,5 @@ export function BotonGoogle({ onToken }: Props) {
     }
   }
 
-  return (
-    <Presionable
-      onPress={presionar}
-      disabled={cargando}
-      accessibilityRole="button"
-      accessibilityLabel="Continuar con Google"
-      style={[estilos.boton, { backgroundColor: color.superficie, borderColor: color.bordeFuerte }]}
-    >
-      {cargando ? <ActivityIndicator color={color.textoSuave} /> : <LogoGoogle size={22} />}
-    </Presionable>
-  );
+  return <Boton titulo="Continuar con Google" variante="contorno" icono={LogoGoogle} onPress={presionar} cargando={cargando} style={style} />;
 }
-
-const estilos = StyleSheet.create({
-  boton: { width: 48, height: 48, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
-});

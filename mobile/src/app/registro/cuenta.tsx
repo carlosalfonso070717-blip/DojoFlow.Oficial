@@ -3,6 +3,7 @@ import { Mail, UserRound } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { enviarVerificacion } from '@/api/endpoints';
+import type { CredencialGoogle } from '@/auth/google';
 import { useSesion } from '@/auth/session';
 import { BotonGoogle, googleDisponible } from '@/components/BotonGoogle';
 import { IconoCandado, IconoCandadoAbierto } from '@/components/iconos/Iconly';
@@ -44,14 +45,14 @@ export default function PasoCuenta() {
     }
   }
 
-  async function alElegirGoogle(idToken: string) {
-    const r = await entrarConGoogle(idToken);
+  async function alElegirGoogle(credencial: CredencialGoogle) {
+    const r = await entrarConGoogle(credencial);
     if (r.registrado) {
       // Ya tenía cuenta con ese correo: la sesión quedó iniciada y la app lo lleva a su panel
       alerta('Ya tenías una cuenta', 'Ese correo de Google ya está registrado en GestAcademy. Te llevamos a tu academia.');
       return;
     }
-    const cuenta: CuentaGoogle = { idToken, email: r.email, nombre: r.nombre };
+    const cuenta: CuentaGoogle = { credencial, email: r.email, nombre: r.nombre };
     const datos: Borrador = { ...borrador, google: cuenta, email: r.email, nombre: borrador.nombre.trim() || r.nombre };
     actualizar(datos);
     await crearConGoogle(datos);
