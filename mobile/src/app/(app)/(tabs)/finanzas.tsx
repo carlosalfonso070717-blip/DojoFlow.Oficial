@@ -58,6 +58,8 @@ export default function FinanzasScreen() {
     });
   }
 
+  const mejorMes = Math.max(0, ...datos.map((f) => f.total));
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
       <FlatList
@@ -153,7 +155,14 @@ export default function FinanzasScreen() {
                 </Texto>
               }
               onPress={() => setSeleccionado(item)}
-            />
+            >
+              {/* En el celular, cada mes se compara con el mejor mes del historial */}
+              {!esEscritorio && mejorMes > 0 && (
+                <View style={[estilos.barraMes, { backgroundColor: color.fondo, borderRadius: radio.total }]}>
+                  <View style={{ width: `${(item.total / mejorMes) * 100}%`, backgroundColor: index === 0 ? color.marca : color.bordeFuerte, borderRadius: radio.total }} />
+                </View>
+              )}
+            </Fila>
           </CeldaLista>
         )}
       />
@@ -216,6 +225,7 @@ function Desglose({ etiqueta, valor, colorPunto }: { etiqueta: string; valor: nu
 }
 
 const estilos = StyleSheet.create({
+  barraMes: { height: 6, marginTop: 10, flexDirection: 'row', overflow: 'hidden' },
   lista: { width: '100%', alignSelf: 'center' },
   cabecera: { gap: 14, marginBottom: 8 },
   barra: { height: 10, flexDirection: 'row', overflow: 'hidden' },

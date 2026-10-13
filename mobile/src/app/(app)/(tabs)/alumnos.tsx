@@ -7,7 +7,7 @@ import { eliminarAlumno, obtenerAlumnos, type Alumno } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoAgregarAlumno, IconoEliminar, IconoPagos } from '@/components/iconos/Iconly';
-import { Indicador, Rejilla } from '@/components/Tarjetas';
+import { Indicador, Rejilla, ResumenMovil } from '@/components/Tarjetas';
 import {
   Avatar,
   Boton,
@@ -18,6 +18,7 @@ import {
   Encabezado,
   EstadoVacio,
   Fila,
+  formatoCorto,
   formatoMoneda,
   Grupo,
   Hoja,
@@ -127,6 +128,16 @@ export default function AlumnosScreen() {
                 <Indicador icono={BookOpen} tono="aviso" etiqueta="Clases con inscritos" valor={String(clases)} />
               </Rejilla>
             )}
+            {!esEscritorio && alumnos.length > 0 && (
+              <ResumenMovil
+                sangria={margen}
+                datos={[
+                  { etiqueta: 'Inscritos', valor: String(alumnos.length), tono: 'marca' },
+                  { etiqueta: 'Cuotas al mes', valor: formatoCorto(cuotaMensual), tono: 'exito' },
+                  { etiqueta: 'Clases activas', valor: String(clases), tono: 'aviso' },
+                ]}
+              />
+            )}
             {alumnos.length > 0 && <Buscador value={busqueda} onChangeText={setBusqueda} placeholder="Buscar por nombre o PIN" />}
           </View>
         }
@@ -138,11 +149,20 @@ export default function AlumnosScreen() {
               detalle={
                 esEscritorio
                   ? `PIN ${item.claveKiosco} · ${formatoMoneda(item.costoMensualidad)} al mes · ${item.disciplinas.join(', ')}`
-                  : `PIN ${item.claveKiosco}`
+                  : `PIN ${item.claveKiosco} · ${formatoMoneda(item.costoMensualidad)} al mes`
               }
               izquierda={<Avatar nombre={item.nombre} />}
               onPress={() => setSeleccionado(item)}
-            />
+            >
+              {/* En el celular, sus clases como etiquetas debajo del nombre */}
+              {!esEscritorio && item.disciplinas.length > 0 && (
+                <View style={estilos.clasesFila}>
+                  {item.disciplinas.map((d) => (
+                    <Insignia key={d} texto={d} />
+                  ))}
+                </View>
+              )}
+            </Fila>
           </CeldaLista>
         )}
       />
@@ -180,5 +200,6 @@ export default function AlumnosScreen() {
 const estilos = StyleSheet.create({
   lista: { width: '100%', alignSelf: 'center' },
   cabecera: { gap: 16, marginBottom: 16 },
+  clasesFila: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
   clases: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end', flexShrink: 1 },
 });

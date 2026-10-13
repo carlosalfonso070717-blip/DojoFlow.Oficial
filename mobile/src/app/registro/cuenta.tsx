@@ -134,12 +134,6 @@ export default function PasoCuenta() {
       descripcion="Con estos datos administrarás tu academia desde cualquier dispositivo."
       continuar={{ titulo: 'Enviar código a mi correo', onPress: continuar, deshabilitado: !valido, cargando: enviando }}
     >
-      {googleDisponible && (
-        <View style={{ gap: 20, marginBottom: 6 }}>
-          <BotonGoogle texto="registro" onToken={alElegirGoogle} />
-          <Separador texto="o con tu correo" />
-        </View>
-      )}
       <Campo
         etiqueta="Tu nombre"
         value={borrador.nombre}
@@ -147,7 +141,7 @@ export default function PasoCuenta() {
         autoCapitalize="words"
         autoComplete="name"
         icono={UserRound}
-        autoFocus={!googleDisponible}
+        autoFocus
         returnKeyType="next"
         onSubmitEditing={() => refCorreo.current?.focus()}
       />
@@ -177,6 +171,12 @@ export default function PasoCuenta() {
         returnKeyType="go"
         onSubmitEditing={() => valido && continuar()}
       />
+      {googleDisponible && (
+        <View style={{ gap: 14, marginTop: 10 }}>
+          <Separador texto="o regístrate con" />
+          <BotonGoogle onToken={alElegirGoogle} />
+        </View>
+      )}
     </PantallaPaso>
   );
 }

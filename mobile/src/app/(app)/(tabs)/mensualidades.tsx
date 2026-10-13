@@ -12,6 +12,7 @@ import {
   Encabezado,
   EstadoVacio,
   Fila,
+  formatoCorto,
   formatoMoneda,
   Grupo,
   Hoja,
@@ -22,7 +23,7 @@ import {
   useRejilla,
   type TonoInsignia,
 } from '@/components/ui';
-import { Indicador, Rejilla } from '@/components/Tarjetas';
+import { Indicador, Rejilla, ResumenMovil } from '@/components/Tarjetas';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema, type Tema } from '@/theme';
@@ -146,21 +147,53 @@ export default function CobrosScreen() {
                 />
               </Rejilla>
             )}
+            {/* En el celular, las cifras son también los filtros */}
+            {!esEscritorio && datos.length > 0 && (
+              <ResumenMovil
+                sangria={margen}
+                datos={[
+                  { etiqueta: 'Por cobrar', valor: formatoCorto(porCobrar), tono: 'marca', activo: filtro === 'todos', onPress: () => setFiltro('todos') },
+                  {
+                    etiqueta: `Vencidos · ${deEstado('Vencido').length}`,
+                    valor: formatoCorto(suma(deEstado('Vencido'))),
+                    tono: 'peligro',
+                    activo: filtro === 'Vencido',
+                    onPress: () => setFiltro(filtro === 'Vencido' ? 'todos' : 'Vencido'),
+                  },
+                  {
+                    etiqueta: `Pendientes · ${deEstado('Pendiente').length}`,
+                    valor: formatoCorto(suma(deEstado('Pendiente'))),
+                    tono: 'aviso',
+                    activo: filtro === 'Pendiente',
+                    onPress: () => setFiltro(filtro === 'Pendiente' ? 'todos' : 'Pendiente'),
+                  },
+                  {
+                    etiqueta: `Pagados · ${deEstado('Pagado').length}`,
+                    valor: formatoCorto(suma(deEstado('Pagado'))),
+                    tono: 'exito',
+                    activo: filtro === 'Pagado',
+                    onPress: () => setFiltro(filtro === 'Pagado' ? 'todos' : 'Pagado'),
+                  },
+                ]}
+              />
+            )}
             {/* En escritorio, filtros y búsqueda comparten una fila */}
             <View style={esEscritorio ? estilos.filtrosEscritorio : estilos.filtros}>
-              <View style={esEscritorio ? { flex: 1.2 } : undefined}>
-                <Segmentos<Filtro>
-                  icono={IconoFiltro}
-                  valor={filtro}
-                  onCambio={setFiltro}
-                  opciones={[
-                    { valor: 'todos', etiqueta: 'Todos' },
-                    { valor: 'Vencido', etiqueta: 'Vencidos' },
-                    { valor: 'Pendiente', etiqueta: 'Pendientes' },
-                    { valor: 'Pagado', etiqueta: 'Pagados' },
-                  ]}
-                />
-              </View>
+              {esEscritorio && (
+                <View style={{ flex: 1.2 }}>
+                  <Segmentos<Filtro>
+                    icono={IconoFiltro}
+                    valor={filtro}
+                    onCambio={setFiltro}
+                    opciones={[
+                      { valor: 'todos', etiqueta: 'Todos' },
+                      { valor: 'Vencido', etiqueta: 'Vencidos' },
+                      { valor: 'Pendiente', etiqueta: 'Pendientes' },
+                      { valor: 'Pagado', etiqueta: 'Pagados' },
+                    ]}
+                  />
+                </View>
+              )}
               {datos.length > 0 && (
                 <View style={esEscritorio ? { flex: 1 } : undefined}>
                   <Buscador value={busqueda} onChangeText={setBusqueda} placeholder="Buscar por nombre o PIN" />
@@ -179,15 +212,19 @@ export default function CobrosScreen() {
               <Fila
                 titulo={item.nombreAlumno}
                 detalle={item.estado === 'Pagado' ? `Pagado el ${fechaCorta(item.fechaPago)}` : `Vence el ${fechaCorta(item.fechaVencimiento)}`}
+                alinearArriba={!esEscritorio}
                 izquierda={
                   <View style={[estilos.estado, { backgroundColor: fondo }]} accessibilityLabel={estado.texto}>
                     <Icono size={20} color={frente} />
                   </View>
                 }
                 derecha={
-                  <Texto variante="cuerpoFuerte" cifras>
-                    {formatoMoneda(item.monto)}
-                  </Texto>
+                  <View style={estilos.derecha}>
+                    <Texto variante="cuerpoFuerte" cifras>
+                      {formatoMoneda(item.monto)}
+                    </Texto>
+                    {!esEscritorio && <Insignia texto={estado.texto} tono={estado.tono} />}
+                  </View>
                 }
                 onPress={() => setSeleccionado(item)}
               />
@@ -237,5 +274,6 @@ const estilos = StyleSheet.create({
   cabecera: { gap: 14, marginBottom: 16 },
   filtros: { gap: 14 },
   filtrosEscritorio: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  derecha: { alignItems: 'flex-end', gap: 6 },
   estado: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

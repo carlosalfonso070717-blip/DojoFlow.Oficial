@@ -27,9 +27,9 @@ import {
   confirmar,
   Encabezado,
   EstadoVacio,
-  Fila,
   Grupo,
   Hoja,
+  formatoCorto,
   formatoMoneda,
   ParDato,
   Presionable,
@@ -37,7 +37,7 @@ import {
   Texto,
   useRejilla,
 } from '@/components/ui';
-import { Indicador, Rejilla } from '@/components/Tarjetas';
+import { Indicador, Rejilla, ResumenMovil, useSombra } from '@/components/Tarjetas';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useSesion } from '@/auth/session';
@@ -82,7 +82,9 @@ const aEntero = (s: string) => {
 export default function InventarioScreen() {
   const refTour = useObjetivoTour('inventario');
   const { color } = useTema();
-  const { margen, anchoSeccion, arriba, esEscritorio } = useDiseno();
+  const { margen, anchoSeccion, arriba, esEscritorio, ancho } = useDiseno();
+  // En el celular, rejilla de 2 columnas con tarjetas de producto
+  const anchoTarjeta = (Math.min(ancho, anchoSeccion + margen * 2) - margen * 2 - ESPACIO_PRODUCTOS) / 2;
   const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { datos, cargando, error, recargar } = useRecurso(cargarInventario, { productos: [], alertas: [] });
@@ -224,8 +226,10 @@ export default function InventarioScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
       <FlatList
-        key={rejilla.clave}
-        {...rejilla.props}
+        key={esEscritorio ? rejilla.clave : 'productos-movil'}
+        {...(esEscritorio
+          ? rejilla.props
+          : { numColumns: 2, columnWrapperStyle: { gap: ESPACIO_PRODUCTOS }, ItemSeparatorComponent: SeparadorProductos })}
         data={filtrados}
         keyExtractor={(p) => p.id}
         contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
@@ -269,7 +273,18 @@ export default function InventarioScreen() {
                 <Indicador icono={Wallet} tono="exito" etiqueta="Valor a precio de venta" valor={formatoMoneda(valor)} />
               </Rejilla>
             )}
-            {datos.alertas.length > 0 && (
+            {!esEscritorio && datos.productos.length > 0 && (
+              <ResumenMovil
+                sangria={margen}
+                datos={[
+                  { etiqueta: 'Productos', valor: String(datos.productos.length), tono: 'marca' },
+                  { etiqueta: 'Por resurtir', valor: String(bajos), tono: bajos > 0 ? 'peligro' : 'exito' },
+                  { etiqueta: 'Piezas', valor: String(piezas) },
+                  { etiqueta: 'Valor de venta', valor: formatoCorto(valor), tono: 'exito' },
+                ]}
+              />
+            )}
+            {esEscritorio && datos.alertas.length > 0 && (
               <View style={[estilos.alerta, { backgroundColor: color.avisoSuave }]}>
                 <TriangleAlert size={18} color={color.aviso} />
                 <Texto variante="detalle" style={{ flex: 1 }}>
@@ -288,26 +303,7 @@ export default function InventarioScreen() {
           // Escritorio: tarjeta con la foto grande
           if (rejilla.columnas > 1) return <TarjetaProducto producto={item} columnas={rejilla.columnas} onPress={abrir} />;
 
-          const bajo = item.stockActual <= item.stockMinimo;
-          const stock = (
-            <View style={[estilos.stock, { backgroundColor: bajo ? color.peligroSuave : color.fondo }]}>
-              <Texto variante="subtitulo" cifras style={{ color: bajo ? color.peligro : color.texto }}>
-                {item.stockActual}
-              </Texto>
-            </View>
-          );
-          return (
-            <CeldaLista indice={index} total={filtrados.length} columnas={1}>
-              <Fila
-                titulo={item.nombre}
-                detalle={bajo ? `Por resurtir, mínimo ${item.stockMinimo}` : item.precio > 0 ? formatoMoneda(item.precio) : `Mínimo ${item.stockMinimo}`}
-                // Con foto, la existencia pasa a la derecha
-                izquierda={item.imagenUrl ? <FotoProducto url={item.imagenUrl} tamano={44} /> : stock}
-                derecha={item.imagenUrl ? stock : undefined}
-                onPress={abrir}
-              />
-            </CeldaLista>
-          );
+          return <TarjetaProductoMovil producto={item} ancho={anchoTarjeta} onPress={abrir} />;
         }}
       />
 
@@ -497,6 +493,48 @@ function TarjetaProducto({ producto, columnas, onPress }: { producto: Producto; 
   );
 }
 
+const ESPACIO_PRODUCTOS = 12;
+
+function SeparadorProductos() {
+  return <View style={{ height: ESPACIO_PRODUCTOS }} />;
+}
+
+// Tarjeta de producto del celular: foto cuadrada con la existencia encima, nombre y precio debajo
+function TarjetaProductoMovil({ producto, ancho, onPress }: { producto: Producto; ancho: number; onPress: () => void }) {
+  const { color, radio } = useTema();
+  const sombra = useSombra();
+  const bajo = producto.stockActual <= producto.stockMinimo;
+  return (
+    <Presionable
+      onPress={onPress}
+      escala={0.97}
+      accessibilityRole="button"
+      accessibilityLabel={`${producto.nombre}, ${producto.stockActual} en existencia`}
+      style={[estilos.tarjetaMovil, { width: ancho, backgroundColor: color.superficie, borderColor: color.borde, borderRadius: radio.l + 2 }, sombra]}
+    >
+      <View>
+        <FotoProducto url={producto.imagenUrl} style={[estilos.fotoMovil, { borderRadius: radio.m + 2 }]} />
+        <View style={[estilos.existencia, { backgroundColor: bajo ? color.peligro : color.superficie }]}>
+          <Texto variante="pequeno" cifras style={{ color: bajo ? '#ffffff' : color.texto, fontFamily: 'Figtree_700Bold' }}>
+            {producto.stockActual} pz
+          </Texto>
+        </View>
+      </View>
+      <View style={{ gap: 2, paddingHorizontal: 4 }}>
+        <Texto variante="detalle" numberOfLines={2} style={{ fontFamily: 'Figtree_600SemiBold', color: color.texto }}>
+          {producto.nombre}
+        </Texto>
+        <Texto variante="cuerpoFuerte" cifras>
+          {producto.precio > 0 ? formatoMoneda(producto.precio) : 'Sin precio'}
+        </Texto>
+        <Texto variante="pequeno" numberOfLines={1} style={{ color: bajo ? color.peligro : color.textoTenue }}>
+          {bajo ? `Por resurtir · mín. ${producto.stockMinimo}` : producto.enCatalogo ? 'En el catálogo' : 'Oculto en el catálogo'}
+        </Texto>
+      </View>
+    </Presionable>
+  );
+}
+
 const estilos = StyleSheet.create({
   lista: { width: '100%', alignSelf: 'center' },
   cabecera: { gap: 14, marginBottom: 16 },
@@ -506,5 +544,8 @@ const estilos = StyleSheet.create({
   tarjeta: { padding: 12, gap: 12 },
   fotoGrande: { width: '100%', aspectRatio: 16 / 10 },
   pieTarjeta: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4, paddingBottom: 2 },
+  tarjetaMovil: { borderWidth: StyleSheet.hairlineWidth, padding: 8, paddingBottom: 12, gap: 10 },
+  fotoMovil: { width: '100%', aspectRatio: 4 / 3 },
+  existencia: { position: 'absolute', top: 8, left: 8, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 },
   pastilla: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
 });

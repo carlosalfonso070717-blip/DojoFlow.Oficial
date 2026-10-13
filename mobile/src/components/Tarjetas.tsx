@@ -1,5 +1,5 @@
 import { Children, isValidElement, type ComponentType, type ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTema } from '@/theme';
 import type { PropsIcono } from './iconos/Iconly';
 import { Presionable } from './Presionable';
@@ -133,6 +133,65 @@ export function TarjetaAccion({
   );
 }
 
+export type DatoResumen = { etiqueta: string; valor: string; tono?: TonoTarjeta; activo?: boolean; onPress?: () => void };
+
+// Cifras clave en el celular: tarjetas pequeñas que se deslizan de lado, de borde a borde de la pantalla.
+// `sangria` es el margen lateral de la pantalla, para que el carrusel llegue al borde sin cortar la primera tarjeta.
+export function ResumenMovil({ datos, sangria }: { datos: DatoResumen[]; sangria: number }) {
+  const { color, radio } = useTema();
+  const sombra = useSombra();
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginHorizontal: -sangria }}
+      contentContainerStyle={{ paddingHorizontal: sangria, gap: 10 }}
+    >
+      {datos.map(({ etiqueta, valor, tono = 'neutro', activo, onPress }) => (
+        <DatoResumenTarjeta key={etiqueta} etiqueta={etiqueta} valor={valor} tono={tono} activo={activo} onPress={onPress} color={color} radio={radio.l + 2} sombra={sombra} />
+      ))}
+    </ScrollView>
+  );
+}
+
+function DatoResumenTarjeta({
+  etiqueta,
+  valor,
+  tono,
+  activo,
+  onPress,
+  color,
+  radio,
+  sombra,
+}: Required<Pick<DatoResumen, 'etiqueta' | 'valor' | 'tono'>> &
+  Pick<DatoResumen, 'activo' | 'onPress'> & { color: ReturnType<typeof useTema>['color']; radio: number; sombra: ViewStyle }) {
+  const [, frente] = useColoresTono(tono);
+  const contenido = (
+    <>
+      <View style={estilos.etiquetaResumen}>
+        <View style={[estilos.punto, { backgroundColor: tono === 'neutro' ? color.textoTenue : frente }]} />
+        <Texto variante="pequeno" tono="suave" numberOfLines={1}>
+          {etiqueta}
+        </Texto>
+      </View>
+      <Texto variante="encabezado" cifras numberOfLines={1} style={{ fontSize: 20, lineHeight: 24 }}>
+        {valor}
+      </Texto>
+    </>
+  );
+  const estilo = [
+    estilos.resumen,
+    { backgroundColor: color.superficie, borderColor: activo ? color.marcaTexto : color.borde, borderRadius: radio, borderWidth: activo ? 1.5 : StyleSheet.hairlineWidth },
+    sombra,
+  ];
+  if (!onPress) return <View style={estilo}>{contenido}</View>;
+  return (
+    <Presionable onPress={onPress} escala={0.97} accessibilityRole="button" accessibilityLabel={`${etiqueta}: ${valor}`} accessibilityState={{ selected: !!activo }} style={estilo}>
+      {contenido}
+    </Presionable>
+  );
+}
+
 // Reparte sus hijos en filas de `columnas` elementos del mismo ancho
 export function Rejilla({ columnas, children, espacio = 12 }: { columnas: number; children: ReactNode; espacio?: number }) {
   const hijos = Children.toArray(children).filter(isValidElement);
@@ -174,5 +233,8 @@ const estilos = StyleSheet.create({
   indicador: { gap: 14, padding: 16, flex: 1 },
   accion: { borderWidth: StyleSheet.hairlineWidth, padding: 16, gap: 14, flex: 1, minHeight: 128 },
   iconoAccion: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
+  resumen: { minWidth: 128, paddingHorizontal: 14, paddingVertical: 12, gap: 6 },
+  etiquetaResumen: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  punto: { width: 7, height: 7, borderRadius: 4 },
   tituloSeccion: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
 });

@@ -93,12 +93,6 @@ export default function LoginScreen() {
         )}
       </Animated.View>
 
-      {googleDisponible && (
-        <Animated.View entering={entrada(2)} style={{ gap: compacto ? 14 : 24 }}>
-          <BotonGoogle onToken={conGoogle} />
-          <Separador texto="o con tu correo" />
-        </Animated.View>
-      )}
 
       <Animated.View entering={entrada(3)} style={{ gap: compacto ? 12 : 16 }}>
         <Campo
@@ -145,6 +139,12 @@ export default function LoginScreen() {
           cargando={cargando}
           style={compacto && { minHeight: 50 }}
         />
+        {googleDisponible && (
+          <View style={{ gap: compacto ? 12 : 16 }}>
+            <Separador texto="o inicia con" />
+            <BotonGoogle onToken={conGoogle} />
+          </View>
+        )}
         <View style={estilos.alternativa}>
           <Texto variante="detalle" tono="suave">
             ¿Aún no tienes cuenta?

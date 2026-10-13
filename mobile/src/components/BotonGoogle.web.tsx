@@ -33,12 +33,10 @@ function cargarGis(): Promise<Gis> {
 
 export const googleDisponible = !!GOOGLE_WEB_CLIENT_ID;
 
-type Props = {
-  onToken: (idToken: string) => Promise<void>;
-  texto?: 'continuar' | 'registro';
-};
+type Props = { onToken: (idToken: string) => Promise<void> };
 
-export function BotonGoogle({ onToken, texto = 'continuar' }: Props) {
+// Siempre es el botón de solo ícono: nunca muestra el nombre ni el correo de la cuenta de Google
+export function BotonGoogle({ onToken }: Props) {
   const { oscuro } = useTema();
   const contenedor = useRef<View>(null);
   const [ancho, setAncho] = useState(0);
@@ -70,15 +68,11 @@ export function BotonGoogle({ onToken, texto = 'continuar' }: Props) {
         });
         nodo.innerHTML = '';
         gis.accounts.id.renderButton(nodo, {
-          type: 'standard',
+          type: 'icon',
           theme: oscuro ? 'filled_black' : 'outline',
           size: 'large',
-          shape: 'pill',
-          text: texto === 'registro' ? 'signup_with' : 'continue_with',
-          logo_alignment: 'center',
+          shape: 'circle',
           locale: 'es',
-          // Google acepta como máximo 400 px
-          width: Math.min(400, Math.floor(ancho)),
         });
       })
       .catch(() => {});
@@ -86,7 +80,7 @@ export function BotonGoogle({ onToken, texto = 'continuar' }: Props) {
     return () => {
       vigente = false;
     };
-  }, [ancho, oscuro, texto]);
+  }, [ancho, oscuro]);
 
   if (!GOOGLE_WEB_CLIENT_ID) return null;
 

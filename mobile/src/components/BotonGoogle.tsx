@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@/auth/google';
+import { useTema } from '@/theme';
 import { alerta } from '@/utils/alerta';
-import { Boton } from './Boton';
 import { LogoGoogle } from './iconos/LogoGoogle';
+import { Presionable } from './Presionable';
 
 type ModuloGoogle = typeof import('@react-native-google-signin/google-signin');
 
@@ -20,13 +22,12 @@ if (GOOGLE_WEB_CLIENT_ID) {
 
 export const googleDisponible = !!google;
 
-type Props = {
-  // Recibe el ID token de Google; la pantalla decide si inicia sesión o registra
-  onToken: (idToken: string) => Promise<void>;
-  texto?: 'continuar' | 'registro';
-};
+// Recibe el ID token de Google; la pantalla decide si inicia sesión o registra
+type Props = { onToken: (idToken: string) => Promise<void> };
 
-export function BotonGoogle({ onToken, texto = 'continuar' }: Props) {
+// Botón redondo de solo ícono: nunca muestra el nombre ni el correo de la cuenta de Google
+export function BotonGoogle({ onToken }: Props) {
+  const { color } = useTema();
   const [cargando, setCargando] = useState(false);
   if (!google) return null;
   const { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } = google;
@@ -50,12 +51,18 @@ export function BotonGoogle({ onToken, texto = 'continuar' }: Props) {
   }
 
   return (
-    <Boton
-      titulo={texto === 'registro' ? 'Registrarme con Google' : 'Continuar con Google'}
-      variante="contorno"
-      icono={LogoGoogle}
+    <Presionable
       onPress={presionar}
-      cargando={cargando}
-    />
+      disabled={cargando}
+      accessibilityRole="button"
+      accessibilityLabel="Continuar con Google"
+      style={[estilos.boton, { backgroundColor: color.superficie, borderColor: color.bordeFuerte }]}
+    >
+      {cargando ? <ActivityIndicator color={color.textoSuave} /> : <LogoGoogle size={22} />}
+    </Presionable>
   );
 }
+
+const estilos = StyleSheet.create({
+  boton: { width: 48, height: 48, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
+});
