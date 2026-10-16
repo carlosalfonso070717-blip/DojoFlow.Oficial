@@ -1,11 +1,13 @@
 import { router } from 'expo-router';
-import { BookOpen, ClipboardCheck, Compass, Palette, SunMoon, Tablet } from 'lucide-react-native';
+import { BookOpen, ClipboardCheck, Compass, Palette, Store, SunMoon, Tablet } from 'lucide-react-native';
 import { useState } from 'react';
 import { Switch, View } from 'react-native';
 import {
   configurarAsistencias,
+  configurarSucursales,
   obtenerClases,
   obtenerConfiguracion,
+  obtenerSucursales,
   quitarFotoPerfil,
   quitarLogo,
   subirFotoPerfil,
@@ -14,8 +16,9 @@ import {
   type ConfiguracionAcademia,
 } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
-import { IconoCerrarSesion, IconoFinanzas, IconoPagos } from '@/components/iconos/Iconly';
+import { IconoCerrarSesion, IconoFinanzas, IconoPagos, IconoSucursal } from '@/components/iconos/Iconly';
 import { PantallaSecundaria } from '@/components/PantallaSecundaria';
+import { COLORES_AJUSTE, IconoAjuste } from '@/components/Tarjetas';
 import { Segmentos } from '@/components/Segmentos';
 import { Avatar, Boton, confirmar, Fila, Grupo, Hoja, Texto } from '@/components/ui';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -39,13 +42,14 @@ type TipoFoto = 'logo' | 'perfil';
 export default function AjustesScreen() {
   const { color } = useTema();
   const preferencia = usePreferenciaTema();
-  const { perfil, recargarPerfil, cerrarSesion, vincularKiosco } = useSesion();
+  const { perfil, recargarPerfil, cerrarSesion, vincularKiosco, cambiarSucursal } = useSesion();
   const { iniciar: iniciarTour } = useTour();
   const { datos } = useRecurso(cargar, { config: null, clases: [] } as Datos);
   const [tipoFoto, setTipoFoto] = useState<TipoFoto>('logo');
   const [hojaAbierta, setHojaAbierta] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
   const [cambiandoAsistencias, setCambiandoAsistencias] = useState(false);
+  const [cambiandoSucursales, setCambiandoSucursales] = useState(false);
 
   if (!perfil) return null;
   const { academia, usuario } = perfil;
@@ -112,6 +116,41 @@ export default function AjustesScreen() {
     }
   }
 
+  async function guardarSucursales(activas: boolean) {
+    setCambiandoSucursales(true);
+    try {
+      await configurarSucursales(activas);
+      await recargarPerfil();
+    } catch (e) {
+      alerta('No se pudo cambiar Sucursales', (e as Error).message);
+    } finally {
+      setCambiandoSucursales(false);
+    }
+  }
+
+  async function alternarSucursales(activas: boolean) {
+    if (activas) return guardarSucursales(true);
+    // Al apagarlo la sesión se queda en la principal: si está en otra sede, primero se regresa
+    let principal;
+    try {
+      principal = (await obtenerSucursales()).find((s) => s.esPrincipal);
+    } catch (e) {
+      alerta('No se pudo cambiar Sucursales', (e as Error).message);
+      return;
+    }
+    if (!principal || principal.actual) return guardarSucursales(false);
+    const destino = principal;
+    confirmar(
+      '¿Apagar sucursales?',
+      `Te llevaremos a ${destino.nombre}, la sucursal principal. Las demás sedes y sus datos se conservan.`,
+      'Apagar',
+      async () => {
+        await cambiarSucursal(destino);
+        await guardarSucursales(false);
+      },
+    );
+  }
+
   return (
     <PantallaSecundaria titulo="Ajustes" principal>
       <Grupo titulo="Tu academia">
@@ -125,7 +164,7 @@ export default function AjustesScreen() {
           <Fila
             titulo="Nombre y colores"
             detalle={`Llamas a tus alumnos "${plural(academia.terminoAlumno).toLowerCase()}"`}
-            izquierda={<Palette size={22} color={color.texto} />}
+            izquierda={<IconoAjuste icono={Palette} fondo={COLORES_AJUSTE.rosa} />}
             onPress={() => router.push('/ajustes/marca')}
           />
         )}
@@ -133,7 +172,7 @@ export default function AjustesScreen() {
           <Fila
             titulo="Clases y precios"
             detalle={datos.config ? `${activas} ${activas === 1 ? 'clase activa' : 'clases activas'}` : undefined}
-            izquierda={<BookOpen size={22} color={color.texto} />}
+            izquierda={<IconoAjuste icono={BookOpen} fondo={COLORES_AJUSTE.naranja} />}
             onPress={() => router.push('/ajustes/clases')}
           />
         )}
@@ -141,7 +180,7 @@ export default function AjustesScreen() {
           <Fila
             titulo="Forma de cobro"
             detalle={cobro ? `${cobro.modoCobro === 'Paquete' ? 'Por paquete' : 'Por clase'}, vence el día ${cobro.diaVencimiento}` : undefined}
-            izquierda={<IconoPagos size={22} color={color.texto} />}
+            izquierda={<IconoAjuste icono={IconoPagos} fondo={COLORES_AJUSTE.verde} />}
             onPress={() => router.push('/ajustes/cobro')}
           />
         )}
@@ -164,7 +203,7 @@ export default function AjustesScreen() {
                 ? 'Actívalo si tus alumnos registran su entrada con PIN'
                 : 'Desactivado. Solo la persona dueña puede activarlo'
           }
-          izquierda={<ClipboardCheck size={22} color={color.texto} />}
+          izquierda={<IconoAjuste icono={ClipboardCheck} fondo={COLORES_AJUSTE.azul} />}
           derecha={
             <Switch
               value={academia.asistenciasActivas}
@@ -182,7 +221,7 @@ export default function AjustesScreen() {
           <Fila
             titulo="Abrir registrador de asistencias"
             detalle="Vincula esta tablet para que marquen su PIN"
-            izquierda={<Tablet size={22} color={color.texto} />}
+            izquierda={<IconoAjuste icono={Tablet} fondo={COLORES_AJUSTE.gris} />}
             onPress={abrirRegistrador}
           />
         )}
@@ -190,8 +229,42 @@ export default function AjustesScreen() {
           <Fila
             titulo="Reporte de asistencias"
             detalle="Quién viene, cuándo y quién no pudo entrar"
-            izquierda={<IconoFinanzas size={22} color={color.texto} />}
+            izquierda={<IconoAjuste icono={IconoFinanzas} fondo={COLORES_AJUSTE.turquesa} />}
             onPress={() => router.push('/asistencias')}
+          />
+        )}
+      </Grupo>
+
+      {/* Opcional: para negocios con más de una sede */}
+      <Grupo titulo="Sucursales">
+        <Fila
+          titulo="Varias sucursales"
+          detalle={
+            academia.sucursalesActivas
+              ? `Estás en ${academia.nombreSucursal ?? academia.nombre}`
+              : esDueno
+                ? 'Actívalo si tu negocio tiene más de una sede'
+                : 'Desactivado. Solo la persona dueña puede activarlo'
+          }
+          izquierda={<IconoAjuste icono={IconoSucursal} fondo={COLORES_AJUSTE.rojo} />}
+          derecha={
+            <Switch
+              value={academia.sucursalesActivas}
+              onValueChange={alternarSucursales}
+              disabled={!esDueno || cambiandoSucursales}
+              trackColor={{ true: color.marca, false: color.bordeFuerte }}
+              thumbColor="#ffffff"
+              {...({ activeThumbColor: '#ffffff' } as object)}
+              accessibilityLabel="Varias sucursales"
+            />
+          }
+        />
+        {academia.sucursalesActivas && esDueno && (
+          <Fila
+            titulo="Ver y cambiar de sucursal"
+            detalle="Agrega sedes, edita sus datos y muévete entre ellas"
+            izquierda={<IconoAjuste icono={Store} fondo={COLORES_AJUSTE.indigo} />}
+            onPress={() => router.navigate('/sucursales')}
           />
         )}
       </Grupo>
@@ -223,7 +296,7 @@ export default function AjustesScreen() {
         />
         <Fila
           titulo="Ver el recorrido de nuevo"
-          izquierda={<Compass size={22} color={color.texto} />}
+          izquierda={<IconoAjuste icono={Compass} fondo={COLORES_AJUSTE.azul} />}
           onPress={() => {
             // Si se llegó directo a /ajustes (p. ej. desde la barra lateral o la URL) no hay a dónde regresar
             if (router.canGoBack()) router.back();
@@ -233,7 +306,7 @@ export default function AjustesScreen() {
         />
         <Fila
           titulo="Cerrar sesión"
-          izquierda={<IconoCerrarSesion size={22} color={color.peligro} />}
+          izquierda={<IconoAjuste icono={IconoCerrarSesion} fondo={COLORES_AJUSTE.gris} />}
           onPress={() => confirmar('¿Cerrar sesión?', undefined, 'Cerrar sesión', () => cerrarSesion())}
         />
       </Grupo>

@@ -17,14 +17,14 @@ export function Grupo({ titulo, children, style }: { titulo?: string; children: 
   return (
     <View style={[{ gap: 8 }, style]}>
       {titulo && (
-        <Texto variante="detalle" tono="suave" style={{ paddingHorizontal: 4 }}>
+        <Texto variante="pequeno" tono="suave" style={estilos.tituloGrupo}>
           {titulo}
         </Texto>
       )}
-      <View style={[estilos.superficie, { backgroundColor: color.superficie, borderRadius: radio.l, borderColor: color.borde }, sombra]}>
+      <View style={[estilos.superficie, { backgroundColor: color.superficie, borderRadius: radio.l, borderColor: color.contorno }, sombra]}>
         {hijos.map((hijo, i) => (
           <Fragment key={hijo.key ?? i}>
-            {i > 0 && <View style={[estilos.separador, { backgroundColor: color.borde }]} />}
+            {i > 0 && <View style={[estilos.separador, { backgroundColor: color.borde }, conIcono(hijo) && { marginLeft: 58 }]} />}
             {hijo}
           </Fragment>
         ))}
@@ -32,6 +32,9 @@ export function Grupo({ titulo, children, style }: { titulo?: string; children: 
     </View>
   );
 }
+
+// Como en iOS, la línea entre filas empieza donde empieza el texto, no bajo el ícono
+const conIcono = (hijo: ReactNode) => isValidElement<{ izquierda?: ReactNode }>(hijo) && !!hijo.props.izquierda;
 
 type FilaProps = {
   titulo: string;
@@ -83,7 +86,7 @@ export function ItemGrupo({ indice, total, children }: { indice: number; total: 
     <View
       style={{
         backgroundColor: color.superficie,
-        borderColor: color.borde,
+        borderColor: color.contorno,
         borderLeftWidth: StyleSheet.hairlineWidth,
         borderRightWidth: StyleSheet.hairlineWidth,
         borderTopWidth: primero ? StyleSheet.hairlineWidth : 0,
@@ -134,7 +137,7 @@ export function CeldaLista({ columnas, children }: { indice?: number; total?: nu
   const sombra = useSombra();
   if (columnas <= 1) {
     return (
-      <View style={[estilos.tarjetaLista, { backgroundColor: color.superficie, borderColor: color.borde, borderRadius: radio.l + 2 }, sombra]}>
+      <View style={[estilos.tarjetaLista, { backgroundColor: color.superficie, borderColor: color.contorno, borderRadius: radio.l + 2 }, sombra]}>
         {children}
       </View>
     );
@@ -146,7 +149,7 @@ export function CeldaLista({ columnas, children }: { indice?: number; total?: nu
     <View
       style={[
         estilos.tarjeta,
-        { backgroundColor: color.superficie, borderColor: color.borde, borderRadius: radio.l, maxWidth: ancho as unknown as number },
+        { backgroundColor: color.superficie, borderColor: color.contorno, borderRadius: radio.l, maxWidth: ancho as unknown as number },
         sombra,
       ]}
     >
@@ -161,6 +164,8 @@ const estilos = StyleSheet.create({
   par: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingHorizontal: 16, paddingVertical: 14, minHeight: 52 },
   superficie: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   separador: { height: StyleSheet.hairlineWidth, marginLeft: 16 },
+  // Como en Ajustes de iOS: mayúsculas pequeñas y espaciadas sobre el grupo
+  tituloGrupo: { paddingHorizontal: 16, textTransform: 'uppercase', letterSpacing: 0.5 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14, minHeight: 56 },
 });
 

@@ -55,7 +55,7 @@ export function CreditoSolullan({ sobreOscuro, apilado }: { sobreOscuro?: boolea
 const estilos = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   apilado: { flexDirection: 'column', gap: 6 },
-  prefijo: { fontFamily: 'Figtree_500Medium', fontSize: 12, letterSpacing: 0.2 },
+  prefijo: { fontFamily: 'Inter_500Medium', fontSize: 12, letterSpacing: 0.2 },
   marca: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   isotipo: { width: 17, height: 18 },
   palabra: { fontFamily: 'Inter_500Medium', fontSize: 14, letterSpacing: -0.42 },

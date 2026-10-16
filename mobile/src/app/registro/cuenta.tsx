@@ -109,7 +109,7 @@ export default function PasoCuenta() {
             hitSlop={8}
             accessibilityRole="button"
           >
-            <Texto variante="detalle" style={{ fontFamily: 'Figtree_700Bold', color: color.texto, textDecorationLine: 'underline' }}>
+            <Texto variante="detalle" style={{ fontFamily: 'Inter_700Bold', color: color.texto, textDecorationLine: 'underline' }}>
               Cambiar
             </Texto>
           </Pressable>

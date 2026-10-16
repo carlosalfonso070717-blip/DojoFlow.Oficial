@@ -153,7 +153,7 @@ export default function LoginScreen() {
             ¿Aún no tienes cuenta?
           </Texto>
           <Pressable onPress={crearCuenta} hitSlop={10} accessibilityRole="link">
-            <Texto variante="detalle" style={{ fontFamily: 'Figtree_700Bold', color: color.texto, textDecorationLine: 'underline' }}>
+            <Texto variante="detalle" style={{ fontFamily: 'Inter_700Bold', color: color.texto, textDecorationLine: 'underline' }}>
               Crear cuenta
             </Texto>
           </Pressable>
@@ -255,7 +255,7 @@ function Presentacion() {
       </View>
 
       <View style={{ gap: 16, maxWidth: 460 }}>
-        <Texto variante="pequeno" style={{ color: suave, letterSpacing: 1.6, textTransform: 'uppercase', fontFamily: 'Figtree_600SemiBold' }}>
+        <Texto variante="pequeno" style={{ color: suave, letterSpacing: 1.6, textTransform: 'uppercase', fontFamily: 'Inter_600SemiBold' }}>
           Gestión para academias
         </Texto>
         <Texto variante="gigante" style={{ color: tinta, fontSize: 56, lineHeight: 58, letterSpacing: -2 }}>

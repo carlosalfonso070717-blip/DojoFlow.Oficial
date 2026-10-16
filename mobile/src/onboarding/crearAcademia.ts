@@ -20,6 +20,12 @@ export async function crearAcademia(borrador: Borrador): Promise<string> {
     colorSecundario: borrador.colorSecundario,
     terminoAlumno: borrador.terminoAlumno.trim(),
     clases: borrador.clases.map((c) => ({ nombre: c.nombre, precio: parseFloat(c.precio) || 0 })),
+    ...(borrador.variasSucursales && {
+      nombreSucursal: borrador.nombreSucursal.trim(),
+      sucursales: borrador.sucursales
+        .filter((s) => s.nombre.trim())
+        .map((s) => ({ nombre: s.nombre.trim(), direccion: s.direccion.trim() || undefined, telefono: s.telefono.trim() || undefined })),
+    }),
   });
 
   // El logo es opcional: si falla la subida, la academia ya existe y se puede subir en Ajustes

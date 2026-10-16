@@ -29,7 +29,7 @@ export function Marca({ tamano = 'normal' }: { tamano?: 'normal' | 'grande' }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: grande ? 14 : 10 }}>
       <Monograma size={grande ? 48 : 34} />
-      <Texto variante={grande ? 'titulo' : 'subtitulo'} style={{ fontFamily: 'BricolageGrotesque_700Bold', letterSpacing: -0.4 }}>
+      <Texto variante={grande ? 'titulo' : 'subtitulo'} style={{ fontFamily: 'Inter_700Bold', letterSpacing: -0.4 }}>
         GestAcademy
       </Texto>
     </View>

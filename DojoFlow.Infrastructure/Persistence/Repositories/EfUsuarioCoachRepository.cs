@@ -24,6 +24,11 @@ namespace DojoFlow.Infrastructure.Persistence.Repositories
             return await _context.UsuariosCoach.FirstOrDefaultAsync(u => u.Id == id);
         }
 
+        public async Task<bool> ExisteEnAcademiaAsync(Guid academiaId)
+        {
+            return await _context.UsuariosCoach.AnyAsync(u => u.AcademiaId == academiaId);
+        }
+
         public async Task AgregarAsync(UsuarioCoach usuario)
         {
             _context.UsuariosCoach.Add(usuario);

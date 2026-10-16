@@ -31,7 +31,7 @@ export default function PasoClases() {
       paso="clases"
       titulo="¿Qué clases das?"
       descripcion="Pon el precio mensual de cada una. Si cobras por paquete, lo configuras después en Ajustes."
-      continuar={{ onPress: () => router.push('/registro/cuenta'), deshabilitado: borrador.clases.length === 0 }}
+      continuar={{ onPress: () => router.push('/registro/sucursales'), deshabilitado: borrador.clases.length === 0 }}
     >
       {borrador.clases.length > 0 && (
         <Grupo>

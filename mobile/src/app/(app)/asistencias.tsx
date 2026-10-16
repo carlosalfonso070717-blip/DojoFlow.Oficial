@@ -64,7 +64,7 @@ function barras(periodo: Periodo, registros: RegistroAsistencia[]): DatoBarra[] 
 
 export default function AsistenciasScreen() {
   const { color } = useTema();
-  const { margen, arriba, esEscritorio, esTableta } = useDiseno();
+  const { margen, arriba, esEscritorio, esTableta, anchoSeccion } = useDiseno();
   const { perfil } = useSesion();
   const [periodo, setPeriodo] = useState<Periodo>('7');
   const [resultado, setResultado] = useState<{ periodo: Periodo; registros: RegistroAsistencia[] } | null>(null);
@@ -86,7 +86,9 @@ export default function AsistenciasScreen() {
       return () => {
         vigente = false;
       };
-    }, [periodo]),
+      // La sucursal no se usa adentro: está para recargar el reporte al cambiar de sede
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [periodo, perfil?.academia.id]),
   );
 
   const registros = useMemo(() => (resultado?.periodo === periodo ? resultado.registros : []), [resultado, periodo]);
@@ -237,7 +239,7 @@ export default function AsistenciasScreen() {
       <ScrollView
         contentContainerStyle={[
           estilos.contenido,
-          { paddingHorizontal: margen, paddingTop: 8 + arriba, maxWidth: esEscritorio ? 1240 + margen * 2 : 760 },
+          { paddingHorizontal: margen, paddingTop: 8 + arriba, maxWidth: esEscritorio ? anchoSeccion + margen * 2 : 760 },
         ]}
       >
         {!esEscritorio && <BotonAtras alterno="/" />}

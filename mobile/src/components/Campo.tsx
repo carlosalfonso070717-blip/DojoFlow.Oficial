@@ -20,13 +20,15 @@ export const Campo = forwardRef<TextInput, Props>(function Campo(
   { etiqueta, ayuda, error, icono, iconoVisible, compacto, secureTextEntry, style, onFocus, onBlur, ...props },
   ref,
 ) {
-  const { color, radio, tipografia } = useTema();
+  const { color, radio, tipografia, oscuro } = useTema();
   const [enfocado, setEnfocado] = useState(false);
   const [oculto, setOculto] = useState(true);
   const esPassword = !!secureTextEntry;
   const Icono = esPassword && !oculto && iconoVisible ? iconoVisible : icono;
 
-  const colorBorde = error ? color.peligro : enfocado ? color.marcaTexto : color.borde;
+  // En reposo el campo casi no tiene borde; al enfocarlo aparece un halo suave del color de la marca
+  const colorBorde = error ? color.peligro : enfocado ? color.marcaTexto : oscuro ? color.borde : color.contorno;
+  const halo = error ? color.peligroSuave : enfocado ? color.marcaSuave : null;
 
   return (
     <View style={{ gap: 8 }}>
@@ -43,7 +45,8 @@ export const Campo = forwardRef<TextInput, Props>(function Campo(
             backgroundColor: color.superficie,
             borderColor: colorBorde,
             borderRadius: radio.m + 2,
-            borderWidth: enfocado || error ? 1.5 : StyleSheet.hairlineWidth * 2,
+            borderWidth: 1,
+            boxShadow: halo ? `0 0 0 4px ${halo}` : oscuro ? undefined : '0 0.5px 1.5px rgba(16,18,24,0.06)',
           },
         ]}
       >

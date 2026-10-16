@@ -6,6 +6,8 @@ namespace DojoFlow.Application.Interfaces
     {
         Task<UsuarioCoach?> ObtenerPorEmailAsync(string email);
         Task<UsuarioCoach?> ObtenerPorIdAsync(Guid id);
+        // Si alguna cuenta del panel pertenece a esa academia (o sucursal)
+        Task<bool> ExisteEnAcademiaAsync(Guid academiaId);
         Task AgregarAsync(UsuarioCoach usuario);
         Task ActualizarAsync(UsuarioCoach usuario);
     }

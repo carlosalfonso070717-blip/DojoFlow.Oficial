@@ -17,11 +17,12 @@ export function useDiseno() {
     // Margen lateral: más aire en pantallas grandes
     margen: esEscritorio ? 40 : esTableta ? 32 : width < 360 ? 16 : 20,
     // Ancho máximo del contenido de listas y formularios
-    maximo: esTableta ? 720 : 560,
+    // En escritorio las pantallas ocupan todo el ancho disponible (solo con su margen lateral)
+    maximo: esEscritorio ? width : esTableta ? 720 : 560,
     // Ancho máximo de las secciones principales en escritorio (rejillas de tarjetas)
-    maximoEscritorio: 1240,
+    maximoEscritorio: width,
     // Ancho máximo de las secciones con lista (Alumnos, Cobros, Inventario, Finanzas)
-    anchoSeccion: esEscritorio ? 1240 : esTableta ? 720 : 560,
+    anchoSeccion: esEscritorio ? width : esTableta ? 720 : 560,
     // Aire arriba del título de cada sección (se suma al área segura del celular)
     arriba: esEscritorio ? 36 : 14,
     // Columnas de tarjetas para las listas: 1 en celular, más en escritorio según el espacio

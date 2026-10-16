@@ -41,6 +41,9 @@ export const registrarAcademia = (datos: {
   colorSecundario?: string;
   terminoAlumno?: string;
   clases?: { nombre: string; precio: number }[];
+  // Si tiene varias sucursales: el nombre de esta y los datos de las demás
+  nombreSucursal?: string;
+  sucursales?: DatosSucursal[];
 }) => post<LoginRespuesta>('/Auth/signup', datos);
 
 export const subirLogo = async (archivo: ArchivoLogo, tokenPropio?: string) =>
@@ -58,6 +61,9 @@ export type MarcaAcademia = {
   logoUrl: string | null;
   // Registrador de asistencias con PIN (opcional por academia)
   asistenciasActivas: boolean;
+  // Varias sucursales (opcional por negocio); nombreSucursal es el de la sede de la sesión
+  sucursalesActivas: boolean;
+  nombreSucursal: string | null;
 };
 
 export type Perfil = {
@@ -264,3 +270,32 @@ export type RegistroAsistencia = {
 
 export const obtenerAsistencias = (desde: Date, hasta: Date) =>
   api<RegistroAsistencia[]>(`/Asistencias?desde=${encodeURIComponent(desde.toISOString())}&hasta=${encodeURIComponent(hasta.toISOString())}`);
+
+// ===== SUCURSALES =====
+export type DatosSucursal = { nombre: string; direccion?: string; telefono?: string };
+
+export type Sucursal = {
+  id: string;
+  nombre: string;
+  direccion: string | null;
+  telefono: string | null;
+  esPrincipal: boolean;
+  // La sede en la que trabaja la sesión
+  actual: boolean;
+};
+
+export const configurarSucursales = (activas: boolean) =>
+  api<MarcaAcademia>('/Academia/sucursales', { method: 'PUT', body: JSON.stringify({ activas }) });
+
+export const obtenerSucursales = () => api<Sucursal[]>('/Sucursales');
+
+export const crearSucursal = (datos: DatosSucursal) => post<Sucursal>('/Sucursales', datos);
+
+export const editarSucursal = (id: string, datos: DatosSucursal) =>
+  api<Sucursal>(`/Sucursales/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
+
+// Borra la sucursal con todos sus datos (no la principal ni la de la sesión)
+export const eliminarSucursal = (id: string) => api<Mensaje>(`/Sucursales/${id}`, { method: 'DELETE' });
+
+// Devuelve el token de la sesión apuntando a la otra sucursal
+export const entrarASucursal = (id: string) => post<{ token: string; sucursal: Sucursal }>(`/Sucursales/${id}/cambiar`);

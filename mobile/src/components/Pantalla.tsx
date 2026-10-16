@@ -24,9 +24,9 @@ export function Encabezado({ titulo, detalle, acciones }: { titulo: string; deta
 }
 
 export function Buscador({ value, onChangeText, ...props }: TextInputProps & { value: string; onChangeText: (t: string) => void }) {
-  const { color, radio, tipografia } = useTema();
+  const { color, radio, tipografia, oscuro } = useTema();
   return (
-    <View style={[estilos.buscador, { backgroundColor: color.superficie, borderRadius: radio.m, borderColor: color.borde }]}>
+    <View style={[estilos.buscador, { backgroundColor: oscuro ? 'rgba(118,118,128,0.24)' : 'rgba(118,118,128,0.12)', borderRadius: radio.m }]}>
       <Search size={18} color={color.textoTenue} />
       <TextInput
         value={value}
@@ -58,7 +58,7 @@ export function BotonIcono({ icono, onPress, etiqueta, destacado }: { icono: Rea
       accessibilityLabel={etiqueta}
       style={({ pressed }) => [
         estilos.botonIcono,
-        { backgroundColor: destacado ? color.marca : color.superficie, borderColor: color.borde, opacity: pressed ? 0.7 : 1 },
+        { backgroundColor: destacado ? color.marca : color.superficie, borderColor: color.contorno, opacity: pressed ? 0.7 : 1 },
       ]}
     >
       {icono}
@@ -69,7 +69,7 @@ export function BotonIcono({ icono, onPress, etiqueta, destacado }: { icono: Rea
 const estilos = StyleSheet.create({
   encabezado: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingTop: 8, paddingBottom: 4 },
   acciones: { flexDirection: 'row', gap: 8, paddingBottom: 2 },
-  buscador: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, borderWidth: StyleSheet.hairlineWidth },
+  buscador: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, minHeight: 42 },
   botonIcono: {
     width: 42,
     height: 42,

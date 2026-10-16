@@ -1,4 +1,5 @@
 using DojoFlow.Application.Interfaces;
+using DojoFlow.Application.UseCases.Academias;
 using DojoFlow.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace DojoFlow.API.Controllers
 {
     public class ConfigurarAsistenciasRequest
+    {
+        public bool Activas { get; set; }
+    }
+
+    public class ConfigurarSucursalesRequest
     {
         public bool Activas { get; set; }
     }
@@ -54,6 +60,8 @@ namespace DojoFlow.API.Controllers
             a.TerminoAlumno,
             a.Moneda,
             a.AsistenciasActivas,
+            a.SucursalesActivas,
+            a.NombreSucursal,
             LogoUrl = a.Logo == null ? null : $"/api/Academia/{a.Id}/logo?v={a.LogoVersion}"
         };
 
@@ -112,8 +120,29 @@ namespace DojoFlow.API.Controllers
                 return BadRequest(new { Error = ex.Message });
             }
 
-            await _academiaRepository.ActualizarAsync(academia);
+            await GuardarEnTodasLasSedesAsync(academia, (sede, origen) => sede.CopiarMarcaDe(origen));
             return Ok(AMarca(academia));
+        }
+
+        // Activa o desactiva el manejo de varias sucursales; aplica a todas las sedes del negocio.
+        // Al apagarlo nada se borra: solo deja de mostrarse el cambio entre sedes.
+        [Authorize(Roles = Roles.Dueno)]
+        [HttpPut("sucursales")]
+        public async Task<IActionResult> ConfigurarSucursales([FromBody] ConfigurarSucursalesRequest request)
+        {
+            var academia = await _academiaRepository.ObtenerPorIdAsync(_tenant.AcademiaId);
+            if (academia == null) return NotFound();
+
+            var sedes = await _academiaRepository.ObtenerGrupoAsync(academia.GrupoId);
+            foreach (var sede in sedes)
+            {
+                sede.SucursalesActivas = request.Activas;
+                // La primera vez que se activa, la sede actual necesita un nombre para distinguirla
+                if (request.Activas && string.IsNullOrWhiteSpace(sede.NombreSucursal))
+                    sede.NombreSucursal = RegistrarAcademiaUseCase.NombreSucursalPrincipal;
+            }
+            await _academiaRepository.ActualizarAsync(sedes);
+            return Ok(AMarca(sedes.First(s => s.Id == academia.Id)));
         }
 
         // Activa o desactiva el registrador de asistencias de la academia
@@ -168,7 +197,7 @@ namespace DojoFlow.API.Controllers
             await archivo.CopyToAsync(memoria);
             academia.CambiarLogo(memoria.ToArray(), archivo.ContentType);
 
-            await _academiaRepository.ActualizarAsync(academia);
+            await GuardarEnTodasLasSedesAsync(academia, (sede, origen) => sede.CopiarLogoDe(origen));
             return Ok(AMarca(academia));
         }
 
@@ -180,8 +209,16 @@ namespace DojoFlow.API.Controllers
             if (academia == null) return NotFound();
 
             academia.QuitarLogo();
-            await _academiaRepository.ActualizarAsync(academia);
+            await GuardarEnTodasLasSedesAsync(academia, (sede, origen) => sede.CopiarLogoDe(origen));
             return Ok(AMarca(academia));
+        }
+
+        // La marca es del negocio, no de una sede: lo que se cambia en una se copia a las demás
+        private async Task GuardarEnTodasLasSedesAsync(Academia origen, Action<Academia, Academia> copiar)
+        {
+            var sedes = await _academiaRepository.ObtenerGrupoAsync(origen.GrupoId);
+            foreach (var sede in sedes.Where(s => s.Id != origen.Id)) copiar(sede, origen);
+            await _academiaRepository.ActualizarAsync(sedes);
         }
 
         // Público para que <img> e <Image> lo carguen sin token; la URL lleva la versión

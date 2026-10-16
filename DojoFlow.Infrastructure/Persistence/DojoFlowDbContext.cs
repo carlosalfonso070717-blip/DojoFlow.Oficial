@@ -46,6 +46,11 @@ namespace DojoFlow.Infrastructure.Persistence
                 academia.Property(a => a.ModoCobro).HasConversion<string>().HasMaxLength(20);
                 academia.Property(a => a.CodigoCatalogo).HasMaxLength(16);
                 academia.HasIndex(a => a.CodigoCatalogo).IsUnique();
+                academia.Property(a => a.NombreSucursal).HasMaxLength(80);
+                academia.Property(a => a.Direccion).HasMaxLength(200);
+                academia.Property(a => a.Telefono).HasMaxLength(30);
+                // Las sucursales apuntan a la principal; no se puede borrar una principal que aún tenga sedes
+                academia.HasOne<Academia>().WithMany().HasForeignKey(a => a.MatrizId).OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<Clase>(clase =>

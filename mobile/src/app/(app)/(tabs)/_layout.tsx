@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 import { useSesion } from '@/auth/session';
 import { BarraLiquida, type PestanaLiquida } from '@/components/BarraLiquida';
 import { useDiseno } from '@/hooks/useDiseno';
-import { IconoFinanzas, IconoInicio, IconoPagos } from '@/components/iconos/Iconly';
+import { IconoFinanzas, IconoInicio, IconoPagos, IconoSucursal } from '@/components/iconos/Iconly';
 import { useObjetivoTour } from '@/tour/Tour';
 import { plural } from '@/utils/texto';
 
@@ -17,24 +17,29 @@ const ICONOS: Record<string, PestanaLiquida['icono']> = {
   mensualidades: IconoPagos,
   inventario: Package,
   finanzas: IconoFinanzas,
+  sucursales: IconoSucursal,
 };
 
 function Barra({ state, descriptors, navigation }: BottomTabBarProps) {
   const refTour = useObjetivoTour('barra');
-  const pestanas: PestanaLiquida[] = state.routes.map((ruta) => {
+  const { perfil } = useSesion();
+  // Sucursales solo aparece en la barra si el negocio tiene varias sedes
+  const visibles = state.routes.filter((ruta) => ruta.name !== 'sucursales' || perfil?.academia.sucursalesActivas);
+  const pestanas: PestanaLiquida[] = visibles.map((ruta) => {
     const { options } = descriptors[ruta.key];
     return { clave: ruta.key, etiqueta: options.title ?? ruta.name, icono: ICONOS[ruta.name] ?? IconoInicio };
   });
+  const activa = Math.max(0, visibles.findIndex((ruta) => ruta.key === state.routes[state.index].key));
 
   return (
     <BarraLiquida
       refContenedor={refTour}
       pestanas={pestanas}
-      activa={state.index}
+      activa={activa}
       onCambiar={(i) => {
-        const ruta = state.routes[i];
+        const ruta = visibles[i];
         const evento = navigation.emit({ type: 'tabPress', target: ruta.key, canPreventDefault: true });
-        if (state.index !== i && !evento.defaultPrevented) navigation.navigate(ruta.name, ruta.params);
+        if (activa !== i && !evento.defaultPrevented) navigation.navigate(ruta.name, ruta.params);
       }}
     />
   );
@@ -52,6 +57,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="mensualidades" options={{ title: 'Cobros' }} />
       <Tabs.Screen name="inventario" options={{ title: 'Inventario' }} />
       <Tabs.Screen name="finanzas" options={{ title: 'Finanzas' }} />
+      <Tabs.Screen name="sucursales" options={{ title: 'Sucursales' }} />
     </Tabs>
   );
 }

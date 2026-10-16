@@ -15,14 +15,15 @@ namespace DojoFlow.API.Services
             _config = config;
         }
 
-        public string ParaUsuario(UsuarioCoach usuario)
+        // academiaId: la sucursal en la que trabaja la sesión (por defecto, la academia del usuario)
+        public string ParaUsuario(UsuarioCoach usuario, Guid? academiaId = null)
         {
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, usuario.Email),
                 new Claim("nombre", usuario.Nombre),
                 new Claim("id", usuario.Id.ToString()),
-                new Claim(TenantContextHttp.ClaimAcademia, usuario.AcademiaId.ToString()),
+                new Claim(TenantContextHttp.ClaimAcademia, (academiaId ?? usuario.AcademiaId).ToString()),
                 new Claim(ClaimTypes.Role, usuario.Rol)
             };
             return Crear(claims, TimeSpan.FromDays(7));

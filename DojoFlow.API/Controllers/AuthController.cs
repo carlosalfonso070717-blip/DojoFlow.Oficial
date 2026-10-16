@@ -22,6 +22,7 @@ namespace DojoFlow.API.Controllers
         private readonly GeneradorTokens _tokens;
         private readonly IImagenRepository _imagenRepository;
         private readonly VerificadorGoogle _google;
+        private readonly ITenantContext _tenant;
 
         public AuthController(
             IUsuarioCoachRepository usuarioRepository,
@@ -31,8 +32,10 @@ namespace DojoFlow.API.Controllers
             RegistrarAcademiaUseCase registrarAcademia,
             GeneradorTokens tokens,
             IImagenRepository imagenRepository,
-            VerificadorGoogle google)
+            VerificadorGoogle google,
+            ITenantContext tenant)
         {
+            _tenant = tenant;
             _google = google;
             _imagenRepository = imagenRepository;
             _usuarioRepository = usuarioRepository;
@@ -176,7 +179,9 @@ namespace DojoFlow.API.Controllers
                     request.ColorPrimario,
                     request.ColorSecundario,
                     request.TerminoAlumno,
-                    request.Clases?.Select(c => new ClaseInicial(c.Nombre, c.Precio)).ToList()));
+                    request.Clases?.Select(c => new ClaseInicial(c.Nombre, c.Precio)).ToList(),
+                    request.NombreSucursal,
+                    request.Sucursales?.Select(s => new SucursalInicial(s.Nombre, s.Direccion, s.Telefono)).ToList()));
             }
             catch (ArgumentException ex)
             {
@@ -252,8 +257,13 @@ namespace DojoFlow.API.Controllers
             var usuario = await ObtenerUsuarioActualAsync();
             if (usuario == null) return Unauthorized();
 
-            var academia = await _academiaRepository.ObtenerPorIdAsync(usuario.AcademiaId);
-            if (academia == null) return Unauthorized();
+            // La sede de la sesión (puede ser otra sucursal del mismo negocio, elegida al cambiar de sucursal)
+            var casa = await _academiaRepository.ObtenerPorIdAsync(usuario.AcademiaId);
+            if (casa == null) return Unauthorized();
+            // Si la sucursal de la sesión ya no existe (se borró desde otro dispositivo), la sesión
+            // se cierra y al volver a entrar queda en la principal
+            var academia = await _academiaRepository.ObtenerPorIdAsync(_tenant.AcademiaId);
+            if (academia == null || academia.GrupoId != casa.GrupoId) return Unauthorized();
 
             return Ok(new
             {
@@ -422,6 +432,10 @@ namespace DojoFlow.API.Controllers
         public string? ColorSecundario { get; set; }
         public string? TerminoAlumno { get; set; }
         public List<ClaseRegistroRequest>? Clases { get; set; }
+
+        // Si tiene varias sucursales: el nombre de esta (la principal) y los datos de las demás
+        public string? NombreSucursal { get; set; }
+        public List<SucursalRequest>? Sucursales { get; set; }
     }
 
     public class ClaseRegistroRequest

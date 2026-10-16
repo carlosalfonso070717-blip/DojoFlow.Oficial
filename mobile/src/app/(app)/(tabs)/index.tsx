@@ -96,7 +96,7 @@ const AIRE_SUPERIOR = 14;
 export default function InicioScreen() {
   const { color } = useTema();
   const insets = useSafeAreaInsets();
-  const { margen, esTableta, esEscritorio, arriba } = useDiseno();
+  const { margen, esTableta, esEscritorio, arriba, maximoEscritorio } = useDiseno();
   const espacioBarra = useEspacioBarra();
   const { perfil, vincularKiosco } = useSesion();
   const { iniciar: iniciarTour } = useTour();
@@ -192,7 +192,7 @@ export default function InicioScreen() {
     return (
       <ScrollView
         style={{ flex: 1, backgroundColor: color.fondo }}
-        contentContainerStyle={[estilos.contenido, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: 1240 }]}
+        contentContainerStyle={[estilos.contenido, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: maximoEscritorio }]}
       >
         <View style={estilos.cabeceraEscritorio}>
           <LogoAcademia academia={academia} tamano={56} />
@@ -434,7 +434,7 @@ function TarjetaIngresos({ academia, meses }: { academia: MarcaAcademia; meses: 
           {cambio !== null && (
             <View style={[estilos.cambio, { backgroundColor: pista }]}>
               {cambio >= 0 ? <TrendingUp size={13} color={tinta} strokeWidth={2.4} /> : <TrendingDown size={13} color={tinta} strokeWidth={2.4} />}
-              <Texto variante="pequeno" cifras style={{ color: tinta, fontFamily: 'Figtree_700Bold' }}>
+              <Texto variante="pequeno" cifras style={{ color: tinta, fontFamily: 'Inter_700Bold' }}>
                 {cambio >= 0 ? '+' : ''}
                 {Math.round(cambio)}% vs {anterior.corto}
               </Texto>

@@ -1,11 +1,8 @@
-import { BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque/600SemiBold';
-import { BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque/700Bold';
-import { Figtree_400Regular } from '@expo-google-fonts/figtree/400Regular';
-import { Figtree_500Medium } from '@expo-google-fonts/figtree/500Medium';
-import { Figtree_600SemiBold } from '@expo-google-fonts/figtree/600SemiBold';
-import { Figtree_700Bold } from '@expo-google-fonts/figtree/700Bold';
+import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
 import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
 import { Inter_500Medium_Italic } from '@expo-google-fonts/inter/500Medium_Italic';
+import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
+import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -21,16 +18,13 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 function RootNavigator() {
   const { token, cargando } = useSesion();
   const { color, oscuro } = useTema();
+  // Inter: la tipografía de la app (la más cercana a SF Pro); también da forma al logotipo de Solullan
   const [fuentesListas, errorFuentes] = useFonts({
-    BricolageGrotesque_600SemiBold,
-    BricolageGrotesque_700Bold,
-    Figtree_400Regular,
-    Figtree_500Medium,
-    Figtree_600SemiBold,
-    Figtree_700Bold,
-    // Solo para el logotipo de Solullan en el crédito
+    Inter_400Regular,
     Inter_500Medium,
     Inter_500Medium_Italic,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
   const listo = !cargando && (fuentesListas || !!errorFuentes);
 

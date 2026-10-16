@@ -14,8 +14,8 @@ export function useSombra(nivel: 'baja' | 'alta' = 'baja'): ViewStyle {
   return {
     boxShadow:
       nivel === 'alta'
-        ? '0 1px 2px rgba(16,18,24,0.05), 0 14px 34px -14px rgba(16,18,24,0.22)'
-        : '0 1px 2px rgba(16,18,24,0.04), 0 8px 24px -14px rgba(16,18,24,0.16)',
+        ? '0 1px 2px rgba(16,18,24,0.05), 0 6px 14px -6px rgba(16,18,24,0.10), 0 22px 44px -18px rgba(16,18,24,0.20)'
+        : '0 0.5px 1px rgba(16,18,24,0.05), 0 4px 18px -8px rgba(16,18,24,0.10)',
   } as ViewStyle;
 }
 
@@ -35,7 +35,7 @@ function useColoresTono(tono: TonoTarjeta): [string, string] {
 export function Tarjeta({ children, style, onPress, etiqueta }: { children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void; etiqueta?: string }) {
   const { color, radio } = useTema();
   const sombra = useSombra();
-  const base = [estilos.tarjeta, { backgroundColor: color.superficie, borderColor: color.borde, borderRadius: radio.xl }, sombra, style];
+  const base = [estilos.tarjeta, { backgroundColor: color.superficie, borderColor: color.contorno, borderRadius: radio.xl }, sombra, style];
   if (!onPress) return <View style={base}>{children}</View>;
   return (
     <Presionable onPress={onPress} escala={0.98} accessibilityRole="button" accessibilityLabel={etiqueta} style={base}>
@@ -110,7 +110,7 @@ export function TarjetaAccion({
       accessibilityLabel={titulo}
       style={[
         estilos.accion,
-        { borderRadius: radio.xl, backgroundColor: destacada ? color.marca : color.superficie, borderColor: destacada ? color.marca : color.borde },
+        { borderRadius: radio.xl, backgroundColor: destacada ? color.marca : color.superficie, borderColor: destacada ? color.marca : color.contorno },
         sombra,
       ]}
     >
@@ -181,7 +181,7 @@ function DatoResumenTarjeta({
   );
   const estilo = [
     estilos.resumen,
-    { backgroundColor: color.superficie, borderColor: activo ? color.marcaTexto : color.borde, borderRadius: radio, borderWidth: activo ? 1.5 : StyleSheet.hairlineWidth },
+    { backgroundColor: color.superficie, borderColor: activo ? color.marcaTexto : color.contorno, borderRadius: radio, borderWidth: activo ? 1.5 : StyleSheet.hairlineWidth },
     sombra,
   ];
   if (!onPress) return <View style={estilo}>{contenido}</View>;
@@ -236,5 +236,28 @@ const estilos = StyleSheet.create({
   resumen: { minWidth: 128, paddingHorizontal: 14, paddingVertical: 12, gap: 6 },
   etiquetaResumen: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   punto: { width: 7, height: 7, borderRadius: 4 },
+  iconoAjuste: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderCurve: 'continuous' },
   tituloSeccion: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
 });
+
+// Colores de sistema de Apple para los íconos de Ajustes
+export const COLORES_AJUSTE = {
+  azul: '#0a84ff',
+  verde: '#30b158',
+  naranja: '#ff9500',
+  morado: '#af52de',
+  rosa: '#ff2d55',
+  indigo: '#5856d6',
+  turquesa: '#30b0c7',
+  gris: '#8e8e93',
+  rojo: '#ff3b30',
+} as const;
+
+// Ícono blanco sobre un cuadrito de color, como en la app Ajustes del iPhone
+export function IconoAjuste({ icono: Icono, fondo }: { icono: ComponentType<PropsIcono>; fondo: string }) {
+  return (
+    <View style={[estilos.iconoAjuste, { backgroundColor: fondo }]}>
+      <Icono size={18} color="#ffffff" strokeWidth={2} />
+    </View>
+  );
+}

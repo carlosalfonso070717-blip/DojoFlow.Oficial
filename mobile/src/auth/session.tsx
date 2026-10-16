@@ -1,12 +1,23 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { router } from 'expo-router';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { onSesionExpirada, setToken } from '@/api/client';
 import type { CredencialGoogle } from './google';
-import { continuarConGoogle, crearSesionKiosco, login, obtenerPerfil, type Perfil } from '@/api/endpoints';
+import { continuarConGoogle, crearSesionKiosco, entrarASucursal, login, obtenerPerfil, type Perfil, type Sucursal } from '@/api/endpoints';
 import { almacen } from './almacen';
 
 // Mismas llaves que usa el frontend web en localStorage
 const LLAVE_TOKEN = 'coachToken';
 const LLAVE_KIOSCO = 'kioscoToken';
+
+// Lo que dura el recorrido de una sucursal a otra, aunque la API conteste antes: así se alcanza a ver
+export const DURACION_VIAJE = 2200;
+// Lo que se queda la escena después de llegar, antes de desvanecerse
+const PAUSA_LLEGADA = 650;
+
+// Cambio de sucursal en curso: la animación muestra de dónde sale y a dónde llega
+export type Viaje = { desde: string; hacia: string; llego: boolean };
+
+const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type Sesion = {
   token: string | null;
@@ -22,6 +33,9 @@ type Sesion = {
   cerrarSesion: () => Promise<void>;
   recargarPerfil: () => Promise<void>;
   vincularKiosco: () => Promise<void>;
+  viaje: Viaje | null;
+  // Cambia la sesión a otra sucursal del mismo negocio (con su animación)
+  cambiarSucursal: (destino: Sucursal) => Promise<void>;
 };
 
 const SesionContext = createContext<Sesion | null>(null);
@@ -31,6 +45,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [tokenKiosco, setTokenKiosco] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [viaje, setViaje] = useState<Viaje | null>(null);
+  const viajando = useRef(false);
 
   const guardar = useCallback(async (nuevo: string | null) => {
     setToken(nuevo);
@@ -97,6 +113,29 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setTokenKiosco(nuevo);
   }, []);
 
+  const cambiarSucursal = useCallback(
+    async (destino: Sucursal) => {
+      if (viajando.current) return;
+      viajando.current = true;
+      const desde = perfil?.academia.nombreSucursal || perfil?.academia.nombre || '';
+      setViaje({ desde, hacia: destino.nombre, llego: false });
+      const inicio = Date.now();
+      try {
+        const { token: nuevo } = await entrarASucursal(destino.id);
+        await esperar(DURACION_VIAJE - (Date.now() - inicio));
+        // Con la escena aún encima se cambia todo: token, perfil y pantalla de inicio de la otra sucursal
+        await guardar(nuevo);
+        router.navigate('/');
+        setViaje((v) => v && { ...v, llego: true });
+        await esperar(PAUSA_LLEGADA);
+      } finally {
+        setViaje(null);
+        viajando.current = false;
+      }
+    },
+    [perfil, guardar],
+  );
+
   return (
     <SesionContext.Provider
       value={{
@@ -110,6 +149,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         cerrarSesion,
         recargarPerfil,
         vincularKiosco,
+        viaje,
+        cambiarSucursal,
       }}
     >
       {children}

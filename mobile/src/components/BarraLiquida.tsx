@@ -229,7 +229,7 @@ function Pestana({ pestana, i, indice, activa, colorActivo, textoActivo, onPress
         <Icono size={24} color={colorIcono} strokeWidth={activa ? 2 : 1.5} />
       </Animated.View>
       <Animated.View style={[estilos.etiqueta, estiloEtiqueta]} pointerEvents="none">
-        <Texto variante="pequeno" numberOfLines={1} style={{ color: textoActivo, fontFamily: 'Figtree_700Bold' }}>
+        <Texto variante="pequeno" numberOfLines={1} style={{ color: textoActivo, fontFamily: 'Inter_700Bold' }}>
           {pestana.etiqueta}
         </Texto>
       </Animated.View>

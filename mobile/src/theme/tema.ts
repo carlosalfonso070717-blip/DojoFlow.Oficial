@@ -14,32 +14,34 @@ export const MARCA_DOJOFLOW: Marca = { primario: '#d90429', secundario: '#14161a
 const NEUTRO_CLARO: Marca = { primario: '#151619', secundario: '#151619' };
 const NEUTRO_OSCURO: Marca = { primario: '#f2f2f3', secundario: '#1b1c20' };
 
+// Inter es lo más cercano a SF Pro (la letra de Apple) que se puede incluir en la app
 export const fuentes = {
-  display: 'BricolageGrotesque_700Bold',
-  displayMedia: 'BricolageGrotesque_600SemiBold',
-  cuerpo: 'Figtree_400Regular',
-  cuerpoMedia: 'Figtree_500Medium',
-  cuerpoFuerte: 'Figtree_600SemiBold',
-  cuerpoNegrita: 'Figtree_700Bold',
+  display: 'Inter_700Bold',
+  displayMedia: 'Inter_600SemiBold',
+  cuerpo: 'Inter_400Regular',
+  cuerpoMedia: 'Inter_500Medium',
+  cuerpoFuerte: 'Inter_600SemiBold',
+  cuerpoNegrita: 'Inter_700Bold',
 } as const;
 
-// Escala tipográfica para móvil (pt), con interlineado proporcional
+// Escala al estilo iOS (pt): títulos grandes y compactos con tracking negativo que se abre
+// conforme baja el tamaño; el texto secundario va en peso regular y lo jerarquiza el color
 export const tipografia = {
-  gigante: { fontFamily: fuentes.display, fontSize: 44, lineHeight: 46, letterSpacing: -1.4 },
-  titulo: { fontFamily: fuentes.display, fontSize: 30, lineHeight: 34, letterSpacing: -0.6 },
-  encabezado: { fontFamily: fuentes.display, fontSize: 22, lineHeight: 27, letterSpacing: -0.3 },
-  subtitulo: { fontFamily: fuentes.cuerpoFuerte, fontSize: 17, lineHeight: 23 },
-  cuerpo: { fontFamily: fuentes.cuerpo, fontSize: 16, lineHeight: 23 },
-  cuerpoFuerte: { fontFamily: fuentes.cuerpoFuerte, fontSize: 16, lineHeight: 23 },
-  detalle: { fontFamily: fuentes.cuerpoMedia, fontSize: 14, lineHeight: 19 },
-  pequeno: { fontFamily: fuentes.cuerpoMedia, fontSize: 12, lineHeight: 16 },
-  cifra: { fontFamily: fuentes.display, fontSize: 34, lineHeight: 38, letterSpacing: -0.8 },
+  gigante: { fontFamily: fuentes.display, fontSize: 44, lineHeight: 48, letterSpacing: -1.3 },
+  titulo: { fontFamily: fuentes.display, fontSize: 32, lineHeight: 38, letterSpacing: -0.9 },
+  encabezado: { fontFamily: fuentes.display, fontSize: 22, lineHeight: 28, letterSpacing: -0.5 },
+  subtitulo: { fontFamily: fuentes.cuerpoFuerte, fontSize: 17, lineHeight: 22, letterSpacing: -0.35 },
+  cuerpo: { fontFamily: fuentes.cuerpo, fontSize: 16, lineHeight: 22, letterSpacing: -0.25 },
+  cuerpoFuerte: { fontFamily: fuentes.cuerpoFuerte, fontSize: 16, lineHeight: 22, letterSpacing: -0.25 },
+  detalle: { fontFamily: fuentes.cuerpo, fontSize: 14, lineHeight: 19, letterSpacing: -0.12 },
+  pequeno: { fontFamily: fuentes.cuerpoMedia, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
+  cifra: { fontFamily: fuentes.display, fontSize: 34, lineHeight: 40, letterSpacing: -1.1 },
 } as const;
 
 export const espacio = { xs: 4, s: 8, m: 12, l: 16, xl: 24, xxl: 32 } as const;
 
 // Radios con jerarquía: lo más grande contiene, lo más pequeño se toca
-export const radio = { s: 8, m: 12, l: 18, xl: 26, total: 999 } as const;
+export const radio = { s: 8, m: 12, l: 16, xl: 22, total: 999 } as const;
 
 // `marca` null = tema neutro (sin academia)
 export function crearTema(marcaAcademia: Marca | null, esquema: Esquema) {
@@ -52,8 +54,9 @@ export function crearTema(marcaAcademia: Marca | null, esquema: Esquema) {
   const tinte = esNeutro ? 0.35 : 1;
   const neutro = (s: number, l: number) => hslAHex({ h, s: s * tinte, l });
 
-  const fondo = oscuro ? neutro(0.1, 0.065) : neutro(0.14, 0.965);
-  const superficie = oscuro ? neutro(0.09, 0.105) : '#ffffff';
+  // Gris agrupado de iOS (#f2f2f7) con un toque mínimo del tono de la marca; negro profundo en oscuro
+  const fondo = oscuro ? neutro(0.08, 0.045) : neutro(0.1, 0.958);
+  const superficie = oscuro ? neutro(0.07, 0.1) : '#ffffff';
   const superficieElevada = oscuro ? neutro(0.08, 0.145) : '#ffffff';
   const texto = oscuro ? neutro(0.1, 0.94) : neutro(0.18, 0.11);
 
@@ -70,6 +73,8 @@ export function crearTema(marcaAcademia: Marca | null, esquema: Esquema) {
     superficieElevada,
     borde: oscuro ? neutro(0.08, 0.19) : neutro(0.1, 0.9),
     bordeFuerte: oscuro ? neutro(0.08, 0.28) : neutro(0.1, 0.8),
+    // Silueta de tarjetas y grupos: en claro casi invisible (la sombra hace el trabajo), en oscuro un filo fino
+    contorno: oscuro ? neutro(0.08, 0.17) : 'rgba(16,18,24,0.05)',
     texto,
     textoSuave: oscuro ? neutro(0.06, 0.68) : neutro(0.08, 0.4),
     textoTenue: oscuro ? neutro(0.05, 0.5) : neutro(0.06, 0.58),

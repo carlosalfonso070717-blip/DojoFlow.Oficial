@@ -483,7 +483,7 @@ function TarjetaProducto({ producto, columnas, onPress }: { producto: Producto; 
             </Texto>
           </View>
           <View style={[estilos.pastilla, { backgroundColor: bajo ? color.peligroSuave : color.fondo }]}>
-            <Texto variante="pequeno" cifras style={{ color: bajo ? color.peligro : color.textoSuave, fontFamily: 'Figtree_700Bold' }}>
+            <Texto variante="pequeno" cifras style={{ color: bajo ? color.peligro : color.textoSuave, fontFamily: 'Inter_700Bold' }}>
               {bajo ? `Quedan ${producto.stockActual}` : `${producto.stockActual} en existencia`}
             </Texto>
           </View>
@@ -515,13 +515,13 @@ function TarjetaProductoMovil({ producto, ancho, onPress }: { producto: Producto
       <View>
         <FotoProducto url={producto.imagenUrl} style={[estilos.fotoMovil, { borderRadius: radio.m + 2 }]} />
         <View style={[estilos.existencia, { backgroundColor: bajo ? color.peligro : color.superficie }]}>
-          <Texto variante="pequeno" cifras style={{ color: bajo ? '#ffffff' : color.texto, fontFamily: 'Figtree_700Bold' }}>
+          <Texto variante="pequeno" cifras style={{ color: bajo ? '#ffffff' : color.texto, fontFamily: 'Inter_700Bold' }}>
             {producto.stockActual} pz
           </Texto>
         </View>
       </View>
       <View style={{ gap: 2, paddingHorizontal: 4 }}>
-        <Texto variante="detalle" numberOfLines={2} style={{ fontFamily: 'Figtree_600SemiBold', color: color.texto }}>
+        <Texto variante="detalle" numberOfLines={2} style={{ fontFamily: 'Inter_600SemiBold', color: color.texto }}>
           {producto.nombre}
         </Texto>
         <Texto variante="cuerpoFuerte" cifras>

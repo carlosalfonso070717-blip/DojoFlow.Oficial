@@ -25,7 +25,7 @@ export function Insignia({ texto, tono = 'neutro', icono: Icono }: { texto: stri
   return (
     <View style={[estilos.insignia, { backgroundColor: fondo, borderRadius: radio.total }]}>
       {Icono && <Icono size={13} color={frente} strokeWidth={2.4} />}
-      <Texto variante="pequeno" style={{ color: frente, fontFamily: 'Figtree_600SemiBold' }}>
+      <Texto variante="pequeno" style={{ color: frente, fontFamily: 'Inter_600SemiBold' }}>
         {texto}
       </Texto>
     </View>
@@ -48,7 +48,7 @@ export function Chip({ texto, activo, onPress }: { texto: string; activo: boolea
         },
       ]}
     >
-      <Texto variante="detalle" style={{ color: activo ? color.sobreMarca : color.texto, fontFamily: 'Figtree_600SemiBold' }}>
+      <Texto variante="detalle" style={{ color: activo ? color.sobreMarca : color.texto, fontFamily: 'Inter_600SemiBold' }}>
         {texto}
       </Texto>
     </Presionable>

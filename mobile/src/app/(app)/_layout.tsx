@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { Platform, View } from 'react-native';
 import { BarraLateral } from '@/components/BarraLateral';
+import { ViajeSucursal } from '@/components/ViajeSucursal';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useTema } from '@/theme';
 import { ProveedorTour } from '@/tour/Tour';
@@ -33,6 +34,8 @@ export default function AppLayout() {
           </Stack>
         </View>
       </View>
+      {/* Encima de todo mientras se cambia de sucursal */}
+      <ViajeSucursal />
     </ProveedorTour>
   );
 }

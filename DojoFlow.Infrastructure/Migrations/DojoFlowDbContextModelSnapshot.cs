@@ -49,6 +49,10 @@ namespace DojoFlow.Infrastructure.Migrations
                     b.Property<int>("DiaVencimiento")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Direccion")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("timestamp without time zone");
 
@@ -61,6 +65,9 @@ namespace DojoFlow.Infrastructure.Migrations
 
                     b.Property<int>("LogoVersion")
                         .HasColumnType("integer");
+
+                    b.Property<Guid?>("MatrizId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ModoCobro")
                         .IsRequired()
@@ -77,9 +84,20 @@ namespace DojoFlow.Infrastructure.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
+                    b.Property<string>("NombreSucursal")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
                     b.PrimitiveCollection<List<decimal>>("PreciosPaquete")
                         .IsRequired()
                         .HasColumnType("numeric[]");
+
+                    b.Property<bool>("SucursalesActivas")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("TerminoAlumno")
                         .IsRequired()
@@ -95,6 +113,8 @@ namespace DojoFlow.Infrastructure.Migrations
 
                     b.HasIndex("CodigoCatalogo")
                         .IsUnique();
+
+                    b.HasIndex("MatrizId");
 
                     b.ToTable("Academias");
 
@@ -112,6 +132,7 @@ namespace DojoFlow.Infrastructure.Migrations
                             Moneda = "MXN",
                             Nombre = "Dominio Combat Club",
                             PreciosPaquete = new List<decimal> { 850m, 1500m, 2400m, 3200m, 4000m },
+                            SucursalesActivas = false,
                             TerminoAlumno = "Peleador",
                             TipoNegocio = "Artes marciales"
                         });
@@ -638,6 +659,14 @@ namespace DojoFlow.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("VerificacionesEmail");
+                });
+
+            modelBuilder.Entity("DojoFlow.Domain.Entities.Academia", b =>
+                {
+                    b.HasOne("DojoFlow.Domain.Entities.Academia", null)
+                        .WithMany()
+                        .HasForeignKey("MatrizId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("DojoFlow.Domain.Entities.Alumno", b =>

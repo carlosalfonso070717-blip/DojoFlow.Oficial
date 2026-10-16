@@ -87,7 +87,7 @@ export function GraficaBarras({ datos, elegido, onElegir, colores, formatoGuia, 
               style={[
                 estilos.etiqueta,
                 { color: i === elegido ? colores.etiquetaActiva : colores.etiqueta, opacity: visible ? 1 : 0 },
-                i === elegido && { fontFamily: 'Figtree_700Bold' },
+                i === elegido && { fontFamily: 'Inter_700Bold' },
               ]}
             >
               {d.etiqueta}

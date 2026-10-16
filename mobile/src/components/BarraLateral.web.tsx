@@ -4,11 +4,12 @@ import { useEffect, useRef, useState, type ComponentType, type CSSProperties, ty
 import { obtenerAlertasInventario, obtenerMensualidades } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { cambiarPreferenciaTema, useTema } from '@/theme';
+import { conAlfa } from '@/theme/color';
 import { useTour, type IdObjetivo } from '@/tour/Tour';
 import { alerta } from '@/utils/alerta';
 import { plural } from '@/utils/texto';
 import { urlAbsoluta } from './Elementos';
-import { IconoAjustes, IconoCerrarSesion, IconoFinanzas, IconoInicio, IconoPagos, type PropsIcono } from './iconos/Iconly';
+import { IconoAjustes, IconoCerrarSesion, IconoFinanzas, IconoInicio, IconoPagos, IconoSucursal, type PropsIcono } from './iconos/Iconly';
 import { confirmar } from './ui';
 
 // Barra lateral de la web de escritorio: contraída muestra solo íconos; al pasar el mouse
@@ -38,7 +39,7 @@ export function BarraLateral() {
     return () => {
       vigente = false;
     };
-  }, [pathname]);
+  }, [pathname, perfil?.academia.id]);
 
   if (!perfil) return null;
   const { usuario, academia } = perfil;
@@ -52,6 +53,10 @@ export function BarraLateral() {
   ];
   const secundarias: Seccion[] = [
     { ruta: '/finanzas', etiqueta: 'Finanzas', icono: IconoFinanzas, activa: (p) => p.startsWith('/finanzas') },
+    // Solo para negocios con varias sedes
+    ...(academia.sucursalesActivas
+      ? [{ ruta: '/sucursales' as Href, etiqueta: 'Sucursales', icono: IconoSucursal, activa: (p: string) => p.startsWith('/sucursales') }]
+      : []),
     // Solo para quienes usan el registrador de asistencias
     ...(academia.asistenciasActivas
       ? [{ ruta: '/asistencias' as Href, etiqueta: 'Asistencias', icono: ClipboardCheck, activa: (p: string) => p.startsWith('/asistencias') }]
@@ -84,8 +89,9 @@ export function BarraLateral() {
   }
 
   const variables = {
-    '--lb-fondo': color.superficie,
-    '--lb-borde': color.borde,
+    // Material translúcido como la barra lateral de macOS: deja ver lo que pasa debajo al expandirse
+    '--lb-fondo': conAlfa(color.superficie, oscuro ? 0.72 : 0.78),
+    '--lb-borde': color.contorno,
     '--lb-texto': color.texto,
     '--lb-suave': color.textoSuave,
     '--lb-tenue': color.textoTenue,
@@ -136,7 +142,9 @@ export function BarraLateral() {
           )}
           <span className="lb-detalles">
             <span className="lb-nombre">{usuario.nombre}</span>
-            <span className="lb-rol">{usuario.rol === 'Dueno' ? 'Dueño' : 'Coach'} · {academia.nombre}</span>
+            <span className="lb-rol">
+              {usuario.rol === 'Dueno' ? 'Dueño' : 'Coach'} · {academia.sucursalesActivas && academia.nombreSucursal ? academia.nombreSucursal : academia.nombre}
+            </span>
           </span>
           <span className="lb-chevron">
             <ChevronRight size={18} color="currentColor" />
@@ -265,7 +273,8 @@ const CSS = `
   position: absolute; inset: 0 auto 0 0; width: ${ANCHO_BARRA_LATERAL}px; box-sizing: border-box;
   display: flex; flex-direction: column; gap: 14px; padding: 18px 12px;
   background: var(--lb-fondo); border-right: 1px solid var(--lb-borde); color: var(--lb-texto);
-  font-family: Figtree_500Medium, system-ui, sans-serif; font-size: 15px;
+  -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px);
+  font-family: Inter_500Medium, system-ui, sans-serif; font-size: 15px;
   overflow: hidden; transition: width .32s cubic-bezier(.4,0,.2,1), box-shadow .32s ease;
 }
 .lb:hover, .lb:has(:focus-visible), .lb:has(input:focus) { width: 264px; box-shadow: 12px 0 40px -12px var(--lb-sombra); }
@@ -277,9 +286,9 @@ const CSS = `
 .lb-perfil { display: flex; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 16px; min-height: 56px; box-sizing: border-box; transition: background .2s; }
 .lb-perfil:hover { background: var(--lb-hover); }
 .lb-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: none; }
-.lb-iniciales { display: grid; place-items: center; background: var(--lb-activo); color: var(--lb-activo-texto); font-family: Figtree_700Bold, sans-serif; font-size: 16px; }
+.lb-iniciales { display: grid; place-items: center; background: var(--lb-activo); color: var(--lb-activo-texto); font-family: Inter_700Bold, sans-serif; font-size: 16px; }
 .lb-detalles { display: grid; min-width: 0; flex: 1; }
-.lb-nombre { font-family: Figtree_700Bold, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-nombre { font-family: Inter_700Bold, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lb-rol { font-size: 13px; color: var(--lb-suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lb-chevron { display: flex; color: var(--lb-tenue); }
 
@@ -294,7 +303,7 @@ const CSS = `
 .lb-buscar input {
   width: 100%; height: 100%; box-sizing: border-box; padding: 0 12px 0 46px; border-radius: 14px;
   border: 1px solid var(--lb-borde); background: var(--lb-campo); color: var(--lb-texto);
-  font: 15px Figtree_400Regular, sans-serif; outline: none; cursor: pointer;
+  font: 15px Inter_400Regular, sans-serif; outline: none; cursor: pointer;
 }
 .lb-buscar input:focus { border-color: var(--lb-marca); cursor: text; }
 .lb-buscar input::placeholder { color: var(--lb-tenue); }
@@ -315,7 +324,7 @@ const CSS = `
 }
 .lb-item:hover { color: var(--lb-texto) !important; }
 .lb-item:hover::before { opacity: 1; transform: scale(1); }
-.lb-item.activa { color: var(--lb-activo-texto) !important; font-family: Figtree_700Bold, sans-serif; }
+.lb-item.activa { color: var(--lb-activo-texto) !important; font-family: Inter_700Bold, sans-serif; }
 .lb-item.activa::before { background: var(--lb-activo); opacity: 1; transform: scale(1); }
 .lb-icono, .lb-texto { position: relative; display: flex; }
 .lb-icono { flex: none; }
@@ -324,7 +333,7 @@ const CSS = `
 .lb-insignia {
   position: absolute; top: 5px; left: 36px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
   border-radius: 9px; background: var(--lb-marca); color: var(--lb-sobre-marca); border: 2px solid var(--lb-fondo);
-  font: 11px/14px Figtree_700Bold, sans-serif; text-align: center;
+  font: 11px/14px Inter_700Bold, sans-serif; text-align: center;
   transition: left .32s cubic-bezier(.4,0,.2,1), top .32s cubic-bezier(.4,0,.2,1), height .2s, font-size .2s;
 }
 .lb:hover .lb-insignia, .lb:has(:focus-visible) .lb-insignia, .lb:has(input:focus) .lb-insignia {
@@ -333,7 +342,7 @@ const CSS = `
 
 /* Acciones: misma geometría que la navegación, separadas por una línea */
 .lb-acciones { display: flex; flex-direction: column; gap: 4px; flex: none; padding-top: 10px; border-top: 1px solid var(--lb-borde); }
-.lb-destacada { color: var(--lb-sobre-marca) !important; font-family: Figtree_700Bold, sans-serif; }
+.lb-destacada { color: var(--lb-sobre-marca) !important; font-family: Inter_700Bold, sans-serif; }
 .lb-destacada::before { background: var(--lb-marca) !important; opacity: 1 !important; transform: none !important; }
 .lb-destacada:hover { color: var(--lb-sobre-marca) !important; }
 .lb-destacada:hover::before { filter: brightness(1.08); }

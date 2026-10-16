@@ -5,6 +5,8 @@ import { cuentaGooglePendiente, type CuentaGoogle } from './googlePendiente';
 
 export type ClaseBorrador = { nombre: string; precio: string };
 
+export type SucursalBorrador = { nombre: string; direccion: string; telefono: string };
+
 export type Borrador = {
   nombreAcademia: string;
   tipoNegocio: string;
@@ -13,6 +15,10 @@ export type Borrador = {
   colorSecundario: string;
   logo: ArchivoLogo | null;
   clases: ClaseBorrador[];
+  // Negocios con varias sedes: el nombre de esta (la principal) y los datos de las demás
+  variasSucursales: boolean;
+  nombreSucursal: string;
+  sucursales: SucursalBorrador[];
   nombre: string;
   email: string;
   password: string;
@@ -28,6 +34,9 @@ const INICIAL: Borrador = {
   colorSecundario: '#14161a',
   logo: null,
   clases: [],
+  variasSucursales: false,
+  nombreSucursal: '',
+  sucursales: [],
   nombre: '',
   email: '',
   password: '',
@@ -35,7 +44,7 @@ const INICIAL: Borrador = {
 };
 
 // Orden de las pantallas del asistente; la barra de progreso se calcula con esto
-export const PASOS = ['index', 'tipo', 'alumnos', 'colores', 'logo', 'clases', 'cuenta', 'verificar'] as const;
+export const PASOS = ['index', 'tipo', 'alumnos', 'colores', 'logo', 'clases', 'sucursales', 'cuenta', 'verificar'] as const;
 export type Paso = (typeof PASOS)[number];
 
 type Contexto = {
@@ -79,6 +88,8 @@ export function ProveedorRegistro({ children }: { children: ReactNode }) {
       terminoAlumno: borrador.terminoAlumno,
       moneda: 'MXN',
       asistenciasActivas: false,
+      sucursalesActivas: borrador.variasSucursales,
+      nombreSucursal: borrador.variasSucursales ? borrador.nombreSucursal.trim() || null : null,
       logoUrl: borrador.logo?.uri ?? null,
     }),
     [borrador],

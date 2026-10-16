@@ -41,6 +41,19 @@ namespace DojoFlow.Domain.Entities
         // Registrador de asistencias con PIN (antes "kiosco"). Es opcional: no todos los negocios lo usan
         public bool AsistenciasActivas { get; set; }
 
+        // Sucursales: cada sucursal es una academia con sus propios alumnos, clases, cobros e inventario,
+        // y comparte la marca (nombre, colores, logo) con las demás. La principal tiene MatrizId null.
+        public Guid? MatrizId { get; set; }
+        // Cómo se distingue esta sede de las otras: "Centro", "Norte"...
+        public string? NombreSucursal { get; set; }
+        public string? Direccion { get; set; }
+        public string? Telefono { get; set; }
+        // Opcional, como el registrador de asistencias. Se guarda igual en todas las sedes del grupo
+        public bool SucursalesActivas { get; set; }
+
+        // Todas las sedes de un negocio comparten este id (el de la principal)
+        public Guid GrupoId => MatrizId ?? Id;
+
         public DateTime FechaCreacion { get; set; }
 
         // Código del enlace público del catálogo (dojoflow.club/catalogo/{codigo}); null = no compartido
@@ -89,6 +102,61 @@ namespace DojoFlow.Domain.Entities
             Logo = null;
             LogoContentType = null;
             LogoVersion++;
+        }
+
+        public void ActualizarDatosSucursal(string nombreSucursal, string? direccion, string? telefono)
+        {
+            if (string.IsNullOrWhiteSpace(nombreSucursal))
+                throw new ArgumentException("El nombre de la sucursal es obligatorio.");
+            if (nombreSucursal.Trim().Length > 80)
+                throw new ArgumentException("El nombre de la sucursal no puede pasar de 80 caracteres.");
+
+            NombreSucursal = nombreSucursal.Trim();
+            Direccion = string.IsNullOrWhiteSpace(direccion) ? null : direccion.Trim();
+            Telefono = string.IsNullOrWhiteSpace(telefono) ? null : telefono.Trim();
+        }
+
+        // Nueva sede del mismo negocio: hereda la marca y la forma de cobro; sus datos (alumnos,
+        // clases, inventario, finanzas) empiezan vacíos y viven aparte
+        public Academia CrearSucursal(string nombreSucursal, string? direccion, string? telefono, DateTime ahora)
+        {
+            var sucursal = new Academia
+            {
+                Id = Guid.NewGuid(),
+                MatrizId = GrupoId,
+                Nombre = Nombre,
+                TipoNegocio = TipoNegocio,
+                ColorPrimario = ColorPrimario,
+                ColorSecundario = ColorSecundario,
+                Logo = Logo,
+                LogoContentType = LogoContentType,
+                LogoVersion = LogoVersion,
+                TerminoAlumno = TerminoAlumno,
+                ModoCobro = ModoCobro,
+                PreciosPaquete = PreciosPaquete.ToList(),
+                Moneda = Moneda,
+                DiaVencimiento = DiaVencimiento,
+                AsistenciasActivas = AsistenciasActivas,
+                SucursalesActivas = true,
+                FechaCreacion = ahora
+            };
+            sucursal.ActualizarDatosSucursal(nombreSucursal, direccion, telefono);
+            return sucursal;
+        }
+
+        // Copia la marca de otra sede del grupo (al editarla en una, se ve igual en todas)
+        public void CopiarMarcaDe(Academia origen)
+        {
+            Nombre = origen.Nombre;
+            ColorPrimario = origen.ColorPrimario;
+            ColorSecundario = origen.ColorSecundario;
+            TerminoAlumno = origen.TerminoAlumno;
+        }
+
+        public void CopiarLogoDe(Academia origen)
+        {
+            if (origen.Logo == null) QuitarLogo();
+            else CambiarLogo(origen.Logo, origen.LogoContentType ?? "image/png");
         }
 
         // Genera un código nuevo; el anterior deja de funcionar
