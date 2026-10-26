@@ -1,18 +1,20 @@
 import * as Haptics from 'expo-haptics';
+import { Check } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSesion } from '@/auth/session';
-import { Boton, Credencial, DatoCredencial, Texto } from '@/components/ui';
+import { Boton, Credencial, DatoCredencial, Insignia, Texto } from '@/components/ui';
 import { useRegistro } from '@/onboarding/RegistroContexto';
+import { formatoFecha } from '@/suscripciones/catalogo';
 import { useTema } from '@/theme';
 import { plural } from '@/utils/texto';
 
 // El cierre del asistente: la credencial terminada es la recompensa
 export default function PasoListo() {
   const { color, espacio } = useTema();
-  const { borrador, vistaPrevia, token } = useRegistro();
+  const { borrador, vistaPrevia, token, suscripcion } = useRegistro();
   const { entrarConToken } = useSesion();
   const [entrando, setEntrando] = useState(false);
 
@@ -37,6 +39,14 @@ export default function PasoListo() {
           <Texto variante="cuerpo" tono="suave">
             Ya puedes inscribir {plural(borrador.terminoAlumno).toLowerCase()}, cobrar y abrir el kiosco.
           </Texto>
+          {suscripcion && (
+            <View style={estilos.plan}>
+              <Insignia texto={suscripcion.plan.nombre} tono="exito" icono={Check} />
+              <Texto variante="pequeno" tono="tenue">
+                Se renueva el {formatoFecha(new Date(suscripcion.renovacion))}
+              </Texto>
+            </View>
+          )}
         </Animated.View>
 
         <Animated.View entering={ZoomIn.delay(250).springify().damping(15)}>
@@ -47,7 +57,7 @@ export default function PasoListo() {
         </Animated.View>
       </View>
 
-      <Animated.View entering={FadeInDown.delay(600).duration(400)} style={{ paddingHorizontal: espacio.xl, paddingBottom: 12 }}>
+      <Animated.View entering={FadeInDown.delay(600).duration(400)} style={[estilos.pie, { paddingHorizontal: espacio.xl }]}>
         <Boton titulo={`Entrar a ${borrador.nombreAcademia.trim()}`} onPress={entrar} cargando={entrando} />
       </Animated.View>
     </SafeAreaView>
@@ -55,5 +65,7 @@ export default function PasoListo() {
 }
 
 const estilos = StyleSheet.create({
+  pie: { paddingBottom: 12, maxWidth: 560 + 48, width: '100%', alignSelf: 'center' },
+  plan: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
   contenido: { flex: 1, justifyContent: 'center', gap: 32, maxWidth: 560, width: '100%', alignSelf: 'center' },
 });

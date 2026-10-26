@@ -10,6 +10,8 @@ Es un adaptador de entrada más de la arquitectura hexagonal: consume la misma A
 | `login` | Inicio de sesión del coach (JWT guardado en SecureStore) | No |
 | `registro` | Alta de coach: verificación de correo por PIN + código de invitación | No |
 | `recuperar` | Restablecer contraseña con PIN enviado por correo | No |
+| `registro/planes` | Elección de plan (Gestiona, Plus, Premium; mensual o anual) | Cuenta recién creada |
+| `registro/pago` | Pasarela de pago **simulada** (modo de prueba, ver `src/suscripciones/`) | Cuenta recién creada |
 | `kiosco` | Registro de asistencia con PIN de 5 dígitos (tablet de recepción) | No |
 | `(app)/index` | Lista de alumnos con búsqueda y baja | Sí |
 | `(app)/registrar` | Alta de peleador con disciplinas | Sí |
@@ -37,8 +39,17 @@ src/
 ├── api/            # Cliente HTTP (token Bearer automático) y endpoints
 ├── auth/           # Contexto de sesión
 ├── components/     # UI reutilizable
+├── suscripciones/  # Planes, validación de tarjetas y pasarela de pago (hoy simulada)
 └── theme.ts        # Colores (mismos que el frontend web), claro/oscuro
 ```
+
+### Pagos (mockup listo para reglas de negocio)
+
+`src/suscripciones/` separa el catálogo (`catalogo.ts`), la validación de tarjetas (`tarjeta.ts`),
+el puerto de la pasarela (`pasarela.ts`) y el caso de uso `contratarPlan` (`servicio.ts`).
+Para conectar una pasarela real basta con escribir un adaptador de `Pasarela` (que tokenice la tarjeta
+con el SDK del proveedor) y asignarlo en `pasarela.ts`; la activación del plan pasa a la API en `servicio.ts`.
+Tarjetas de prueba: `4242 4242 4242 4242` (aprobada) y `4000 0000 0000 0002` (rechazada).
 
 ## Nota sobre npm 11
 

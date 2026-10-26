@@ -41,7 +41,7 @@ export default function PasoVerificar() {
     try {
       const token = await crearAcademia(borrador);
       setToken(token);
-      router.replace('/registro/listo');
+      router.replace('/registro/planes');
     } catch (e) {
       setError((e as Error).message);
       setEtapa('codigo');

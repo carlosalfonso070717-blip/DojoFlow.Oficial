@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { obtenerTiposNegocio, type MarcaAcademia, type TipoNegocio } from '@/api/endpoints';
+import type { Periodo, Plan, Suscripcion } from '@/suscripciones/tipos';
 import type { ArchivoLogo } from '@/utils/logo';
 import { cuentaGooglePendiente, type CuentaGoogle } from './googlePendiente';
 
@@ -44,7 +45,7 @@ const INICIAL: Borrador = {
 };
 
 // Orden de las pantallas del asistente; la barra de progreso se calcula con esto
-export const PASOS = ['index', 'tipo', 'alumnos', 'colores', 'logo', 'clases', 'sucursales', 'cuenta', 'verificar'] as const;
+export const PASOS = ['index', 'tipo', 'alumnos', 'colores', 'logo', 'clases', 'sucursales', 'cuenta', 'verificar', 'planes', 'pago'] as const;
 export type Paso = (typeof PASOS)[number];
 
 type Contexto = {
@@ -55,6 +56,11 @@ type Contexto = {
   // Sesión creada al verificar el correo; se usa en "listo" para entrar
   token: string | null;
   setToken: (t: string) => void;
+  // Plan elegido en "planes" y la suscripción que deja el pago
+  eleccion: { plan: Plan; periodo: Periodo } | null;
+  setEleccion: (e: { plan: Plan; periodo: Periodo }) => void;
+  suscripcion: Suscripcion | null;
+  setSuscripcion: (s: Suscripcion) => void;
   // La credencial de vista previa con lo elegido hasta ahora
   vistaPrevia: MarcaAcademia;
 };
@@ -69,6 +75,8 @@ export function ProveedorRegistro({ children }: { children: ReactNode }) {
   });
   const [tipos, setTipos] = useState<TipoNegocio[]>([]);
   const [token, setToken] = useState<string | null>(null);
+  const [eleccion, setEleccion] = useState<{ plan: Plan; periodo: Periodo } | null>(null);
+  const [suscripcion, setSuscripcion] = useState<Suscripcion | null>(null);
 
   useEffect(() => {
     obtenerTiposNegocio()
@@ -102,6 +110,10 @@ export function ProveedorRegistro({ children }: { children: ReactNode }) {
     plantilla,
     token,
     setToken,
+    eleccion,
+    setEleccion,
+    suscripcion,
+    setSuscripcion,
     vistaPrevia,
   };
 

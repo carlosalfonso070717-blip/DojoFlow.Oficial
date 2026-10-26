@@ -38,7 +38,7 @@ export default function PasoCuenta() {
     try {
       setToken(await crearAcademia(datos));
       dejarCuentaGoogle(null);
-      router.replace('/registro/listo');
+      router.replace('/registro/planes');
     } catch (e) {
       setCreando(false);
       alerta('No se pudo crear tu academia', (e as Error).message);

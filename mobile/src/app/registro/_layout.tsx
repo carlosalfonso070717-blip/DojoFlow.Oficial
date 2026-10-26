@@ -12,7 +12,8 @@ function Pasos() {
         contentStyle: { backgroundColor: color.fondo },
       }}
     >
-      {/* En la pantalla final ya no se puede volver: la cuenta existe */}
+      {/* Desde los planes ya no se puede volver: la cuenta existe */}
+      <Stack.Screen name="planes" options={{ gestureEnabled: false, animation: 'fade' }} />
       <Stack.Screen name="listo" options={{ gestureEnabled: false, animation: 'fade' }} />
     </Stack>
   );
