@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useTema } from '@/theme';
 import { Boton } from './Boton';
+import { Cristal } from './Cristal';
 import { Texto } from './Texto';
 
 type Props = {
@@ -60,17 +61,19 @@ export function Hoja({ visible, titulo, descripcion, onCerrar, accion, children 
           <Animated.View
             style={[
               estilos.panel,
+              { borderColor: color.contorno, borderTopColor: color.contornoLuz },
               esEscritorio
-                ? [estilos.dialogo, { backgroundColor: color.superficieElevada, borderRadius: radio.xl }]
+                ? [estilos.dialogo, { borderRadius: radio.xl + 6 }]
                 : {
-                    backgroundColor: color.superficieElevada,
-                    borderTopLeftRadius: radio.xl,
-                    borderTopRightRadius: radio.xl,
+                    borderTopLeftRadius: radio.xl + 6,
+                    borderTopRightRadius: radio.xl + 6,
                     paddingBottom: Math.max(insets.bottom, 16),
                   },
               panel,
             ]}
           >
+            {/* Cristal grueso: deja intuir la pantalla de atrás sin restarle legibilidad al formulario */}
+            <Cristal grueso intensidad={80} style={StyleSheet.absoluteFill} />
             {!esEscritorio && <View style={[estilos.asa, { backgroundColor: color.bordeFuerte }]} />}
             <View style={{ gap: 6, marginBottom: 20 }}>
               <Texto variante="encabezado">{titulo}</Texto>
@@ -106,9 +109,9 @@ export function Hoja({ visible, titulo, descripcion, onCerrar, accion, children 
 
 const estilos = StyleSheet.create({
   ancla: { position: 'absolute', left: 0, right: 0, bottom: 0, top: 0, justifyContent: 'flex-end', alignItems: 'center' },
-  panel: { width: '100%', maxWidth: 600, paddingHorizontal: 24, paddingTop: 10, maxHeight: '90%' },
+  panel: { width: '100%', maxWidth: 600, paddingHorizontal: 24, paddingTop: 10, maxHeight: '90%', overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth },
   anclaCentro: { justifyContent: 'center', padding: 32 },
-  dialogo: { maxWidth: 560, paddingTop: 28, paddingBottom: 24, maxHeight: '100%', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 40, shadowOffset: { width: 0, height: 16 } },
+  dialogo: { maxWidth: 560, paddingTop: 28, paddingBottom: 24, maxHeight: '100%', boxShadow: '0 30px 80px -20px rgba(0,0,0,0.6)' },
   asa: { width: 40, height: 5, borderRadius: 3, alignSelf: 'center', marginBottom: 16 },
   acciones: { flexDirection: 'row', gap: 10, marginTop: 24 },
 });

@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { MapPin, Phone, Plus, WifiOff } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { crearSucursal, editarSucursal, eliminarSucursal, obtenerSucursales, type Sucursal } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoEditar, IconoSucursal } from '@/components/iconos/Iconly';
+import { useSeccionCristal } from '@/components/Cristal';
 import { IconoTonal, LuzAmbiental } from '@/components/Tarjetas';
 import { Boton, BotonIcono, Campo, confirmar, Encabezado, EstadoVacio, Fila, Grupo, Hoja, Insignia, Texto } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
@@ -19,7 +20,8 @@ type Formulario = { id?: string; nombre: string; direccion: string; telefono: st
 
 export default function SucursalesScreen() {
   const { color } = useTema();
-  const { margen, arriba, esEscritorio, anchoSeccion } = useDiseno();
+  const { margen, esEscritorio, anchoSeccion } = useDiseno();
+  const seccion = useSeccionCristal('Sucursales');
   const espacioBarra = useEspacioBarra();
   const { perfil, cambiarSucursal, viaje } = useSesion();
   const esDueno = perfil?.usuario.rol === 'Dueno';
@@ -133,14 +135,15 @@ export default function SucursalesScreen() {
   );
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+    <View style={{ flex: 1, backgroundColor: color.fondo }}>
       <LuzAmbiental />
-      <ScrollView
+      <Animated.ScrollView
+        {...seccion.desplazamiento}
         contentContainerStyle={[
           estilos.contenido,
-          { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 },
+          { paddingHorizontal: margen, paddingTop: seccion.arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 },
         ]}
-        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
+        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} progressViewOffset={seccion.arriba} />}
       >
         <Encabezado
           titulo="Sucursales"
@@ -156,7 +159,7 @@ export default function SucursalesScreen() {
           }
         />
         {contenido}
-      </ScrollView>
+      </Animated.ScrollView>
 
       <Hoja
         visible={!!formulario}
@@ -204,7 +207,8 @@ export default function SucursalesScreen() {
           </View>
         )}
       </Hoja>
-    </SafeAreaView>
+      {seccion.barra}
+    </View>
   );
 }
 

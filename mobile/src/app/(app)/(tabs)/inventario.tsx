@@ -1,7 +1,7 @@
 import { Boxes, Copy, ExternalLink, Package, PackagePlus, SearchX, ShoppingCart, TriangleAlert, Wallet, WifiOff } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Switch, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { RefreshControl, StyleSheet, Switch, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import {
   agregarProducto,
   editarProducto,
@@ -37,6 +37,7 @@ import {
   Texto,
   useRejilla,
 } from '@/components/ui';
+import { useSeccionCristal } from '@/components/Cristal';
 import { Indicador, LuzAmbiental, Rejilla, ResumenMovil, useSombra } from '@/components/Tarjetas';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -82,7 +83,8 @@ const aEntero = (s: string) => {
 export default function InventarioScreen() {
   const refTour = useObjetivoTour('inventario');
   const { color } = useTema();
-  const { margen, anchoSeccion, arriba, esEscritorio, ancho } = useDiseno();
+  const { margen, anchoSeccion, esEscritorio, ancho } = useDiseno();
+  const seccion = useSeccionCristal('Inventario');
   // En el celular, rejilla de 2 columnas con tarjetas de producto
   const anchoTarjeta = (Math.min(ancho, anchoSeccion + margen * 2) - margen * 2 - ESPACIO_PRODUCTOS) / 2;
   const rejilla = useRejilla();
@@ -224,18 +226,19 @@ export default function InventarioScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+    <View style={{ flex: 1, backgroundColor: color.fondo }}>
       <LuzAmbiental />
-      <FlatList
+      <Animated.FlatList
+        {...seccion.desplazamiento}
         key={esEscritorio ? rejilla.clave : 'productos-movil'}
         {...(esEscritorio
           ? rejilla.props
           : { numColumns: 2, columnWrapperStyle: { gap: ESPACIO_PRODUCTOS }, ItemSeparatorComponent: SeparadorProductos })}
         data={filtrados}
         keyExtractor={(p) => p.id}
-        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
+        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: seccion.arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
+        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} progressViewOffset={seccion.arriba} />}
         ListHeaderComponent={
           <View style={estilos.cabecera} ref={refTour} collapsable={false}>
             <Encabezado
@@ -461,7 +464,8 @@ export default function InventarioScreen() {
           </>
         )}
       </Hoja>
-    </SafeAreaView>
+      {seccion.barra}
+    </View>
   );
 }
 

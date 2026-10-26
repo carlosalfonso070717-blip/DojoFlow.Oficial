@@ -1,7 +1,7 @@
 import { CircleCheck, Clock, TriangleAlert, WifiOff } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { RefreshControl, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { obtenerMensualidades, pagarMensualidad, type Mensualidad } from '@/api/endpoints';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoFiltro, IconoPagos } from '@/components/iconos/Iconly';
@@ -23,6 +23,7 @@ import {
   useRejilla,
   type TonoInsignia,
 } from '@/components/ui';
+import { useSeccionCristal } from '@/components/Cristal';
 import { Indicador, LuzAmbiental, Rejilla, ResumenMovil } from '@/components/Tarjetas';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -50,7 +51,8 @@ function coloresEstado(tono: TonoInsignia, color: Tema['color']) {
 export default function CobrosScreen() {
   const refTour = useObjetivoTour('cobros');
   const { color } = useTema();
-  const { margen, anchoSeccion, arriba, esEscritorio } = useDiseno();
+  const { margen, anchoSeccion, esEscritorio } = useDiseno();
+  const seccion = useSeccionCristal('Cobros');
   const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { datos, cargando, error, recargar } = useRecurso(obtenerMensualidades, [] as Mensualidad[]);
@@ -100,16 +102,17 @@ export default function CobrosScreen() {
   const pagadoSel = seleccionado?.estado === 'Pagado';
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+    <View style={{ flex: 1, backgroundColor: color.fondo }}>
       <LuzAmbiental />
-      <FlatList
+      <Animated.FlatList
+        {...seccion.desplazamiento}
         key={rejilla.clave}
         {...rejilla.props}
         data={filtrados}
         keyExtractor={(m) => m.id}
-        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
+        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: seccion.arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
+        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} progressViewOffset={seccion.arriba} />}
         ListHeaderComponent={
           <View style={estilos.cabecera} ref={refTour} collapsable={false}>
             <Encabezado titulo="Cobros" detalle={porCobrar > 0 ? `${formatoMoneda(porCobrar)} por cobrar` : 'Todo cobrado'} />
@@ -266,7 +269,8 @@ export default function CobrosScreen() {
           </>
         )}
       </Hoja>
-    </SafeAreaView>
+      {seccion.barra}
+    </View>
   );
 }
 

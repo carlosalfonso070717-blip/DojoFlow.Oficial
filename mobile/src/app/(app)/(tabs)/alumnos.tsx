@@ -1,12 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { BookOpen, SearchX, Users, WifiOff } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { RefreshControl, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { eliminarAlumno, obtenerAlumnos, type Alumno } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoAgregarAlumno, IconoEliminar, IconoPagos } from '@/components/iconos/Iconly';
+import { useSeccionCristal } from '@/components/Cristal';
 import { Indicador, LuzAmbiental, Rejilla, ResumenMovil } from '@/components/Tarjetas';
 import {
   Avatar,
@@ -37,11 +38,12 @@ import { plural } from '@/utils/texto';
 export default function AlumnosScreen() {
   const refTour = useObjetivoTour('alumnos');
   const { color } = useTema();
-  const { margen, anchoSeccion, arriba, esEscritorio } = useDiseno();
+  const { margen, anchoSeccion, esEscritorio } = useDiseno();
   const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { perfil } = useSesion();
   const termino = perfil?.academia.terminoAlumno || 'Alumno';
+  const seccion = useSeccionCristal(plural(termino));
   const { datos: alumnos, setDatos, cargando, error, recargar } = useRecurso(obtenerAlumnos, [] as Alumno[]);
   const [busqueda, setBusqueda] = useState('');
 
@@ -88,16 +90,17 @@ export default function AlumnosScreen() {
   );
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+    <View style={{ flex: 1, backgroundColor: color.fondo }}>
       <LuzAmbiental />
-      <FlatList
+      <Animated.FlatList
+        {...seccion.desplazamiento}
         key={rejilla.clave}
         {...rejilla.props}
         data={filtrados}
         keyExtractor={(a) => a.id}
-        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
+        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: seccion.arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
+        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} progressViewOffset={seccion.arriba} />}
         ListHeaderComponent={
           <View style={estilos.cabecera} ref={refTour} collapsable={false}>
             <Encabezado
@@ -194,7 +197,8 @@ export default function AlumnosScreen() {
           </>
         )}
       </Hoja>
-    </SafeAreaView>
+      {seccion.barra}
+    </View>
   );
 }
 

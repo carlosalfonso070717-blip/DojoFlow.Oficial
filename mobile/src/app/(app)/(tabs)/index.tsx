@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { ChevronRight, CircleCheck, ClipboardCheck, Package, ShoppingCart, Tablet, TrendingDown, TrendingUp, TriangleAlert, Users } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { Extrapolation, FadeInDown, interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   obtenerAlertasInventario,
@@ -16,6 +16,7 @@ import {
 } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
+import { Cristal, useDesplazamiento } from '@/components/Cristal';
 import { GraficaArea } from '@/components/GraficaArea';
 import { IconoAgregarAlumno, IconoAjustes, IconoPagos } from '@/components/iconos/Iconly';
 import { IconoTonal, Indicador, LuzAmbiental, Rejilla, Tarjeta, TarjetaAccion, TituloSeccion, useSombra, Vidrio } from '@/components/Tarjetas';
@@ -107,6 +108,7 @@ export default function InicioScreen() {
   const { perfil, vincularKiosco } = useSesion();
   const { iniciar: iniciarTour } = useTour();
   const { datos, cargando, recargar, error } = useRecurso(cargarResumen, VACIO);
+  const desplazamiento = useDesplazamiento();
 
   const refCredencial = useObjetivoTour('credencial');
   const refPendiente = useObjetivoTour('pendiente');
@@ -127,6 +129,7 @@ export default function InicioScreen() {
   const termino = academia.terminoAlumno || 'Alumno';
   const todoAlDia = datos.vencidos.n === 0 && datos.pendientes.n === 0 && datos.alertasStock === 0;
   const porCobrar = datos.vencidos.monto + datos.pendientes.monto;
+  const conAsistencias = academia.asistenciasActivas;
 
   async function abrirRegistrador() {
     try {
@@ -147,7 +150,8 @@ export default function InicioScreen() {
   const indicadores = (
     <View ref={refPendiente} collapsable={false} style={{ gap: 12 }}>
       {!esEscritorio && <TituloSeccion titulo="Resumen" />}
-      <Rejilla columnas={esEscritorio || esTableta ? 4 : 2}>
+      {/* En escritorio las asistencias son una cifra más de la fila: las columnas de abajo quedan parejas */}
+      <Rejilla columnas={esEscritorio ? (conAsistencias ? 5 : 4) : esTableta ? 4 : 2}>
         <Indicador
           destacado
           icono={Users}
@@ -180,6 +184,16 @@ export default function InicioScreen() {
           detalle={datos.alertasStock > 0 ? 'Llegaron a su mínimo' : 'Todo surtido'}
           onPress={() => router.navigate('/inventario')}
         />
+        {esEscritorio && conAsistencias && (
+          <Indicador
+            icono={ClipboardCheck}
+            tono="exito"
+            etiqueta="Asistencias hoy"
+            valor={String(datos.asistenciasHoy)}
+            detalle="Ver el reporte"
+            onPress={() => router.push('/asistencias')}
+          />
+        )}
       </Rejilla>
     </View>
   );
@@ -239,7 +253,6 @@ export default function InicioScreen() {
                   <TarjetaAccion icono={ShoppingCart} titulo="Vender" detalle="Descuenta una pieza del inventario" onPress={() => router.navigate('/inventario')} />
                 </Rejilla>
               </View>
-              {asistencias}
               <Pendientes datos={datos} error={!!error} todoAlDia={todoAlDia} />
             </View>
           </View>
@@ -254,7 +267,8 @@ export default function InicioScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: color.fondo }}>
       <LuzAmbiental />
-      <ScrollView
+      <Animated.ScrollView
+        {...desplazamiento.props}
         contentContainerStyle={[
           estilos.contenido,
           { paddingHorizontal: margen, paddingTop: arribaContenido, paddingBottom: espacioBarra, maxWidth: esTableta ? 760 : 560 },
@@ -265,9 +279,10 @@ export default function InicioScreen() {
         {ingresos}
         {indicadores}
         {asistencias}
-      </ScrollView>
+      </Animated.ScrollView>
 
       <CabeceraFlotante
+        y={desplazamiento.y}
         academia={academia}
         alto={arribaCabecera + ALTO_CABECERA}
         top={arribaCabecera}
@@ -294,9 +309,10 @@ function LogoAcademia({ academia, tamano }: { academia: MarcaAcademia; tamano: n
   );
 }
 
-// Logo, nombre y categoría flotando sobre el contenido, sin barra: solo un degradado
-// del fondo detrás para que el texto se lea cuando las tarjetas pasan por debajo
+// Logo, nombre y categoría flotando sobre el contenido. Arriba del todo no hay barra;
+// en cuanto las tarjetas empiezan a pasar por debajo aparece un cristal que las difumina
 function CabeceraFlotante({
+  y,
   academia,
   alto,
   top,
@@ -304,6 +320,7 @@ function CabeceraFlotante({
   ancho,
   accion,
 }: {
+  y: SharedValue<number>;
   academia: MarcaAcademia;
   alto: number;
   top: number;
@@ -312,14 +329,13 @@ function CabeceraFlotante({
   accion: ReactNode;
 }) {
   const { color } = useTema();
+  const material = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [0, 28], [0, 1], Extrapolation.CLAMP) }));
   return (
-    <View pointerEvents="box-none" style={[estilos.capaCabecera, { height: alto + 28 }]}>
-      <LinearGradient
-        pointerEvents="none"
-        colors={[color.fondo, conAlfa(color.fondo, 0.92), conAlfa(color.fondo, 0)]}
-        locations={[0, 0.62, 1]}
-        style={StyleSheet.absoluteFill}
-      />
+    <View pointerEvents="box-none" style={[estilos.capaCabecera, { height: alto + 10 }]}>
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, material]}>
+        <Cristal style={StyleSheet.absoluteFill} />
+        <View style={[estilos.filoCabecera, { backgroundColor: color.borde }]} />
+      </Animated.View>
       <Animated.View
         entering={FadeInDown.duration(420).springify().damping(18)}
         style={[estilos.cabecera, { marginTop: top, paddingHorizontal: margen, maxWidth: ancho + margen * 2 }]}
@@ -544,6 +560,7 @@ const estilos = StyleSheet.create({
   columnas: { flexDirection: 'row', gap: 24, alignItems: 'flex-start' },
   cabeceraEscritorio: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   capaCabecera: { position: 'absolute', left: 0, right: 0, top: 0 },
+  filoCabecera: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
   cabecera: { width: '100%', height: ALTO_CABECERA, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 12 },
   aro: { borderWidth: 2, padding: 2 },
   botonFlotante: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },

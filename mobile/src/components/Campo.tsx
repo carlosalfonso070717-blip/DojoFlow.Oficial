@@ -93,5 +93,6 @@ const sinContornoWeb = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as obje
 
 const estilos = StyleSheet.create({
   caja: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 56 },
-  input: { flex: 1, paddingVertical: 14 },
+  // minWidth 0: en filas de dos campos el texto no empuja la caja más allá de su columna
+  input: { flex: 1, minWidth: 0, paddingVertical: 14 },
 });

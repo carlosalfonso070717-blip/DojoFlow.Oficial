@@ -1,10 +1,11 @@
 import { ShoppingCart, TrendingUp, WifiOff } from 'lucide-react-native';
 import { useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { RefreshControl, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { eliminarMesFinanzas, obtenerFinanzas, type RegistroFinanciero } from '@/api/endpoints';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoDescargar, IconoEliminar, IconoFinanzas, IconoPagos } from '@/components/iconos/Iconly';
+import { useSeccionCristal } from '@/components/Cristal';
 import { Indicador, LuzAmbiental, Rejilla } from '@/components/Tarjetas';
 import { Boton, BotonIcono, confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, CeldaLista, Grupo, Hoja, ParDato, Superficie, Texto, useRejilla } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
@@ -27,7 +28,8 @@ function nombreMes(mesAnio: string) {
 export default function FinanzasScreen() {
   const refTour = useObjetivoTour('finanzas');
   const { color, radio } = useTema();
-  const { margen, anchoSeccion, arriba, esEscritorio } = useDiseno();
+  const { margen, anchoSeccion, esEscritorio } = useDiseno();
+  const seccion = useSeccionCristal('Finanzas');
   const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
   const { datos, cargando, error, recargar } = useRecurso(obtenerFinanzas, [] as RegistroFinanciero[]);
@@ -61,15 +63,16 @@ export default function FinanzasScreen() {
   const mejorMes = Math.max(0, ...datos.map((f) => f.total));
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+    <View style={{ flex: 1, backgroundColor: color.fondo }}>
       <LuzAmbiental />
-      <FlatList
+      <Animated.FlatList
+        {...seccion.desplazamiento}
         key={rejilla.clave}
         {...rejilla.props}
         data={datos}
         keyExtractor={(f) => f.mesAnio}
-        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
-        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} />}
+        contentContainerStyle={[estilos.lista, { paddingHorizontal: margen, paddingTop: seccion.arriba, paddingBottom: espacioBarra, maxWidth: anchoSeccion + margen * 2 }]}
+        refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} progressViewOffset={seccion.arriba} />}
         ListHeaderComponent={
           <View style={estilos.cabecera} ref={refTour} collapsable={false}>
             <Encabezado
@@ -205,7 +208,8 @@ export default function FinanzasScreen() {
           </>
         )}
       </Hoja>
-    </SafeAreaView>
+      {seccion.barra}
+    </View>
   );
 }
 
