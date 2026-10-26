@@ -16,37 +16,43 @@ import {
 } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
-import { GraficaBarras } from '@/components/GraficaBarras';
+import { GraficaArea } from '@/components/GraficaArea';
 import { IconoAgregarAlumno, IconoAjustes, IconoPagos } from '@/components/iconos/Iconly';
-import { IconoTonal, Indicador, Rejilla, Tarjeta, TarjetaAccion, TituloSeccion, useSombra } from '@/components/Tarjetas';
+import { IconoTonal, Indicador, LuzAmbiental, Rejilla, Tarjeta, TarjetaAccion, TituloSeccion, useSombra, Vidrio } from '@/components/Tarjetas';
 import { Avatar, Boton, Fila, formatoCorto, formatoMoneda, Grupo, Presionable, Texto } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
-import { conAlfa, mezclar, textoSobre } from '@/theme/color';
+import { conAlfa, mezclar } from '@/theme/color';
 import { useTema } from '@/theme';
 import { useObjetivoTour, useTour } from '@/tour/Tour';
 import { cantidad, plural } from '@/utils/texto';
 import { alerta } from '@/utils/alerta';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-const MESES_GRAFICA = 6;
+// Rangos de la gráfica de ingresos, en meses
+const RANGOS = [
+  { meses: 3, etiqueta: '3 meses' },
+  { meses: 6, etiqueta: '6 meses' },
+  { meses: 12, etiqueta: '1 año' },
+] as const;
 
 // Mismo formato que guarda la API: "10-2026"
 const claveMes = (fecha: Date) => `${String(fecha.getMonth() + 1).padStart(2, '0')}-${fecha.getFullYear()}`;
 
-type Mes = { clave: string; corto: string; largo: string; total: number; cuotas: number; ventas: number; nVentas: number };
+type Mes = { clave: string; corto: string; largo: string; anio: number; total: number; cuotas: number; ventas: number; nVentas: number };
 
-// Los últimos meses, del más viejo al actual; los meses sin movimientos valen 0
-function mesesRecientes(finanzas: RegistroFinanciero[]): Mes[] {
+// Los últimos `cuantos` meses, del más viejo al actual; los meses sin movimientos valen 0
+function mesesRecientes(finanzas: RegistroFinanciero[], cuantos: number): Mes[] {
   const hoy = new Date();
-  return Array.from({ length: MESES_GRAFICA }, (_, i) => {
-    const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - (MESES_GRAFICA - 1 - i), 1);
+  return Array.from({ length: cuantos }, (_, i) => {
+    const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - (cuantos - 1 - i), 1);
     const nombre = MESES[fecha.getMonth()];
     const registro = finanzas.find((f) => f.mesAnio === claveMes(fecha));
     return {
       clave: claveMes(fecha),
       corto: nombre.slice(0, 3),
       largo: nombre[0].toUpperCase() + nombre.slice(1),
+      anio: fecha.getFullYear(),
       total: registro?.total ?? 0,
       cuotas: registro?.ingresosMensualidades ?? 0,
       ventas: registro?.ingresosVentas ?? 0,
@@ -72,7 +78,7 @@ const cargarResumen = async () => {
     alumnos: alumnos.length,
     vencidos: { n: vencidos.length, monto: vencidos.reduce((s, r) => s + r.monto, 0) },
     pendientes: { n: pendientes.length, monto: pendientes.reduce((s, r) => s + r.monto, 0) },
-    meses: mesesRecientes(finanzas),
+    finanzas,
     alertasStock: alertas.length,
     asistenciasHoy: asistencias.length,
   };
@@ -84,7 +90,7 @@ const VACIO: Resumen = {
   alumnos: 0,
   vencidos: { n: 0, monto: 0 },
   pendientes: { n: 0, monto: 0 },
-  meses: mesesRecientes([]),
+  finanzas: [],
   alertasStock: 0,
   asistenciasHoy: 0,
 };
@@ -133,7 +139,7 @@ export default function InicioScreen() {
 
   const ingresos = (
     <View ref={refCredencial} collapsable={false}>
-      <TarjetaIngresos academia={academia} meses={datos.meses} />
+      <TarjetaIngresos academia={academia} finanzas={datos.finanzas} />
     </View>
   );
 
@@ -142,7 +148,14 @@ export default function InicioScreen() {
     <View ref={refPendiente} collapsable={false} style={{ gap: 12 }}>
       {!esEscritorio && <TituloSeccion titulo="Resumen" />}
       <Rejilla columnas={esEscritorio || esTableta ? 4 : 2}>
-        <Indicador icono={Users} etiqueta={plural(termino)} valor={String(datos.alumnos)} detalle="Inscritos" onPress={() => router.navigate('/alumnos')} />
+        <Indicador
+          destacado
+          icono={Users}
+          etiqueta={plural(termino)}
+          valor={String(datos.alumnos)}
+          detalle="Inscritos"
+          onPress={() => router.navigate('/alumnos')}
+        />
         <Indicador
           icono={IconoPagos}
           tono="aviso"
@@ -190,45 +203,48 @@ export default function InicioScreen() {
   // ===== Escritorio: tablero en dos columnas =====
   if (esEscritorio) {
     return (
-      <ScrollView
-        style={{ flex: 1, backgroundColor: color.fondo }}
-        contentContainerStyle={[estilos.contenido, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: maximoEscritorio }]}
-      >
-        <View style={estilos.cabeceraEscritorio}>
-          <LogoAcademia academia={academia} tamano={56} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <Texto variante="titulo" numberOfLines={1}>
-              {academia.nombre}
-            </Texto>
-            <Texto variante="detalle" tono="suave">
-              {academia.tipoNegocio}
-            </Texto>
-          </View>
-          {academia.asistenciasActivas && (
-            <Boton titulo="Registrador de asistencias" icono={Tablet} variante="contorno" tamano="compacto" onPress={abrirRegistrador} />
-          )}
-          <View ref={refInscribir} collapsable={false}>
-            <Boton titulo={`Inscribir ${termino.toLowerCase()}`} icono={IconoAgregarAlumno} tamano="compacto" onPress={() => router.push('/registrar')} />
-          </View>
-        </View>
-
-        {indicadores}
-
-        <View style={estilos.columnas}>
-          <View style={{ flex: 1.35 }}>{ingresos}</View>
-          <View style={{ flex: 1, gap: 24 }}>
-            <View style={{ gap: 10 }}>
-              <TituloSeccion titulo="Acciones rápidas" />
-              <Rejilla columnas={2}>
-                <TarjetaAccion icono={IconoPagos} titulo="Cobrar" detalle="Registra un pago pendiente" onPress={() => router.navigate('/mensualidades')} />
-                <TarjetaAccion icono={ShoppingCart} titulo="Vender" detalle="Descuenta una pieza del inventario" onPress={() => router.navigate('/inventario')} />
-              </Rejilla>
+      <View style={{ flex: 1, backgroundColor: color.fondo }}>
+        <LuzAmbiental />
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[estilos.contenido, { paddingHorizontal: margen, paddingTop: arriba, paddingBottom: espacioBarra, maxWidth: maximoEscritorio }]}
+        >
+          <View style={estilos.cabeceraEscritorio}>
+            <LogoAcademia academia={academia} tamano={56} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Texto variante="titulo" numberOfLines={1}>
+                {academia.nombre}
+              </Texto>
+              <Texto variante="detalle" tono="suave">
+                {academia.tipoNegocio}
+              </Texto>
             </View>
-            {asistencias}
-            <Pendientes datos={datos} error={!!error} todoAlDia={todoAlDia} />
+            {academia.asistenciasActivas && (
+              <Boton titulo="Registrador de asistencias" icono={Tablet} variante="contorno" tamano="compacto" onPress={abrirRegistrador} />
+            )}
+            <View ref={refInscribir} collapsable={false}>
+              <Boton titulo={`Inscribir ${termino.toLowerCase()}`} icono={IconoAgregarAlumno} tamano="compacto" onPress={() => router.push('/registrar')} />
+            </View>
           </View>
-        </View>
-      </ScrollView>
+
+          {indicadores}
+
+          <View style={estilos.columnas}>
+            <View style={{ flex: 1.35 }}>{ingresos}</View>
+            <View style={{ flex: 1, gap: 24 }}>
+              <View style={{ gap: 10 }}>
+                <TituloSeccion titulo="Acciones rápidas" />
+                <Rejilla columnas={2}>
+                  <TarjetaAccion icono={IconoPagos} titulo="Cobrar" detalle="Registra un pago pendiente" onPress={() => router.navigate('/mensualidades')} />
+                  <TarjetaAccion icono={ShoppingCart} titulo="Vender" detalle="Descuenta una pieza del inventario" onPress={() => router.navigate('/inventario')} />
+                </Rejilla>
+              </View>
+              {asistencias}
+              <Pendientes datos={datos} error={!!error} todoAlDia={todoAlDia} />
+            </View>
+          </View>
+        </ScrollView>
+      </View>
     );
   }
 
@@ -237,6 +253,7 @@ export default function InicioScreen() {
   const arribaContenido = arribaCabecera + ALTO_CABECERA + 20;
   return (
     <View style={{ flex: 1, backgroundColor: color.fondo }}>
+      <LuzAmbiental />
       <ScrollView
         contentContainerStyle={[
           estilos.contenido,
@@ -386,101 +403,137 @@ function Pendientes({ datos, error, todoAlDia }: { datos: Resumen; error: boolea
   );
 }
 
-// Tarjeta protagonista con los colores de la academia: los ingresos del mes elegido,
-// su comparación con el anterior, la gráfica de los últimos meses y el desglose
-function TarjetaIngresos({ academia, meses }: { academia: MarcaAcademia; meses: Mes[] }) {
-  const { radio } = useTema();
+// Tarjeta protagonista: cristal oscuro con un brillo del color de la academia, los ingresos
+// del mes elegido, su comparación con el anterior y la curva de los últimos meses
+function TarjetaIngresos({ academia, finanzas }: { academia: MarcaAcademia; finanzas: RegistroFinanciero[] }) {
+  const { color, radio, oscuro } = useTema();
   const sombra = useSombra('alta');
-  const [elegido, setElegido] = useState(meses.length - 1);
-  const base = academia.colorSecundario;
-  const tinta = textoSobre(base, '#14161a');
-  const claro = tinta === '#ffffff';
-  const tintaSuave = claro ? 'rgba(255,255,255,0.72)' : 'rgba(20,22,26,0.62)';
-  const pista = claro ? 'rgba(255,255,255,0.16)' : 'rgba(20,22,26,0.1)';
+  const { ancho } = useDiseno();
+  const [rango, setRango] = useState<number>(6);
+  const meses = mesesRecientes(finanzas, rango);
+  const [elegido, setElegido] = useState<number | null>(null);
 
-  const indice = Math.min(elegido, meses.length - 1);
+  // Sin elección, el mes en curso; al cambiar de rango la elección se ajusta al nuevo largo
+  const indice = elegido === null ? meses.length - 1 : Math.min(elegido, meses.length - 1);
   const mes = meses[indice];
   const anterior = meses[indice - 1];
   const cambio = anterior && anterior.total > 0 ? ((mes.total - anterior.total) / anterior.total) * 100 : null;
   const enCurso = indice === meses.length - 1;
+  const promedio = meses.reduce((s, m) => s + m.total, 0) / meses.length;
+  const sube = cambio !== null && cambio >= 0;
+  const estrecho = ancho < 520;
+
+  const selector = (
+    <View style={[estilos.rangos, { borderColor: color.contorno, backgroundColor: oscuro ? 'rgba(0,0,0,0.3)' : color.fondo }]}>
+      {RANGOS.map((r) => {
+        const activo = r.meses === rango;
+        return (
+          <Presionable
+            key={r.meses}
+            onPress={() => {
+              setRango(r.meses);
+              setElegido(null);
+            }}
+            escala={0.95}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activo }}
+            style={[estilos.rango, activo && (oscuro ? estilos.rangoActivoOscuro : [estilos.rangoActivo, { backgroundColor: color.superficie }])]}
+          >
+            <Texto variante="pequeno" style={{ color: activo ? color.texto : color.textoSuave, fontFamily: activo ? 'Inter_600SemiBold' : 'Inter_500Medium' }}>
+              {r.etiqueta}
+            </Texto>
+          </Presionable>
+        );
+      })}
+    </View>
+  );
 
   return (
-    <Animated.View entering={FadeInDown.duration(420).delay(60).springify().damping(18)} style={[{ borderRadius: radio.xl }, sombra]}>
+    <Animated.View
+      entering={FadeInDown.duration(420).delay(60).springify().damping(18)}
+      style={[
+        estilos.ingresos,
+        { borderRadius: radio.xl, backgroundColor: color.superficie, borderColor: color.contorno, borderTopColor: color.contornoLuz },
+        sombra,
+      ]}
+    >
+      <Vidrio radio={radio.xl - 1} />
+      {/* Brillo del color principal que se desvanece desde la esquina */}
       <LinearGradient
-        colors={[mezclar(base, academia.colorPrimario, 0.28), base]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[estilos.ingresos, { borderRadius: radio.xl }]}
-      >
-        {/* Brillo del color principal que se desvanece desde la esquina */}
-        <LinearGradient
-          pointerEvents="none"
-          colors={[conAlfa(academia.colorPrimario, 0.45), conAlfa(academia.colorPrimario, 0)]}
-          start={{ x: 1, y: 0 }}
-          end={{ x: 0.35, y: 0.75 }}
-          style={StyleSheet.absoluteFill}
-        />
+        pointerEvents="none"
+        colors={[conAlfa(academia.colorPrimario, oscuro ? 0.22 : 0.1), conAlfa(academia.colorPrimario, 0)]}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.4, y: 0.65 }}
+        style={[StyleSheet.absoluteFill, { borderRadius: radio.xl - 1 }]}
+      />
 
-        <View style={estilos.filaIngresos}>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Texto variante="detalle" style={{ color: tintaSuave }}>
-              Ingresos de {mes.largo.toLowerCase()}
-              {enCurso ? ' · en curso' : ''}
-            </Texto>
-            <Texto variante="gigante" cifras numberOfLines={1} adjustsFontSizeToFit style={{ color: tinta }}>
+      <View style={estilos.filaIngresos}>
+        <View style={{ flex: 1, gap: 6 }}>
+          <Texto variante="detalle" tono="suave">
+            Ingresos de {mes.largo.toLowerCase()}
+            {enCurso ? ' · en curso' : ''}
+          </Texto>
+          <View style={estilos.cifraIngresos}>
+            <Texto variante="gigante" cifras numberOfLines={1} adjustsFontSizeToFit style={{ flexShrink: 1 }}>
               {formatoMoneda(mes.total)}
             </Texto>
+            {cambio !== null && (
+              <View style={[estilos.cambio, { backgroundColor: sube ? color.exitoSuave : color.peligroSuave }]}>
+                {sube ? <TrendingUp size={13} color={color.exito} strokeWidth={2.4} /> : <TrendingDown size={13} color={color.peligro} strokeWidth={2.4} />}
+                <Texto variante="pequeno" cifras style={{ color: sube ? color.exito : color.peligro, fontFamily: 'Inter_700Bold' }}>
+                  {sube ? '+' : ''}
+                  {Math.round(cambio)}% vs {anterior.corto}
+                </Texto>
+              </View>
+            )}
           </View>
-          {cambio !== null && (
-            <View style={[estilos.cambio, { backgroundColor: pista }]}>
-              {cambio >= 0 ? <TrendingUp size={13} color={tinta} strokeWidth={2.4} /> : <TrendingDown size={13} color={tinta} strokeWidth={2.4} />}
-              <Texto variante="pequeno" cifras style={{ color: tinta, fontFamily: 'Inter_700Bold' }}>
-                {cambio >= 0 ? '+' : ''}
-                {Math.round(cambio)}% vs {anterior.corto}
-              </Texto>
-            </View>
-          )}
         </View>
+        {!estrecho && selector}
+      </View>
+      {estrecho && selector}
 
-        <GraficaBarras
-          datos={meses.map((m) => ({ clave: m.clave, etiqueta: m.corto, valor: m.total, descripcion: `${m.largo}: ${formatoMoneda(m.total)}` }))}
-          elegido={indice}
-          onElegir={setElegido}
-          alto={112}
-          formatoGuia={formatoCorto}
-          mensajeVacio="Aquí verás cómo crecen tus ingresos"
-          colores={{
-            activo: tinta,
-            inactivo: claro ? 'rgba(255,255,255,0.28)' : 'rgba(20,22,26,0.22)',
-            vacio: pista,
-            guia: pista,
-            base: pista,
-            etiqueta: tintaSuave,
-            etiquetaActiva: tinta,
-            fondo: 'transparent',
-          }}
-        />
+      <GraficaArea
+        datos={meses.map((m) => ({ clave: m.clave, etiqueta: m.corto, valor: m.total, descripcion: `${m.largo}: ${formatoMoneda(m.total)}` }))}
+        elegido={indice}
+        onElegir={setElegido}
+        alto={estrecho ? 150 : 190}
+        formatoGuia={formatoCorto}
+        formatoGlobo={formatoMoneda}
+        tituloGlobo={(i) => `${meses[i].largo} ${meses[i].anio}`}
+        mensajeVacio="Aquí verás cómo crecen tus ingresos"
+        colores={{
+          linea: oscuro ? mezclar(color.marca, '#ffffff', 0.62) : color.marcaTexto,
+          relleno: color.marca,
+          guia: color.borde,
+          etiqueta: color.textoTenue,
+          etiquetaActiva: color.texto,
+          globo: oscuro ? '#ffffff' : color.texto,
+          textoGlobo: oscuro ? '#14161a' : color.superficie,
+          textoGloboSuave: oscuro ? 'rgba(20,22,26,0.6)' : conAlfa(color.superficie, 0.7),
+        }}
+      />
 
-        <View style={{ flexDirection: 'row', gap: 16 }}>
-          <Parte etiqueta="Cuotas" valor={mes.cuotas} punto={academia.colorPrimario} tinta={tinta} suave={tintaSuave} />
-          <Parte etiqueta={`Ventas (${mes.nVentas})`} valor={mes.ventas} punto={pista} tinta={tinta} suave={tintaSuave} />
-        </View>
-      </LinearGradient>
+      <View style={[estilos.leyenda, { borderTopColor: color.borde }]}>
+        {/* En el celular las cifras van cortas para que quepan las tres */}
+        <Parte etiqueta="Cuotas" valor={mes.cuotas} punto={color.marca} corto={estrecho} />
+        <Parte etiqueta={`Ventas (${mes.nVentas})`} valor={mes.ventas} punto={oscuro ? mezclar(color.marca, '#ffffff', 0.62) : color.textoTenue} corto={estrecho} />
+        <Parte etiqueta={estrecho ? 'Promedio' : `Promedio ${rango === 12 ? 'anual' : `${rango} meses`}`} valor={promedio} punto={color.bordeFuerte} corto={estrecho} />
+      </View>
     </Animated.View>
   );
 }
 
-function Parte({ etiqueta, valor, punto, tinta, suave }: { etiqueta: string; valor: number; punto: string; tinta: string; suave: string }) {
+function Parte({ etiqueta, valor, punto, corto }: { etiqueta: string; valor: number; punto: string; corto?: boolean }) {
   return (
     <View style={{ flex: 1, gap: 2 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: punto }} />
-        <Texto variante="pequeno" style={{ color: suave }}>
+        <View style={{ width: 8, height: 8, borderRadius: 3, backgroundColor: punto }} />
+        <Texto variante="pequeno" tono="suave" numberOfLines={1}>
           {etiqueta}
         </Texto>
       </View>
-      <Texto variante="subtitulo" cifras style={{ color: tinta }}>
-        {formatoMoneda(valor)}
+      <Texto variante="subtitulo" cifras numberOfLines={1} adjustsFontSizeToFit>
+        {corto ? formatoCorto(valor) : formatoMoneda(valor)}
       </Texto>
     </View>
   );
@@ -494,8 +547,14 @@ const estilos = StyleSheet.create({
   cabecera: { width: '100%', height: ALTO_CABECERA, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 12 },
   aro: { borderWidth: 2, padding: 2 },
   botonFlotante: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },
-  ingresos: { padding: 22, gap: 18, overflow: 'hidden' },
+  ingresos: { padding: 22, gap: 18, borderWidth: StyleSheet.hairlineWidth },
   filaIngresos: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  cifraIngresos: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   cambio: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  rangos: { flexDirection: 'row', alignSelf: 'flex-start', padding: 3, gap: 2, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth },
+  rango: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
+  rangoActivo: { boxShadow: '0 2px 6px rgba(0,0,0,0.1)' },
+  rangoActivoOscuro: { backgroundColor: 'rgba(255,255,255,0.11)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14), 0 4px 12px -4px rgba(0,0,0,0.6)' },
+  leyenda: { flexDirection: 'row', gap: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth },
   estadoTarjeta: { flexDirection: 'row', alignItems: 'center', gap: 14 },
 });

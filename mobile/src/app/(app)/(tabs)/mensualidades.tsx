@@ -23,7 +23,7 @@ import {
   useRejilla,
   type TonoInsignia,
 } from '@/components/ui';
-import { Indicador, Rejilla, ResumenMovil } from '@/components/Tarjetas';
+import { Indicador, LuzAmbiental, Rejilla, ResumenMovil } from '@/components/Tarjetas';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useTema, type Tema } from '@/theme';
@@ -101,6 +101,7 @@ export default function CobrosScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+      <LuzAmbiental />
       <FlatList
         key={rejilla.clave}
         {...rejilla.props}

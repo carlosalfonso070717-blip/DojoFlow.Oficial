@@ -26,7 +26,14 @@ export function Encabezado({ titulo, detalle, acciones }: { titulo: string; deta
 export function Buscador({ value, onChangeText, ...props }: TextInputProps & { value: string; onChangeText: (t: string) => void }) {
   const { color, radio, tipografia, oscuro } = useTema();
   return (
-    <View style={[estilos.buscador, { backgroundColor: oscuro ? 'rgba(118,118,128,0.24)' : 'rgba(118,118,128,0.12)', borderRadius: radio.m }]}>
+    <View
+      style={[
+        estilos.buscador,
+        oscuro
+          ? { backgroundColor: 'rgba(0,0,0,0.35)', borderColor: color.contorno, borderWidth: StyleSheet.hairlineWidth, borderRadius: radio.l }
+          : { backgroundColor: 'rgba(118,118,128,0.12)', borderRadius: radio.m },
+      ]}
+    >
       <Search size={18} color={color.textoTenue} />
       <TextInput
         value={value}
@@ -69,7 +76,7 @@ export function BotonIcono({ icono, onPress, etiqueta, destacado }: { icono: Rea
 const estilos = StyleSheet.create({
   encabezado: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingTop: 8, paddingBottom: 4 },
   acciones: { flexDirection: 'row', gap: 8, paddingBottom: 2 },
-  buscador: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, minHeight: 42 },
+  buscador: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, minHeight: 44 },
   botonIcono: {
     width: 42,
     height: 42,

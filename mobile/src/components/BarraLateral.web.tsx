@@ -15,7 +15,10 @@ import { confirmar } from './ui';
 // Barra lateral de la web de escritorio: contraída muestra solo íconos; al pasar el mouse
 // (o al enfocarla con teclado) se expande sobre el contenido con textos, buscador y acciones.
 // Es HTML y CSS reales (react-native-web corre sobre react-dom): las transiciones las hace el navegador.
-export const ANCHO_BARRA_LATERAL = 84;
+export const ANCHO_BARRA_LATERAL = 96;
+// La barra flota separada de los bordes de la ventana, como un panel de cristal
+const AIRE = 14;
+const ANCHO_RIEL = ANCHO_BARRA_LATERAL - AIRE - 10;
 
 type Seccion = { ruta: Href; etiqueta: string; icono: ComponentType<PropsIcono>; activa: (p: string) => boolean; insignia?: number };
 
@@ -90,7 +93,11 @@ export function BarraLateral() {
 
   const variables = {
     // Material translúcido como la barra lateral de macOS: deja ver lo que pasa debajo al expandirse
-    '--lb-fondo': conAlfa(color.superficie, oscuro ? 0.72 : 0.78),
+    '--lb-fondo': conAlfa(color.superficie, oscuro ? 0.62 : 0.78),
+    '--lb-vidrio': `linear-gradient(180deg, ${conAlfa(color.vidrio[0], oscuro ? 0.75 : 0.8)}, ${conAlfa(color.vidrio[1], oscuro ? 0.6 : 0.8)})`,
+    '--lb-luz': color.contornoLuz,
+    '--lb-grad': `linear-gradient(135deg, ${color.degradadoMarca.join(', ')})`,
+    '--lb-brillo': color.brillo,
     '--lb-borde': color.contorno,
     '--lb-texto': color.texto,
     '--lb-suave': color.textoSuave,
@@ -270,22 +277,24 @@ function useObjetivoDom<T extends HTMLElement>(id: IdObjetivo) {
 const CSS = `
 .lb-hueco { position: relative; width: ${ANCHO_BARRA_LATERAL}px; flex: none; height: 100%; z-index: 20; }
 .lb {
-  position: absolute; inset: 0 auto 0 0; width: ${ANCHO_BARRA_LATERAL}px; box-sizing: border-box;
-  display: flex; flex-direction: column; gap: 14px; padding: 18px 12px;
-  background: var(--lb-fondo); border-right: 1px solid var(--lb-borde); color: var(--lb-texto);
+  position: absolute; inset: ${AIRE}px auto ${AIRE}px ${AIRE}px; width: ${ANCHO_RIEL}px; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 14px; padding: 16px 10px;
+  background: var(--lb-vidrio), var(--lb-fondo); color: var(--lb-texto);
+  border: 1px solid var(--lb-borde); border-top-color: var(--lb-luz); border-radius: 26px;
+  box-shadow: 0 30px 60px -30px rgba(0,0,0,0.75);
   -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px);
   font-family: Inter_500Medium, system-ui, sans-serif; font-size: 15px;
   overflow: hidden; transition: width .32s cubic-bezier(.4,0,.2,1), box-shadow .32s ease;
 }
-.lb:hover, .lb:has(:focus-visible), .lb:has(input:focus) { width: 264px; box-shadow: 12px 0 40px -12px var(--lb-sombra); }
+.lb:hover, .lb:has(:focus-visible), .lb:has(input:focus) { width: 264px; box-shadow: 16px 0 50px -14px var(--lb-sombra); }
 
 .lb a, .lb button { color: inherit; text-decoration: none; font: inherit; background: none; border: 0; cursor: pointer; }
 .lb :focus-visible { outline: 2px solid var(--lb-marca); outline-offset: 2px; }
 
 /* Perfil */
-.lb-perfil { display: flex; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 16px; min-height: 56px; box-sizing: border-box; transition: background .2s; }
+.lb-perfil { display: flex; align-items: center; gap: 12px; padding: 6px 3px; border-radius: 16px; min-height: 56px; box-sizing: border-box; transition: background .2s; }
 .lb-perfil:hover { background: var(--lb-hover); }
-.lb-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: none; }
+.lb-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: none; box-sizing: border-box; border: 2px solid var(--lb-marca); box-shadow: 0 6px 20px -6px var(--lb-brillo); }
 .lb-iniciales { display: grid; place-items: center; background: var(--lb-activo); color: var(--lb-activo-texto); font-family: Inter_700Bold, sans-serif; font-size: 16px; }
 .lb-detalles { display: grid; min-width: 0; flex: 1; }
 .lb-nombre { font-family: Inter_700Bold, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -301,21 +310,21 @@ const CSS = `
 /* Buscador: contraído es solo la lupa */
 .lb-buscar { position: relative; height: 44px; flex: none; }
 .lb-buscar input {
-  width: 100%; height: 100%; box-sizing: border-box; padding: 0 12px 0 46px; border-radius: 14px;
+  width: 100%; height: 100%; box-sizing: border-box; padding: 0 12px 0 42px; border-radius: 14px;
   border: 1px solid var(--lb-borde); background: var(--lb-campo); color: var(--lb-texto);
   font: 15px Inter_400Regular, sans-serif; outline: none; cursor: pointer;
 }
 .lb-buscar input:focus { border-color: var(--lb-marca); cursor: text; }
 .lb-buscar input::placeholder { color: var(--lb-tenue); }
 .lb-buscar input::-webkit-search-cancel-button { display: none; }
-.lb-lupa { position: absolute; left: 19px; top: 12px; display: flex; color: var(--lb-suave); pointer-events: none; }
+.lb-lupa { position: absolute; left: 14px; top: 12px; display: flex; color: var(--lb-suave); pointer-events: none; }
 
 /* Navegación */
 .lb-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
 .lb-nav hr { border: 0; height: 1px; background: var(--lb-borde); margin: 8px 6px; flex: none; }
 .lb-item {
   position: relative; display: flex; align-items: center; gap: 14px; height: 46px; flex: none;
-  padding: 0 0 0 19px; border-radius: 14px; color: var(--lb-suave) !important; text-align: left; white-space: nowrap;
+  padding: 0 0 0 14px; border-radius: 14px; color: var(--lb-suave) !important; text-align: left; white-space: nowrap;
   transition: color .2s;
 }
 .lb-item::before {
@@ -324,14 +333,18 @@ const CSS = `
 }
 .lb-item:hover { color: var(--lb-texto) !important; }
 .lb-item:hover::before { opacity: 1; transform: scale(1); }
-.lb-item.activa { color: var(--lb-activo-texto) !important; font-family: Inter_700Bold, sans-serif; }
-.lb-item.activa::before { background: var(--lb-activo); opacity: 1; transform: scale(1); }
+.lb-item.activa { color: var(--lb-sobre-marca) !important; font-family: Inter_700Bold, sans-serif; }
+/* La sección activa es una pieza del color de la academia, con volumen y halo */
+.lb-item.activa::before {
+  background: var(--lb-grad); opacity: 1; transform: scale(1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 10px 26px -8px var(--lb-brillo);
+}
 .lb-icono, .lb-texto { position: relative; display: flex; }
 .lb-icono { flex: none; }
 
 /* Insignia: sobre el ícono al estar contraída, a la derecha al expandirse */
 .lb-insignia {
-  position: absolute; top: 5px; left: 36px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
+  position: absolute; top: 5px; left: 31px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
   border-radius: 9px; background: var(--lb-marca); color: var(--lb-sobre-marca); border: 2px solid var(--lb-fondo);
   font: 11px/14px Inter_700Bold, sans-serif; text-align: center;
   transition: left .32s cubic-bezier(.4,0,.2,1), top .32s cubic-bezier(.4,0,.2,1), height .2s, font-size .2s;
@@ -343,7 +356,7 @@ const CSS = `
 /* Acciones: misma geometría que la navegación, separadas por una línea */
 .lb-acciones { display: flex; flex-direction: column; gap: 4px; flex: none; padding-top: 10px; border-top: 1px solid var(--lb-borde); }
 .lb-destacada { color: var(--lb-sobre-marca) !important; font-family: Inter_700Bold, sans-serif; }
-.lb-destacada::before { background: var(--lb-marca) !important; opacity: 1 !important; transform: none !important; }
+.lb-destacada::before { background: var(--lb-grad) !important; opacity: 1 !important; transform: none !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 10px 26px -8px var(--lb-brillo); }
 .lb-destacada:hover { color: var(--lb-sobre-marca) !important; }
 .lb-destacada:hover::before { filter: brightness(1.08); }
 .lb-salir:hover { color: var(--lb-peligro) !important; }

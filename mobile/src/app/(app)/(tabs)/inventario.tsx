@@ -37,7 +37,7 @@ import {
   Texto,
   useRejilla,
 } from '@/components/ui';
-import { Indicador, Rejilla, ResumenMovil, useSombra } from '@/components/Tarjetas';
+import { Indicador, LuzAmbiental, Rejilla, ResumenMovil, useSombra } from '@/components/Tarjetas';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
 import { useSesion } from '@/auth/session';
@@ -225,6 +225,7 @@ export default function InventarioScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+      <LuzAmbiental />
       <FlatList
         key={esEscritorio ? rejilla.clave : 'productos-movil'}
         {...(esEscritorio

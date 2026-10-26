@@ -127,7 +127,13 @@ function Barra({
       accessibilityState={{ selected: activa }}
     >
       <Animated.View
-        style={[estilos.barra, { backgroundColor: dato.valor > 0 ? (activa ? colores.activo : colores.inactivo) : colores.vacio }, estilo]}
+        style={[
+          estilos.barra,
+          { backgroundColor: dato.valor > 0 ? (activa ? colores.activo : colores.inactivo) : colores.vacio },
+          // La barra elegida se ilumina con su propio color
+          activa && dato.valor > 0 && { boxShadow: `0 0 24px -4px ${colores.activo}` },
+          estilo,
+        ]}
       />
     </Pressable>
   );
@@ -141,7 +147,7 @@ const estilos = StyleSheet.create({
   barras: { flexDirection: 'row', alignItems: 'flex-end', borderBottomWidth: 1 },
   // Toda la columna recibe el toque, no solo la barra
   columna: { flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center' },
-  barra: { width: '62%', maxWidth: 34, borderTopLeftRadius: 4, borderTopRightRadius: 4 },
+  barra: { width: '62%', maxWidth: 34, borderTopLeftRadius: 8, borderTopRightRadius: 8, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },
   etiquetas: { flexDirection: 'row', marginTop: 8 },
   etiqueta: { flex: 1, textAlign: 'center' },
 });

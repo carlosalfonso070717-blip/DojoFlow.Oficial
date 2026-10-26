@@ -7,7 +7,7 @@ import { crearSucursal, editarSucursal, eliminarSucursal, obtenerSucursales, typ
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoEditar, IconoSucursal } from '@/components/iconos/Iconly';
-import { IconoTonal } from '@/components/Tarjetas';
+import { IconoTonal, LuzAmbiental } from '@/components/Tarjetas';
 import { Boton, BotonIcono, Campo, confirmar, Encabezado, EstadoVacio, Fila, Grupo, Hoja, Insignia, Texto } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -134,6 +134,7 @@ export default function SucursalesScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+      <LuzAmbiental />
       <ScrollView
         contentContainerStyle={[
           estilos.contenido,

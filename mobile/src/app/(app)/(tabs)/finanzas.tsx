@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { eliminarMesFinanzas, obtenerFinanzas, type RegistroFinanciero } from '@/api/endpoints';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoDescargar, IconoEliminar, IconoFinanzas, IconoPagos } from '@/components/iconos/Iconly';
-import { Indicador, Rejilla } from '@/components/Tarjetas';
+import { Indicador, LuzAmbiental, Rejilla } from '@/components/Tarjetas';
 import { Boton, BotonIcono, confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, CeldaLista, Grupo, Hoja, ParDato, Superficie, Texto, useRejilla } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -62,6 +62,7 @@ export default function FinanzasScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+      <LuzAmbiental />
       <FlatList
         key={rejilla.clave}
         {...rejilla.props}

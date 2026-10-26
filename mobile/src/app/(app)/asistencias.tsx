@@ -8,7 +8,7 @@ import { useSesion } from '@/auth/session';
 import { BotonAtras } from '@/components/BotonAtras';
 import { GraficaBarras, type DatoBarra } from '@/components/GraficaBarras';
 import { Segmentos } from '@/components/Segmentos';
-import { Indicador, Rejilla, Tarjeta, TituloSeccion } from '@/components/Tarjetas';
+import { Indicador, LuzAmbiental, Rejilla, Tarjeta, TituloSeccion } from '@/components/Tarjetas';
 import { Avatar, Boton, EstadoVacio, Fila, Grupo, Insignia, Texto } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { conAlfa } from '@/theme/color';
@@ -236,6 +236,7 @@ export default function AsistenciasScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+      <LuzAmbiental />
       <ScrollView
         contentContainerStyle={[
           estilos.contenido,

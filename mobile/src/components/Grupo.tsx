@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useDiseno } from '@/hooks/useDiseno';
-import { useSombra } from './Tarjetas';
+import { useSombra, Vidrio } from './Tarjetas';
 import { useTema } from '@/theme';
 import { Presionable } from './Presionable';
 import { Texto } from './Texto';
@@ -21,7 +21,8 @@ export function Grupo({ titulo, children, style }: { titulo?: string; children: 
           {titulo}
         </Texto>
       )}
-      <View style={[estilos.superficie, { backgroundColor: color.superficie, borderRadius: radio.l, borderColor: color.contorno }, sombra]}>
+      <View style={[estilos.superficie, { backgroundColor: color.superficie, borderRadius: radio.l, borderColor: color.contorno, borderTopColor: color.contornoLuz }, sombra]}>
+        <Vidrio radio={radio.l - 1} />
         {hijos.map((hijo, i) => (
           <Fragment key={hijo.key ?? i}>
             {i > 0 && <View style={[estilos.separador, { backgroundColor: color.borde }, conIcono(hijo) && { marginLeft: 58 }]} />}
@@ -137,7 +138,8 @@ export function CeldaLista({ columnas, children }: { indice?: number; total?: nu
   const sombra = useSombra();
   if (columnas <= 1) {
     return (
-      <View style={[estilos.tarjetaLista, { backgroundColor: color.superficie, borderColor: color.contorno, borderRadius: radio.l + 2 }, sombra]}>
+      <View style={[estilos.tarjetaLista, { backgroundColor: color.superficie, borderColor: color.contorno, borderTopColor: color.contornoLuz, borderRadius: radio.l + 2 }, sombra]}>
+        <Vidrio radio={radio.l + 1} />
         {children}
       </View>
     );
@@ -149,10 +151,11 @@ export function CeldaLista({ columnas, children }: { indice?: number; total?: nu
     <View
       style={[
         estilos.tarjeta,
-        { backgroundColor: color.superficie, borderColor: color.contorno, borderRadius: radio.l, maxWidth: ancho as unknown as number },
+        { backgroundColor: color.superficie, borderColor: color.contorno, borderTopColor: color.contornoLuz, borderRadius: radio.l, maxWidth: ancho as unknown as number },
         sombra,
       ]}
     >
+      <Vidrio radio={radio.l - 1} />
       {children}
     </View>
   );

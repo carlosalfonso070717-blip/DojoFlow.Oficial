@@ -7,7 +7,7 @@ import { eliminarAlumno, obtenerAlumnos, type Alumno } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoAgregarAlumno, IconoEliminar, IconoPagos } from '@/components/iconos/Iconly';
-import { Indicador, Rejilla, ResumenMovil } from '@/components/Tarjetas';
+import { Indicador, LuzAmbiental, Rejilla, ResumenMovil } from '@/components/Tarjetas';
 import {
   Avatar,
   Boton,
@@ -89,6 +89,7 @@ export default function AlumnosScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: color.fondo }}>
+      <LuzAmbiental />
       <FlatList
         key={rejilla.clave}
         {...rejilla.props}

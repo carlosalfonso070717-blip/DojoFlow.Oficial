@@ -21,7 +21,18 @@ export function Segmentos<T extends string>({ opciones, valor, onCambio, icono: 
   return (
     <View style={estilos.fila}>
       {Icono && <Icono size={22} color={color.textoSuave} />}
-      <View accessibilityRole="tablist" style={[estilos.contenedor, { backgroundColor: oscuro ? 'rgba(118,118,128,0.24)' : 'rgba(118,118,128,0.12)', borderRadius: radio.m - 2 }]}>
+      {/* Riel en forma de píldora; la opción elegida es una cápsula de cristal que flota encima */}
+      <View
+        accessibilityRole="tablist"
+        style={[
+          estilos.contenedor,
+          {
+            backgroundColor: oscuro ? 'rgba(0,0,0,0.35)' : 'rgba(118,118,128,0.12)',
+            borderColor: oscuro ? color.contorno : 'transparent',
+            borderRadius: radio.total,
+          },
+        ]}
+      >
       {opciones.map((o) => {
         const activo = o.valor === valor;
         return (
@@ -31,12 +42,16 @@ export function Segmentos<T extends string>({ opciones, valor, onCambio, icono: 
             escala={0.96}
             accessibilityRole="tab"
             accessibilityState={{ selected: activo }}
-            style={[estilos.opcion, { borderRadius: radio.s }, activo && [estilos.activa, { backgroundColor: oscuro ? '#636366' : '#ffffff' }]]}
+            style={[
+              estilos.opcion,
+              { borderRadius: radio.total },
+              activo && [estilos.activa, oscuro ? estilos.activaOscura : { backgroundColor: '#ffffff' }],
+            ]}
           >
             <Texto
               variante="detalle"
               numberOfLines={1}
-              style={{ fontSize: 13, color: color.texto, fontFamily: activo ? 'Inter_600SemiBold' : 'Inter_500Medium' }}
+              style={{ fontSize: 13, color: activo ? color.texto : color.textoSuave, fontFamily: activo ? 'Inter_600SemiBold' : 'Inter_500Medium' }}
             >
               {o.etiqueta}
               {o.conteo ? ` ${o.conteo}` : ''}
@@ -51,8 +66,12 @@ export function Segmentos<T extends string>({ opciones, valor, onCambio, icono: 
 
 const estilos = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  contenedor: { flex: 1, flexDirection: 'row', padding: 2 },
-  opcion: { flex: 1, alignItems: 'center', paddingVertical: 7, paddingHorizontal: 2 },
+  contenedor: { flex: 1, flexDirection: 'row', padding: 3, borderWidth: StyleSheet.hairlineWidth },
+  opcion: { flex: 1, alignItems: 'center', paddingVertical: 8, paddingHorizontal: 2 },
   // La opción elegida flota apenas sobre el riel, como el control segmentado de iOS
   activa: { boxShadow: '0 3px 8px rgba(0,0,0,0.12), 0 3px 1px rgba(0,0,0,0.04)' },
+  activaOscura: {
+    backgroundColor: 'rgba(255,255,255,0.11)',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14), 0 4px 14px -4px rgba(0,0,0,0.6)',
+  },
 });

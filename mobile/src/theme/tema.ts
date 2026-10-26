@@ -54,11 +54,13 @@ export function crearTema(marcaAcademia: Marca | null, esquema: Esquema) {
   const tinte = esNeutro ? 0.35 : 1;
   const neutro = (s: number, l: number) => hslAHex({ h, s: s * tinte, l });
 
-  // Gris agrupado de iOS (#f2f2f7) con un toque mínimo del tono de la marca; negro profundo en oscuro
-  const fondo = oscuro ? neutro(0.08, 0.045) : neutro(0.1, 0.958);
-  const superficie = oscuro ? neutro(0.07, 0.1) : '#ffffff';
-  const superficieElevada = oscuro ? neutro(0.08, 0.145) : '#ffffff';
-  const texto = oscuro ? neutro(0.1, 0.94) : neutro(0.18, 0.11);
+  // Gris agrupado de iOS (#f2f2f7) con un toque mínimo del tono de la marca.
+  // En oscuro: negro profundo teñido de la marca (casi carbón cálido con naranja), donde
+  // las tarjetas de cristal y el brillo del color de la academia resaltan
+  const fondo = oscuro ? neutro(0.3, 0.032) : neutro(0.1, 0.958);
+  const superficie = oscuro ? neutro(0.2, 0.075) : '#ffffff';
+  const superficieElevada = oscuro ? neutro(0.18, 0.11) : '#ffffff';
+  const texto = oscuro ? neutro(0.12, 0.95) : neutro(0.18, 0.11);
 
   // El relleno de botones debe distinguirse del fondo aunque la academia elija blanco o negro
   const relleno = asegurarContraste(asegurarContraste(marca.primario, superficie, 1.6), fondo, 1.6);
@@ -71,13 +73,21 @@ export function crearTema(marcaAcademia: Marca | null, esquema: Esquema) {
     fondo,
     superficie,
     superficieElevada,
-    borde: oscuro ? neutro(0.08, 0.19) : neutro(0.1, 0.9),
-    bordeFuerte: oscuro ? neutro(0.08, 0.28) : neutro(0.1, 0.8),
+    borde: oscuro ? neutro(0.14, 0.15) : neutro(0.1, 0.9),
+    bordeFuerte: oscuro ? neutro(0.12, 0.24) : neutro(0.1, 0.8),
     // Silueta de tarjetas y grupos: en claro casi invisible (la sombra hace el trabajo), en oscuro un filo fino
-    contorno: oscuro ? neutro(0.08, 0.17) : 'rgba(16,18,24,0.05)',
+    contorno: oscuro ? neutro(0.14, 0.135) : 'rgba(16,18,24,0.05)',
     texto,
-    textoSuave: oscuro ? neutro(0.06, 0.68) : neutro(0.08, 0.4),
-    textoTenue: oscuro ? neutro(0.05, 0.5) : neutro(0.06, 0.58),
+    textoSuave: oscuro ? neutro(0.1, 0.7) : neutro(0.08, 0.4),
+    textoTenue: oscuro ? neutro(0.08, 0.5) : neutro(0.06, 0.58),
+
+    // Cristal de las tarjetas: un degradado vertical apenas perceptible y un filo de luz arriba
+    vidrio: (oscuro ? [neutro(0.2, 0.105), neutro(0.22, 0.065)] : ['#ffffff', '#ffffff']) as [string, string],
+    // Filo superior de las tarjetas: atrapa la luz como el canto de un cristal
+    contornoLuz: oscuro ? neutro(0.16, 0.2) : 'rgba(16,18,24,0.05)',
+    sombra: oscuro
+      ? '0 1px 0 rgba(255,255,255,0.02), 0 24px 48px -24px rgba(0,0,0,0.9)'
+      : '0 0.5px 1px rgba(16,18,24,0.05), 0 4px 18px -8px rgba(16,18,24,0.10)',
 
     // Marca: el color tal cual para rellenos, y una versión legible para textos e íconos
     marca: relleno,
@@ -85,6 +95,13 @@ export function crearTema(marcaAcademia: Marca | null, esquema: Esquema) {
     sobreMarca: textoSobre(relleno),
     marcaTexto: asegurarContraste(marca.primario, superficie),
     marcaSuave: conAlfa(marca.primario, esNeutro ? (oscuro ? 0.1 : 0.06) : oscuro ? 0.2 : 0.1),
+    // Relleno de los elementos protagonistas: el color de la marca con volumen (claro arriba, profundo abajo)
+    // (en el tema neutro, blanco o tinta, apenas se nota para no ensuciarlo de gris)
+    degradadoMarca: [mezclar(relleno, '#ffffff', esNeutro ? 0.06 : 0.22), relleno, mezclar(relleno, '#000000', esNeutro ? 0.05 : 0.2)] as [string, string, string],
+    // Halo del color de la marca para botones y elementos activos (sin brillo en el tema neutro)
+    brillo: esNeutro ? 'rgba(0,0,0,0)' : conAlfa(relleno, oscuro ? 0.6 : 0.4),
+    // Luz ambiental que tiñe el fondo de las pantallas principales
+    ambiente: [conAlfa(marca.primario, esNeutro ? 0 : oscuro ? 0.26 : 0.12), conAlfa(marca.primario, 0)] as [string, string],
 
     secundario: marca.secundario,
     sobreSecundario: textoSobre(marca.secundario),

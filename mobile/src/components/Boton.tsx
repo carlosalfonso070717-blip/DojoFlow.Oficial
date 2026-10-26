@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import type { ComponentType } from 'react';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTema } from '@/theme';
@@ -31,6 +32,8 @@ export function Boton({ titulo, onPress, variante = 'primario', tamano = 'normal
   };
   const v = estilosPorVariante[variante];
   const compacto = tamano === 'compacto';
+  const esquina = compacto ? radio.m : radio.m + 2;
+  const primario = variante === 'primario';
 
   return (
     <Presionable
@@ -43,15 +46,29 @@ export function Boton({ titulo, onPress, variante = 'primario', tamano = 'normal
         estilos.base,
         {
           backgroundColor: v.fondo,
-          borderRadius: compacto ? radio.m : radio.m + 2,
+          borderRadius: esquina,
           minHeight: compacto ? 40 : 56,
           paddingHorizontal: compacto ? 14 : 20,
         },
         v.borde && { borderWidth: StyleSheet.hairlineWidth * 2, borderColor: v.borde },
+        // El principal lleva volumen y un halo del color de la academia
+        primario && !inactivo && ({ boxShadow: `0 12px 28px -12px ${color.brillo}` } as ViewStyle),
         inactivo && { opacity: 0.5 },
         style,
       ]}
     >
+      {primario && (
+        <>
+          <LinearGradient colors={color.degradadoMarca} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: esquina }]} />
+          {/* Filo de luz arriba, como un botón de cristal */}
+          <LinearGradient
+            pointerEvents="none"
+            colors={['rgba(255,255,255,0.22)', 'rgba(255,255,255,0)']}
+            locations={[0, 0.5]}
+            style={[StyleSheet.absoluteFill, { borderRadius: esquina }]}
+          />
+        </>
+      )}
       {cargando ? (
         <ActivityIndicator color={v.texto} />
       ) : (
