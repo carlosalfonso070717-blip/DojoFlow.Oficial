@@ -22,23 +22,19 @@ import Animated, {
   ZoomIn,
   ZoomOut,
 } from 'react-native-reanimated';
-import Svg, { Circle, Defs, Line, RadialGradient, Stop } from 'react-native-svg';
-import type { MarcaAcademia } from '@/api/endpoints';
+import Svg, { Circle, Defs, G, LinearGradient as GradienteSvg, Line, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { DURACION_VIAJE, useSesion } from '@/auth/session';
-import { conAlfa } from '@/theme/color';
+import { conAlfa, mezclar } from '@/theme/color';
 import { useTema } from '@/theme';
 import { Cristal } from './Cristal';
-import { Avatar } from './Elementos';
 import { Texto } from './Texto';
 
 // Escena del cambio de sucursal: una personita sale de la casita de la sede actual y camina
 // por un sendero de luz hasta la casita de la sede elegida. Todo sobre un cristal que difumina
-// la app; al llegar, la casa de destino se enciende con ondas de luz y una palomita.
+// la app; al llegar, la casita de destino se enciende con ondas de luz y una palomita.
 const ANCHO = 300;
 const ALTO_ESCENA = 132;
-const CASA = 76; // ancho y alto de cada sede
-const RADIO_SEDE = 24;
-const LOGO_SEDE = 34;
+const CASA = 76; // ancho y alto de cada casita
 const SUELO = 112; // altura (y) del sendero
 const INICIO = CASA / 2; // centro de la puerta izquierda
 const FIN = ANCHO - CASA / 2; // centro de la puerta derecha
@@ -53,7 +49,6 @@ export function ViajeSucursal() {
 
 function Escena({ desde, hacia, llego }: { desde: string; hacia: string; llego: boolean }) {
   const { color, oscuro } = useTema();
-  const { perfil } = useSesion();
   const sinMovimiento = useReducedMotion();
   const { width } = useWindowDimensions();
   // En celulares angostos la escena se encoge para caber con los márgenes de la tarjeta
@@ -83,8 +78,6 @@ function Escena({ desde, hacia, llego }: { desde: string; hacia: string; llego: 
   }, [llego, luz, zancada, onda]);
 
   const marca = color.marca;
-  // Las sedes llevan el logo del negocio: todas sus sucursales comparten la marca
-  const academia = perfil?.academia;
   const tinta = color.texto;
 
   // La personita: avanza, rebota un poco con cada paso y se desvanece al cruzar cada puerta
@@ -191,12 +184,12 @@ function Escena({ desde, hacia, llego }: { desde: string; hacia: string; llego: 
               style={[estilos.cometa, { top: SUELO - 4, backgroundColor: '#ffffff', boxShadow: `0 0 10px 3px ${marca}, 0 0 22px 6px ${color.brillo}` }, estiloCometa]}
             />
   
-            {/* Sede de origen */}
-            <View style={[estilos.sede, { left: 0 }]}>
-              <Sede academia={academia} />
+            {/* Casita de origen */}
+            <View style={[estilos.casa, { left: 0 }]}>
+              <Casa />
             </View>
 
-            {/* Sede de destino: idéntica a la de origen; al llegar se enciende encima, sin cambiar de tamaño */}
+            {/* Casita de destino: idéntica a la de origen; al llegar se enciende encima, sin cambiar de tamaño */}
             <Animated.View style={[estilos.resplandor, estiloLuz]} pointerEvents="none">
               <Svg width={RESPLANDOR} height={RESPLANDOR}>
                 <Defs>
@@ -209,10 +202,10 @@ function Escena({ desde, hacia, llego }: { desde: string; hacia: string; llego: 
               </Svg>
             </Animated.View>
             <Animated.View pointerEvents="none" style={[estilos.onda, { borderColor: marca }, estiloOnda]} />
-            <View style={[estilos.sede, { right: 0 }]}>
-              <Sede academia={academia} />
+            <View style={[estilos.casa, { right: 0 }]}>
+              <Casa />
               <Animated.View style={[StyleSheet.absoluteFill, estiloEncendida]} pointerEvents="none">
-                <Sede academia={academia} encendida />
+                <Casa encendida />
               </Animated.View>
             </View>
             {llego && (
@@ -258,44 +251,69 @@ function Escena({ desde, hacia, llego }: { desde: string; hacia: string; llego: 
   );
 }
 
-// Sede: un mosaico de cristal como ícono de app, con el logo del negocio al centro y una puerta
-// en arco al pie, por donde entra y sale la personita. Apagada es cristal; encendida, el color de
-// la marca con luz cálida en la puerta. Las dos sedes de la escena usan exactamente este dibujo.
-function Sede({ academia, encendida }: { academia?: MarcaAcademia; encendida?: boolean }) {
+// Casita premium: techo a dos aguas con alero y reflejo, frontón con óculo, dos ventanas con
+// cruceta y puerta en arco. Es simétrica, así origen y destino se ven exactamente iguales.
+// Apagada usa tonos neutros; encendida, el techo toma la marca y ventanas y puerta dan luz cálida.
+function Casa({ encendida }: { encendida?: boolean }) {
   const { color, oscuro } = useTema();
-  const fondo: [string, string] = encendida ? [color.degradadoMarca[0], color.degradadoMarca[2]] : [color.vidrio[0], color.superficie];
+  // Cada variante con sus propios ids de degradado: en web dos SVG no pueden compartir el mismo id
+  const id = encendida ? 'casa-on' : 'casa-off';
+  const techo: [string, string] = encendida
+    ? [color.degradadoMarca[0], color.degradadoMarca[2]]
+    : [mezclar(color.texto, color.fondo, 0.5), mezclar(color.texto, color.fondo, 0.72)];
+  const muro: [string, string] = encendida
+    ? [mezclar(color.superficieElevada, color.marca, 0.14), color.superficie]
+    : [mezclar(color.superficieElevada, '#ffffff', oscuro ? 0.06 : 0), color.superficie];
+  const luz: [string, string] = encendida ? ['#fff6e2', '#ffbf63'] : oscuro ? ['#2a2d33', '#121317'] : ['#c9ccd3', '#aeb2bb'];
+  const filo = encendida ? 'rgba(255,255,255,0.5)' : color.contornoLuz;
+  const marco = encendida ? mezclar(color.marca, '#000000', 0.25) : color.bordeFuerte;
+
   return (
-    <View
-      style={[
-        estilos.mosaico,
-        {
-          borderColor: encendida ? conAlfa(color.marca, 0.9) : color.contorno,
-          borderTopColor: encendida ? 'rgba(255,255,255,0.45)' : color.contornoLuz,
-          boxShadow: encendida ? `0 14px 34px -10px ${color.brillo}` : `0 14px 30px -14px rgba(0,0,0,${oscuro ? 0.8 : 0.25})`,
-        },
-      ]}
-    >
-      <LinearGradient colors={fondo} start={{ x: 0, y: 0 }} end={{ x: 0.4, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: RADIO_SEDE - 1 }]} />
-      {/* Reflejo de cristal en la mitad de arriba */}
-      <LinearGradient
-        pointerEvents="none"
-        colors={[encendida ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.07)', 'rgba(255,255,255,0)']}
-        locations={[0, 0.55]}
-        style={[StyleSheet.absoluteFill, { borderRadius: RADIO_SEDE - 1 }]}
+    <Svg width={CASA} height={CASA} viewBox="0 0 76 76">
+      <Defs>
+        <GradienteSvg id={`${id}-techo`} x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={techo[0]} />
+          <Stop offset="1" stopColor={techo[1]} />
+        </GradienteSvg>
+        <GradienteSvg id={`${id}-muro`} x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={muro[0]} />
+          <Stop offset="1" stopColor={muro[1]} />
+        </GradienteSvg>
+        <GradienteSvg id={`${id}-luz`} x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={luz[0]} />
+          <Stop offset="1" stopColor={luz[1]} />
+        </GradienteSvg>
+      </Defs>
+
+      {/* Muro y frontón */}
+      <Path d="M15 40 L38 20 L61 40 L61 73 Q61 76 58 76 L18 76 Q15 76 15 73 Z" fill={`url(#${id}-muro)`} stroke={filo} strokeWidth={1} />
+      {/* Techo con alero */}
+      <Path
+        d="M5.5 42 L38 13 L70.5 42 Q72 43.6 70 44.4 L65.5 44.4 L38 20.2 L10.5 44.4 L6 44.4 Q4 43.6 5.5 42 Z"
+        fill={`url(#${id}-techo)`}
+        stroke={`url(#${id}-techo)`}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
       />
-      <View style={[estilos.marcoLogo, { borderColor: encendida ? 'rgba(255,255,255,0.6)' : color.bordeFuerte }]}>
-        <Avatar nombre={academia?.nombre ?? 'Sede'} logoUrl={academia?.logoUrl} tamano={LOGO_SEDE} />
-      </View>
-      {/* Puerta en arco: se ilumina al llegar */}
-      <View
-        style={[
-          estilos.puerta,
-          encendida
-            ? { backgroundColor: '#fff6e8', boxShadow: '0 0 14px 4px rgba(255,214,150,0.65)' }
-            : { backgroundColor: oscuro ? 'rgba(0,0,0,0.55)' : 'rgba(16,18,24,0.18)' },
-        ]}
-      />
-    </View>
+      {/* Reflejo en el filo izquierdo del techo */}
+      <Line x1={9.5} y1={41} x2={36.5} y2={16.6} stroke="rgba(255,255,255,0.35)" strokeWidth={1} strokeLinecap="round" />
+
+      {/* Óculo del frontón */}
+      <Circle cx={38} cy={32} r={4.2} fill={`url(#${id}-luz)`} stroke={marco} strokeWidth={1.2} />
+
+      {/* Ventanas con cruceta, a la misma distancia de la puerta */}
+      {[19, 47].map((x) => (
+        <G key={x}>
+          <Rect x={x} y={48} width={10} height={10} rx={2} fill={`url(#${id}-luz)`} stroke={marco} strokeWidth={1.2} />
+          <Line x1={x + 5} y1={48.6} x2={x + 5} y2={57.4} stroke={marco} strokeWidth={1} />
+          <Line x1={x + 0.6} y1={53} x2={x + 9.4} y2={53} stroke={marco} strokeWidth={1} />
+        </G>
+      ))}
+
+      {/* Puerta en arco con su perilla */}
+      <Path d="M32 76 L32 61 Q32 54.5 38 54.5 Q44 54.5 44 61 L44 76 Z" fill={`url(#${id}-luz)`} stroke={marco} strokeWidth={1.2} />
+      <Circle cx={41.4} cy={66.5} r={1.1} fill={marco} />
+    </Svg>
   );
 }
 
@@ -317,11 +335,11 @@ const estilos = StyleSheet.create({
   puntoVivo: { width: 7, height: 7, borderRadius: 4 },
   mayusculas: { letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: 'Inter_600SemiBold' },
   cometa: { position: 'absolute', left: 0, width: 8, height: 8, borderRadius: 4 },
-  onda: { position: 'absolute', left: FIN - 40, top: SUELO - CASA / 2 - 40, width: 80, height: 80, borderRadius: RADIO_SEDE + 6, borderWidth: 2 },
+  onda: { position: 'absolute', left: FIN - 40, top: SUELO - CASA / 2 - 40, width: 80, height: 80, borderRadius: 40, borderWidth: 2 },
   palomita: {
     position: 'absolute',
-    left: FIN + CASA / 2 - 16,
-    top: SUELO - CASA - 10,
+    left: FIN + 12,
+    top: SUELO - CASA + 14,
     width: 26,
     height: 26,
     borderRadius: 13,
@@ -329,17 +347,7 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sede: { position: 'absolute', top: SUELO - CASA, width: CASA, height: CASA },
-  mosaico: {
-    width: CASA,
-    height: CASA,
-    borderRadius: RADIO_SEDE,
-    borderWidth: 1,
-    alignItems: 'center',
-    paddingTop: 11,
-  },
-  marcoLogo: { borderWidth: 1.5, borderRadius: LOGO_SEDE, padding: 2 },
-  puerta: { position: 'absolute', bottom: 0, left: CASA / 2 - 9, width: 18, height: 19, borderTopLeftRadius: 9, borderTopRightRadius: 9 },
+  casa: { position: 'absolute', top: SUELO - CASA, width: CASA, height: CASA },
   resplandor: { position: 'absolute', left: FIN - RESPLANDOR / 2, top: SUELO - CASA / 2 - RESPLANDOR / 2, width: RESPLANDOR, height: RESPLANDOR },
   rastro: { position: 'absolute', height: 3, borderRadius: 2, overflow: 'hidden' },
   // Caja de 24 x 52 que termina justo sobre el sendero
