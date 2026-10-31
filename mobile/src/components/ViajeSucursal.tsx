@@ -251,28 +251,23 @@ function Escena({ desde, hacia, llego }: { desde: string; hacia: string; llego: 
   );
 }
 
-// Local comercial (las academias están en locales): letrero, cornisa, toldo a rayas con borde
-// ondulado, dos vitrinas con reflejo, puerta de cristal al centro y zócalo. Es simétrico, así
-// origen y destino se ven exactamente iguales. Apagado usa tonos neutros; encendido, el toldo y
-// el letrero toman la marca y las vitrinas dan luz cálida.
-const FRANJAS = 6;
-const TOLDO_X = 8;
-const TOLDO_ANCHO = 60;
-
+// Edificio de academia: dos niveles, remate plano, ventanal corrido arriba, franja con el
+// letrero (emblema y nombre), marquesina sobre la entrada, ventanales de piso a techo y puerta
+// doble de cristal. Es simétrico, así origen y destino se ven exactamente iguales. Apagado usa
+// tonos neutros; encendido, el letrero y la marquesina toman la marca y los ventanales dan luz cálida.
 function Local({ encendido }: { encendido?: boolean }) {
   const { color, oscuro } = useTema();
   // Cada variante con sus propios ids de degradado: en web dos SVG no pueden compartir el mismo id
   const id = encendido ? 'local-on' : 'local-off';
   const neutro = (peso: number) => mezclar(color.texto, color.fondo, peso);
-  const franjaA = encendido ? color.marca : neutro(0.55);
-  const franjaB = encendido ? '#fff4e8' : neutro(0.78);
   const muro: [string, string] = encendido
-    ? [mezclar(color.superficieElevada, color.marca, 0.12), color.superficie]
-    : [mezclar(color.superficieElevada, '#ffffff', oscuro ? 0.06 : 0), color.superficie];
+    ? [mezclar(color.superficieElevada, color.marca, 0.1), color.superficie]
+    : [mezclar(color.superficieElevada, '#ffffff', oscuro ? 0.07 : 0), color.superficie];
   const luz: [string, string] = encendido ? ['#fff6e2', '#ffbf63'] : oscuro ? ['#2a2d33', '#121317'] : ['#c9ccd3', '#aeb2bb'];
   const marco = encendido ? mezclar(color.marca, '#000000', 0.3) : color.bordeFuerte;
   const filo = encendido ? 'rgba(255,255,255,0.45)' : color.contornoLuz;
-  const anchoFranja = TOLDO_ANCHO / FRANJAS;
+  const remate = encendido ? mezclar(color.marca, '#000000', 0.35) : neutro(0.65);
+  const tintaLetrero = encendido ? '#ffffff' : neutro(0.55);
 
   return (
     <Svg width={CASA} height={CASA} viewBox="0 0 76 76">
@@ -285,52 +280,45 @@ function Local({ encendido }: { encendido?: boolean }) {
           <Stop offset="0" stopColor={luz[0]} />
           <Stop offset="1" stopColor={luz[1]} />
         </GradienteSvg>
-        <GradienteSvg id={`${id}-letrero`} x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={encendido ? color.degradadoMarca[0] : neutro(0.82)} />
-          <Stop offset="1" stopColor={encendido ? color.degradadoMarca[2] : neutro(0.88)} />
+        <GradienteSvg id={`${id}-letrero`} x1="0" y1="0" x2="1" y2="0">
+          <Stop offset="0" stopColor={encendido ? color.degradadoMarca[0] : neutro(0.8)} />
+          <Stop offset="1" stopColor={encendido ? color.degradadoMarca[2] : neutro(0.86)} />
         </GradienteSvg>
       </Defs>
 
-      {/* Fachada */}
-      <Rect x={11} y={24} width={54} height={52} rx={3} fill={`url(#${id}-muro)`} stroke={filo} strokeWidth={1} />
+      {/* Cuerpo del edificio y remate plano */}
+      <Rect x={10} y={10} width={56} height={66} rx={2} fill={`url(#${id}-muro)`} stroke={filo} strokeWidth={1} />
+      <Rect x={8} y={8} width={60} height={4} rx={1.5} fill={remate} />
 
-      {/* Letrero luminoso con su "nombre" en una barra de luz */}
-      <Rect x={17} y={8} width={42} height={12} rx={3.5} fill={`url(#${id}-letrero)`} stroke={marco} strokeWidth={1} />
-      <Rect x={27} y={12.6} width={22} height={2.8} rx={1.4} fill={encendido ? '#ffffff' : neutro(0.6)} opacity={encendido ? 0.95 : 0.7} />
-      <Line x1={24} y1={20} x2={24} y2={24} stroke={marco} strokeWidth={1.2} />
-      <Line x1={52} y1={20} x2={52} y2={24} stroke={marco} strokeWidth={1.2} />
+      {/* Planta alta: ventanal corrido con parteluces */}
+      <Rect x={15} y={16} width={46} height={13} rx={1.5} fill={`url(#${id}-luz)`} stroke={marco} strokeWidth={1.2} />
+      {[26.5, 38, 49.5].map((x) => (
+        <Line key={x} x1={x} y1={16.6} x2={x} y2={28.4} stroke={marco} strokeWidth={1} />
+      ))}
+      <Line x1={18} y1={26} x2={24} y2={19} stroke="rgba(255,255,255,0.3)" strokeWidth={1.1} strokeLinecap="round" />
 
-      {/* Vitrinas con reflejo */}
-      {[15, 47].map((x) => (
+      {/* Franja con el letrero: emblema y nombre */}
+      <Rect x={10} y={33} width={56} height={8} fill={`url(#${id}-letrero)`} />
+      <Circle cx={22} cy={37} r={2.3} fill="none" stroke={tintaLetrero} strokeWidth={1.2} />
+      <Rect x={27} y={35.8} width={27} height={2.4} rx={1.2} fill={tintaLetrero} opacity={encendido ? 0.95 : 0.8} />
+
+      {/* Marquesina sobre la entrada */}
+      <Rect x={27} y={45} width={22} height={2.6} rx={1.3} fill={encendido ? color.marca : neutro(0.6)} />
+
+      {/* Planta baja: ventanales de piso a techo y puerta doble de cristal */}
+      {[14, 49].map((x) => (
         <G key={x}>
-          <Rect x={x} y={41} width={14} height={23} rx={2} fill={`url(#${id}-luz)`} stroke={marco} strokeWidth={1.2} />
-          <Line x1={x + 3} y1={52} x2={x + 9} y2={44} stroke="rgba(255,255,255,0.35)" strokeWidth={1.2} strokeLinecap="round" />
-          <Line x1={x} y1={58} x2={x + 14} y2={58} stroke={marco} strokeWidth={1} />
+          <Rect x={x} y={50} width={13} height={23} rx={1.5} fill={`url(#${id}-luz)`} stroke={marco} strokeWidth={1.2} />
+          <Line x1={x + 3} y1={60} x2={x + 9} y2={53} stroke="rgba(255,255,255,0.3)" strokeWidth={1.1} strokeLinecap="round" />
         </G>
       ))}
-
-      {/* Puerta de cristal al centro, con jaladera */}
-      <Rect x={32} y={44} width={12} height={32} rx={1.5} fill={`url(#${id}-luz)`} stroke={marco} strokeWidth={1.2} />
-      <Line x1={41} y1={57} x2={41} y2={63} stroke={marco} strokeWidth={1.6} strokeLinecap="round" />
+      <Rect x={31} y={50} width={14} height={26} rx={1} fill={`url(#${id}-luz)`} stroke={marco} strokeWidth={1.2} />
+      <Line x1={38} y1={50.6} x2={38} y2={76} stroke={marco} strokeWidth={1} />
+      <Line x1={36} y1={60} x2={36} y2={65} stroke={marco} strokeWidth={1.4} strokeLinecap="round" />
+      <Line x1={40} y1={60} x2={40} y2={65} stroke={marco} strokeWidth={1.4} strokeLinecap="round" />
 
       {/* Zócalo */}
-      <Rect x={11} y={73} width={54} height={3} fill={marco} opacity={0.8} />
-
-      {/* Cornisa */}
-      <Rect x={7} y={24} width={62} height={4} rx={1.5} fill={encendido ? mezclar(color.marca, '#000000', 0.35) : neutro(0.65)} />
-
-      {/* Toldo a rayas con borde ondulado */}
-      {Array.from({ length: FRANJAS }, (_, i) => {
-        const x = TOLDO_X + i * anchoFranja;
-        const relleno = i % 2 === 0 ? franjaA : franjaB;
-        return (
-          <G key={i}>
-            <Rect x={x} y={28} width={anchoFranja} height={7} fill={relleno} />
-            <Circle cx={x + anchoFranja / 2} cy={35} r={anchoFranja / 2} fill={relleno} />
-          </G>
-        );
-      })}
-      <Line x1={TOLDO_X + 0.5} y1={28.6} x2={TOLDO_X + TOLDO_ANCHO - 0.5} y2={28.6} stroke="rgba(255,255,255,0.4)" strokeWidth={1} />
+      <Rect x={10} y={73.5} width={56} height={2.5} fill={marco} opacity={0.8} />
     </Svg>
   );
 }
@@ -356,8 +344,8 @@ const estilos = StyleSheet.create({
   onda: { position: 'absolute', left: FIN - 40, top: SUELO - CASA / 2 - 40, width: 80, height: 80, borderRadius: 40, borderWidth: 2 },
   palomita: {
     position: 'absolute',
-    left: FIN + 14,
-    top: SUELO - CASA,
+    left: FIN + 16,
+    top: SUELO - CASA - 4,
     width: 26,
     height: 26,
     borderRadius: 13,
