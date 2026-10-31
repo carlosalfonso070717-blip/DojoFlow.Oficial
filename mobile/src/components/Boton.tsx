@@ -53,7 +53,9 @@ export function Boton({ titulo, onPress, variante = 'primario', tamano = 'normal
         v.borde && { borderWidth: StyleSheet.hairlineWidth * 2, borderColor: v.borde },
         // El principal lleva volumen y un halo del color de la academia
         primario && !inactivo && ({ boxShadow: `0 12px 28px -12px ${color.brillo}` } as ViewStyle),
-        inactivo && { opacity: 0.5 },
+        // Cargando se ve casi pleno (sigue diciendo qué hace); deshabilitado, atenuado
+        deshabilitado && { opacity: 0.5 },
+        cargando && !deshabilitado && { opacity: 0.85 },
         style,
       ]}
     >
@@ -69,16 +71,17 @@ export function Boton({ titulo, onPress, variante = 'primario', tamano = 'normal
           />
         </>
       )}
-      {cargando ? (
-        <ActivityIndicator color={v.texto} />
-      ) : (
-        <View style={estilos.contenido}>
-          {Icono && <Icono size={compacto ? 18 : 20} color={v.texto} strokeWidth={2} />}
-          <Texto variante={compacto ? 'detalle' : 'cuerpoFuerte'} style={{ color: v.texto, flexShrink: 1 }} numberOfLines={1}>
-            {titulo}
-          </Texto>
-        </View>
-      )}
+      {/* Al cargar, el texto se queda (p. ej. "Pagar $599.00") y el indicador toma el lugar del ícono */}
+      <View style={estilos.contenido}>
+        {cargando ? (
+          <ActivityIndicator size="small" color={v.texto} />
+        ) : (
+          Icono && <Icono size={compacto ? 18 : 20} color={v.texto} strokeWidth={2} />
+        )}
+        <Texto variante={compacto ? 'detalle' : 'cuerpoFuerte'} style={{ color: v.texto, flexShrink: 1 }} numberOfLines={1}>
+          {titulo}
+        </Texto>
+      </View>
     </Presionable>
   );
 }

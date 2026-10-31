@@ -1,16 +1,18 @@
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { CalendarDays, Check, CreditCard, FlaskConical, Lock, UserRound } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, type TextInput } from 'react-native';
+import { Check, CreditCard, FlaskConical, Lock, ShieldCheck } from 'lucide-react-native';
+import { Children, forwardRef, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Platform, Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import Animated, { FadeIn, interpolate, useAnimatedStyle, useSharedValue, withTiming, ZoomIn } from 'react-native-reanimated';
 import { Confeti } from '@/components/Confeti';
 import { Cristal } from '@/components/Cristal';
-import { Boton, Campo, formatoMoneda, Grupo, ParDato, Superficie, Texto } from '@/components/ui';
+import { Tarjeta, useSombra, Vidrio } from '@/components/Tarjetas';
+import { formatoMoneda, Insignia, Texto } from '@/components/ui';
+import { useDiseno } from '@/hooks/useDiseno';
 import { PantallaPaso } from '@/onboarding/PantallaPaso';
 import { useRegistro } from '@/onboarding/RegistroContexto';
-import { fechaRenovacion, formatoFecha, precioDe } from '@/suscripciones/catalogo';
+import { fechaRenovacion, precioDe } from '@/suscripciones/catalogo';
 import { pasarela, TARJETAS_PRUEBA } from '@/suscripciones/pasarela';
 import { contratarPlan } from '@/suscripciones/servicio';
 import { formatearNumero, formatearVencimiento, largoCvv, marcaDe, soloDigitos, validarTarjeta } from '@/suscripciones/tarjeta';
@@ -33,6 +35,7 @@ export default function PasoPago() {
 
 function Pago() {
   const { color } = useTema();
+  const { ancho } = useDiseno();
   const { eleccion, token, borrador, setSuscripcion } = useRegistro();
   const [tarjeta, setTarjeta] = useState<DatosTarjeta>({ ...VACIA, titular: borrador.nombre.trim() });
   const [intento, setIntento] = useState(false);
@@ -51,6 +54,7 @@ function Pago() {
 
   if (!eleccion) return null;
   const { plan, periodo } = eleccion;
+  const dosColumnas = ancho >= 900;
   const monto = precioDe(plan, periodo);
   const marca = marcaDe(tarjeta.numero);
   const errores = intento ? validarTarjeta(tarjeta) : {};
@@ -79,13 +83,172 @@ function Pago() {
     }
   }
 
+  const llenarPrueba = () => {
+    setRechazo(null);
+    setTarjeta((t) => ({ titular: t.titular || 'Titular de prueba', numero: TARJETAS_PRUEBA.aprobada, vencimiento: '12/30', cvv: '123' }));
+  };
+
+  // Columna del pedido: la tarjeta en vivo y lo que se va a pagar
+  const pedido = (
+    <View style={estilos.columna}>
+      <TarjetaVisual datos={tarjeta} marca={marca} reverso={reverso} />
+      <Tarjeta style={estilos.resumen}>
+        <View style={estilos.filaResumen}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Texto variante="pequeno" tono="tenue" style={estilos.rotulo}>
+              Tu plan
+            </Texto>
+            <Texto variante="encabezado" numberOfLines={1}>
+              {plan.nombre}
+            </Texto>
+          </View>
+          <Insignia tono="marca" texto={periodo === 'anual' ? 'Anual' : 'Mensual'} />
+        </View>
+        <View style={[estilos.separador, { backgroundColor: color.borde }]} />
+        <LineaResumen etiqueta="Subtotal" valor={formatoMoneda(monto)} />
+        <LineaResumen etiqueta="Siguiente cobro" valor={fechaCorta(fechaRenovacion(periodo))} />
+        <View style={[estilos.separador, { backgroundColor: color.borde }]} />
+        <View style={estilos.filaTotal}>
+          <Texto variante="cuerpoFuerte">Total hoy</Texto>
+          <Texto variante="cifra" cifras animada style={{ fontSize: 28, lineHeight: 32 }}>
+            {`${formatoMoneda(monto)}`}
+          </Texto>
+        </View>
+        <Texto variante="pequeno" tono="tenue" style={{ textAlign: 'right' }}>
+          {plan.moneda} · IVA incluido · Cancela cuando quieras
+        </Texto>
+      </Tarjeta>
+    </View>
+  );
+
+  // Columna del método de pago: modo de prueba, formulario agrupado y tarjetas aceptadas
+  const metodo = (
+    <View style={estilos.columna}>
+      {pasarela.modoPrueba && (
+        <View style={[estilos.prueba, { backgroundColor: color.avisoSuave }]}>
+          <FlaskConical size={16} color={color.aviso} />
+          <Texto variante="pequeno" style={{ flex: 1, color: color.aviso, fontFamily: 'Inter_600SemiBold' }}>
+            {/* En celular solo el rótulo, para que quepa en una línea junto al enlace */}
+            {dosColumnas ? 'Modo de prueba · sin cargos' : 'Modo de prueba'}
+          </Texto>
+          <Pressable onPress={llenarPrueba} hitSlop={8} accessibilityRole="button" accessibilityLabel="Usar tarjeta de prueba">
+            <Texto variante="pequeno" style={{ color: color.texto, fontFamily: 'Inter_700Bold', textDecorationLine: 'underline' }}>
+              Usar tarjeta de prueba
+            </Texto>
+          </Pressable>
+        </View>
+      )}
+
+      <View style={{ gap: 8 }}>
+        <Texto variante="pequeno" tono="suave" style={[estilos.rotulo, { paddingHorizontal: 4 }]}>
+          Método de pago
+        </Texto>
+        <GrupoFormulario>
+          <CampoTarjeta
+            ref={refNumero}
+            etiqueta="Número de tarjeta"
+            valor={tarjeta.numero}
+            onCambio={(v) => {
+              const formateado = formatearNumero(v);
+              cambiar('numero', formateado);
+              if (soloDigitos(formateado).length === (marcaDe(formateado) === 'amex' ? 15 : 16)) refVence.current?.focus();
+            }}
+            placeholder="1234 5678 9012 3456"
+            teclado="number-pad"
+            autoComplete="cc-number"
+            error={errores.numero}
+            derecha={<LogoMarca marca={marca} />}
+          />
+          <View style={estilos.filaPartida}>
+            <View style={{ flex: 1 }}>
+              <CampoTarjeta
+                ref={refVence}
+                etiqueta="Vencimiento"
+                valor={tarjeta.vencimiento}
+                onCambio={(v) => {
+                  const formateado = formatearVencimiento(v);
+                  cambiar('vencimiento', formateado);
+                  if (formateado.length === 5) refCvv.current?.focus();
+                }}
+                placeholder="MM/AA"
+                teclado="number-pad"
+                autoComplete="cc-exp"
+                error={errores.vencimiento}
+              />
+            </View>
+            <View style={[estilos.divisor, { backgroundColor: color.borde }]} />
+            <View style={{ flex: 1 }}>
+              <CampoTarjeta
+                ref={refCvv}
+                etiqueta="CVV"
+                valor={tarjeta.cvv}
+                onCambio={(v) => cambiar('cvv', soloDigitos(v).slice(0, largoCvv(marca)))}
+                onFocus={() => setReverso(true)}
+                onBlur={() => setReverso(false)}
+                placeholder={marca === 'amex' ? '1234' : '123'}
+                teclado="number-pad"
+                autoComplete="cc-csc"
+                error={errores.cvv}
+                derecha={<Lock size={16} color={color.textoTenue} />}
+              />
+            </View>
+          </View>
+          <CampoTarjeta
+            etiqueta="Nombre en la tarjeta"
+            valor={tarjeta.titular}
+            onCambio={(v) => cambiar('titular', v)}
+            placeholder="Como aparece en la tarjeta"
+            mayusculas
+            autoComplete="cc-name"
+            error={errores.titular}
+          />
+        </GrupoFormulario>
+      </View>
+
+      <View style={estilos.aceptadas}>
+        <Texto variante="pequeno" tono="tenue">
+          Aceptamos
+        </Texto>
+        <LogoMarca marca="visa" />
+        <LogoMarca marca="mastercard" />
+        <LogoMarca marca="amex" />
+        <View style={{ flex: 1 }} />
+        <ShieldCheck size={14} color={color.exito} />
+        <Texto variante="pequeno" tono="tenue">
+          Pago seguro
+        </Texto>
+      </View>
+
+      {/* En escritorio, lo que incluye el plan acompaña al formulario y equilibra las dos columnas */}
+      {dosColumnas && (
+        <Tarjeta style={estilos.incluye}>
+          <Texto variante="pequeno" tono="tenue" style={estilos.rotulo}>
+            Incluye
+          </Texto>
+          {plan.beneficios.map((b) => (
+            <View key={b} style={estilos.beneficio}>
+              <View style={[estilos.palomitaBeneficio, { backgroundColor: color.marcaSuave }]}>
+                <Check size={12} color={color.marcaTexto} strokeWidth={3} />
+              </View>
+              <Texto variante="detalle" style={{ flex: 1 }}>
+                {b}
+              </Texto>
+            </View>
+          ))}
+        </Tarjeta>
+      )}
+    </View>
+  );
+
   return (
     <View style={{ flex: 1 }}>
       <PantallaPaso
         paso="pago"
+        anchoMaximo={dosColumnas ? 960 : 560}
         titulo="Datos de pago"
         descripcion={`Activa ${plan.nombre} para ${borrador.nombreAcademia.trim() || 'tu academia'}.`}
-        continuar={{ titulo: procesando ? 'Procesando pago' : `Pagar ${formatoMoneda(monto)}`, onPress: pagar, cargando: procesando, deshabilitado: aprobado }}
+        // Siempre "Pagar" y el monto: mientras se procesa, el mismo botón muestra que está trabajando
+        continuar={{ titulo: `Pagar ${formatoMoneda(monto)}`, onPress: pagar, cargando: procesando, deshabilitado: aprobado }}
         nota={
           // El rechazo se avisa junto al botón: es lo que se está viendo al pagar
           rechazo ? (
@@ -104,101 +267,146 @@ function Pago() {
           )
         }
       >
-        <TarjetaVisual datos={tarjeta} marca={marca} reverso={reverso} />
-
-        {pasarela.modoPrueba && (
-          <Superficie style={[estilos.prueba, { backgroundColor: color.avisoSuave, borderColor: 'transparent' }]}>
-            <FlaskConical size={18} color={color.aviso} />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Texto variante="cuerpoFuerte" style={{ fontSize: 14, lineHeight: 19 }}>
-                Modo de prueba
-              </Texto>
-              <Texto variante="pequeno" tono="suave">
-                No se hace ningún cargo. Usa {TARJETAS_PRUEBA.aprobada}; la terminada en 0002 se rechaza.
-              </Texto>
-            </View>
-            <Boton
-              titulo="Llenar"
-              variante="tonal"
-              tamano="compacto"
-              onPress={() => {
-                setRechazo(null);
-                setTarjeta((t) => ({ titular: t.titular || 'Titular de prueba', numero: TARJETAS_PRUEBA.aprobada, vencimiento: '12/30', cvv: '123' }));
-              }}
-            />
-          </Superficie>
+        {dosColumnas ? (
+          <View style={estilos.columnas}>
+            <View style={{ flex: 1 }}>{pedido}</View>
+            <View style={{ flex: 1.1 }}>{metodo}</View>
+          </View>
+        ) : (
+          <>
+            {pedido}
+            {metodo}
+          </>
         )}
-
-        <Campo
-          etiqueta="Nombre en la tarjeta"
-          icono={UserRound}
-          value={tarjeta.titular}
-          onChangeText={(v) => cambiar('titular', v)}
-          autoCapitalize="characters"
-          autoComplete="cc-name"
-          returnKeyType="next"
-          onSubmitEditing={() => refNumero.current?.focus()}
-          error={errores.titular}
-        />
-        <Campo
-          ref={refNumero}
-          etiqueta="Número de tarjeta"
-          icono={CreditCard}
-          value={tarjeta.numero}
-          onChangeText={(v) => {
-            const formateado = formatearNumero(v);
-            cambiar('numero', formateado);
-            if (soloDigitos(formateado).length === (marcaDe(formateado) === 'amex' ? 15 : 16)) refVence.current?.focus();
-          }}
-          placeholder="1234 5678 9012 3456"
-          keyboardType="number-pad"
-          autoComplete="cc-number"
-          error={errores.numero}
-        />
-        <View style={estilos.fila}>
-          <View style={{ flex: 1 }}>
-            <Campo
-              ref={refVence}
-              etiqueta="Vencimiento"
-              icono={CalendarDays}
-              value={tarjeta.vencimiento}
-              onChangeText={(v) => {
-                const formateado = formatearVencimiento(v);
-                cambiar('vencimiento', formateado);
-                if (formateado.length === 5) refCvv.current?.focus();
-              }}
-              placeholder="MM/AA"
-              keyboardType="number-pad"
-              autoComplete="cc-exp"
-              error={errores.vencimiento}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Campo
-              ref={refCvv}
-              etiqueta="CVV"
-              icono={Lock}
-              value={tarjeta.cvv}
-              onChangeText={(v) => cambiar('cvv', soloDigitos(v).slice(0, largoCvv(marca)))}
-              onFocus={() => setReverso(true)}
-              onBlur={() => setReverso(false)}
-              placeholder={marca === 'amex' ? '1234' : '123'}
-              keyboardType="number-pad"
-              autoComplete="cc-csc"
-              error={errores.cvv}
-            />
-          </View>
-        </View>
-
-        <Grupo titulo="Resumen">
-          <ParDato etiqueta="Plan" valor={plan.nombre} />
-          <ParDato etiqueta="Periodo" valor={periodo === 'anual' ? 'Anual' : 'Mensual'} />
-          <ParDato etiqueta="Siguiente cobro" valor={formatoFecha(fechaRenovacion(periodo))} />
-          <ParDato etiqueta="Total hoy" valor={`${formatoMoneda(monto)} ${plan.moneda}`} />
-        </Grupo>
       </PantallaPaso>
 
       {aprobado && <Celebracion plan={plan.nombre} />}
+    </View>
+  );
+}
+
+// "1 dic 2026": cabe en una línea junto a su etiqueta, también en celulares angostos
+const fechaCorta = (fecha: Date) => fecha.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }).replace('.', '');
+
+// Renglón del resumen: etiqueta a la izquierda y monto a la derecha, al ras del contenido de la tarjeta
+function LineaResumen({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+  return (
+    <View style={estilos.filaTotal}>
+      <Texto variante="detalle" tono="suave">
+        {etiqueta}
+      </Texto>
+      <Texto variante="cuerpoFuerte" cifras numberOfLines={1}>
+        {valor}
+      </Texto>
+    </View>
+  );
+}
+
+// Formulario agrupado al estilo iOS: una sola superficie de cristal con los campos en filas
+function GrupoFormulario({ children }: { children: ReactNode }) {
+  const { color, radio } = useTema();
+  const sombra = useSombra();
+  const hijos = Children.toArray(children);
+  return (
+    <View style={[estilos.grupo, { backgroundColor: color.superficie, borderColor: color.contorno, borderTopColor: color.contornoLuz, borderRadius: radio.l + 2 }, sombra]}>
+      <Vidrio radio={radio.l + 1} />
+      {hijos.map((hijo, i) => (
+        <View key={i}>
+          {i > 0 && <View style={[estilos.separador, { backgroundColor: color.borde, marginHorizontal: 0 }]} />}
+          {hijo}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+type PropsCampoTarjeta = {
+  etiqueta: string;
+  valor: string;
+  onCambio: (v: string) => void;
+  placeholder?: string;
+  teclado?: 'number-pad' | 'default';
+  autoComplete?: TextInputProps['autoComplete'];
+  mayusculas?: boolean;
+  error?: string;
+  derecha?: ReactNode;
+  onFocus?: () => void;
+  onBlur?: () => void;
+};
+
+// Fila del formulario: rótulo pequeño arriba, el dato grande abajo; al enfocarla se tiñe de la marca
+const CampoTarjeta = forwardRef<TextInput, PropsCampoTarjeta>(function CampoTarjeta(
+  { etiqueta, valor, onCambio, placeholder, teclado = 'default', autoComplete, mayusculas, error, derecha, onFocus, onBlur },
+  ref,
+) {
+  const { color, tipografia } = useTema();
+  const [enfocado, setEnfocado] = useState(false);
+  return (
+    <View style={[estilos.campo, { backgroundColor: enfocado ? color.marcaSuave : 'transparent' }]}>
+      <View style={{ flex: 1, gap: 4 }}>
+        <Texto variante="pequeno" style={{ color: error ? color.peligro : enfocado ? color.marcaTexto : color.textoTenue }}>
+          {error ?? etiqueta}
+        </Texto>
+        <TextInput
+          ref={ref}
+          value={valor}
+          onChangeText={onCambio}
+          onFocus={() => {
+            setEnfocado(true);
+            onFocus?.();
+          }}
+          onBlur={() => {
+            setEnfocado(false);
+            onBlur?.();
+          }}
+          placeholder={placeholder}
+          placeholderTextColor={color.textoTenue}
+          selectionColor={color.marcaTexto}
+          keyboardType={teclado}
+          autoComplete={autoComplete}
+          autoCapitalize={mayusculas ? 'characters' : 'none'}
+          autoCorrect={false}
+          accessibilityLabel={etiqueta}
+          style={[tipografia.cuerpoFuerte, estilos.entrada, { color: color.texto }, Platform.OS === 'web' && ({ outlineStyle: 'none' } as object)]}
+        />
+      </View>
+      {derecha}
+    </View>
+  );
+});
+
+// Logotipo de la red de la tarjeta, dibujado (sin imágenes externas)
+function LogoMarca({ marca }: { marca: MarcaTarjeta }) {
+  const { color } = useTema();
+  if (marca === 'visa') {
+    return (
+      <View style={[estilos.logo, { backgroundColor: '#1a1f71' }]}>
+        <Texto variante="pequeno" style={estilos.textoVisa}>
+          VISA
+        </Texto>
+      </View>
+    );
+  }
+  if (marca === 'mastercard') {
+    return (
+      <View style={[estilos.logo, { backgroundColor: '#14161a' }]}>
+        <View style={[estilos.circulo, { backgroundColor: '#eb001b', marginRight: -6 }]} />
+        <View style={[estilos.circulo, { backgroundColor: '#f79e1b', opacity: 0.92 }]} />
+      </View>
+    );
+  }
+  if (marca === 'amex') {
+    return (
+      <View style={[estilos.logo, { backgroundColor: '#2e77bc' }]}>
+        <Texto variante="pequeno" style={estilos.textoAmex}>
+          AMEX
+        </Texto>
+      </View>
+    );
+  }
+  return (
+    <View style={[estilos.logo, { backgroundColor: 'transparent', borderWidth: 1, borderColor: color.borde }]}>
+      <CreditCard size={14} color={color.textoTenue} />
     </View>
   );
 }
@@ -245,9 +453,7 @@ function TarjetaVisual({ datos, marca, reverso }: { datos: DatosTarjeta; marca: 
             <Texto variante="cuerpoFuerte" numberOfLines={1} style={{ color: tinta, flexShrink: 1 }}>
               {borrador.nombreAcademia.trim() || 'GestAcademy'}
             </Texto>
-            <Texto variante="subtitulo" style={{ color: tinta, fontStyle: 'italic', letterSpacing: 0.5 }}>
-              {marca === 'visa' ? 'VISA' : marca === 'mastercard' ? 'mastercard' : marca === 'amex' ? 'AMEX' : ''}
-            </Texto>
+            {marca !== 'desconocida' && <LogoMarca marca={marca} />}
           </View>
           <View style={estilos.chip} />
           <Texto variante="encabezado" cifras numberOfLines={1} adjustsFontSizeToFit style={{ color: tinta, letterSpacing: 2 }}>
@@ -321,10 +527,30 @@ function Celebracion({ plan }: { plan: string }) {
 
 const estilos = StyleSheet.create({
   nota: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 4 },
-  prueba: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
-  fila: { flexDirection: 'row', gap: 12 },
+  columnas: { flexDirection: 'row', gap: 32, alignItems: 'flex-start' },
+  columna: { gap: 20 },
+  rotulo: { textTransform: 'uppercase', letterSpacing: 0.8, fontFamily: 'Inter_600SemiBold' },
+  resumen: { gap: 14, padding: 20 },
+  filaResumen: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  filaTotal: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  separador: { height: StyleSheet.hairlineWidth, marginHorizontal: -20 },
+  prueba: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
+  grupo: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  campo: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, minHeight: 64 },
+  entrada: { paddingVertical: 0, minWidth: 0 },
+  filaPartida: { flexDirection: 'row' },
+  divisor: { width: StyleSheet.hairlineWidth },
+  aceptadas: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 },
+  logo: { height: 22, minWidth: 34, paddingHorizontal: 6, borderRadius: 5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  textoVisa: { color: '#ffffff', fontFamily: 'Inter_700Bold', fontStyle: 'italic', fontSize: 11, letterSpacing: 0.5 },
+  textoAmex: { color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 0.6 },
+  circulo: { width: 13, height: 13, borderRadius: 7 },
+  incluye: { gap: 12, padding: 20 },
+  beneficio: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  palomitaBeneficio: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   // Proporción de una tarjeta bancaria real (85.6 × 54 mm)
-  marcoTarjeta: { width: '100%', maxWidth: 380, aspectRatio: 1.586, alignSelf: 'center', marginBottom: 8 },
+  // En una columna no pasa de 460: en tableta no se ve desproporcionada
+  marcoTarjeta: { width: '100%', maxWidth: 460, aspectRatio: 1.586, alignSelf: 'center' },
   tarjeta: { flex: 1, borderRadius: 20, padding: 22, justifyContent: 'space-between', overflow: 'hidden', boxShadow: '0 24px 50px -22px rgba(0,0,0,0.7)' },
   filaTarjeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   chip: { width: 44, height: 32, borderRadius: 7, backgroundColor: '#d9c27a', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.2)' },
