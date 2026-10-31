@@ -55,7 +55,12 @@ function Planes() {
       titulo="Elige tu plan"
       descripcion="Tu academia ya está creada. Escoge cómo quieres crecer; puedes cambiar de plan cuando quieras."
       continuar={{
-        titulo: plan ? `Continuar con ${plan.nombre} · ${formatoPrecio(precioDe(plan, periodo))}/${periodo === 'anual' ? 'año' : 'mes'}` : 'Elige un plan',
+        // En celular solo el nombre: el precio ya está a la vista en la tarjeta elegida
+        titulo: !plan
+          ? 'Elige un plan'
+          : ancho < 520
+            ? `Continuar con ${plan.nombre}`
+            : `Continuar con ${plan.nombre} · ${formatoPrecio(precioDe(plan, periodo))}/${periodo === 'anual' ? 'año' : 'mes'}`,
         onPress: continuar,
         deshabilitado: !plan,
       }}

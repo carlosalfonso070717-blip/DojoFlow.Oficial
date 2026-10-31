@@ -74,7 +74,7 @@ export function Boton({ titulo, onPress, variante = 'primario', tamano = 'normal
       ) : (
         <View style={estilos.contenido}>
           {Icono && <Icono size={compacto ? 18 : 20} color={v.texto} strokeWidth={2} />}
-          <Texto variante={compacto ? 'detalle' : 'cuerpoFuerte'} style={{ color: v.texto }} numberOfLines={1}>
+          <Texto variante={compacto ? 'detalle' : 'cuerpoFuerte'} style={{ color: v.texto, flexShrink: 1 }} numberOfLines={1}>
             {titulo}
           </Texto>
         </View>
@@ -85,5 +85,6 @@ export function Boton({ titulo, onPress, variante = 'primario', tamano = 'normal
 
 const estilos = StyleSheet.create({
   base: { alignItems: 'center', justifyContent: 'center' },
-  contenido: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  // Un texto largo se recorta con "…" dentro de los márgenes del botón, nunca toca los bordes
+  contenido: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, maxWidth: '100%', minWidth: 0 },
 });

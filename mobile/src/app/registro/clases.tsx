@@ -1,14 +1,14 @@
 import { router } from 'expo-router';
 import { Plus, X } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Campo, Grupo, Texto } from '@/components/ui';
 import { PantallaPaso } from '@/onboarding/PantallaPaso';
 import { useRegistro } from '@/onboarding/RegistroContexto';
 import { useTema } from '@/theme';
 
 export default function PasoClases() {
-  const { color, tipografia } = useTema();
+  const { color } = useTema();
   const { borrador, actualizar } = useRegistro();
   const [nueva, setNueva] = useState('');
 
@@ -40,20 +40,7 @@ export default function PasoClases() {
               <Texto variante="cuerpoFuerte" style={{ flex: 1 }} numberOfLines={1}>
                 {c.nombre}
               </Texto>
-              <View style={[estilos.precio, { borderColor: color.borde, backgroundColor: color.fondo }]}>
-                <Texto variante="cuerpo" tono="tenue">
-                  $
-                </Texto>
-                <TextInput
-                  value={c.precio}
-                  onChangeText={(v) => cambiarPrecio(i, v)}
-                  placeholder="0"
-                  placeholderTextColor={color.textoTenue}
-                  keyboardType="decimal-pad"
-                  accessibilityLabel={`Precio mensual de ${c.nombre}`}
-                  style={[tipografia.cuerpoFuerte, { color: color.texto, width: 64, paddingVertical: 8, fontVariant: ['tabular-nums'] }]}
-                />
-              </View>
+              <CampoPrecio nombre={c.nombre} valor={c.precio} onCambio={(v) => cambiarPrecio(i, v)} />
               <Pressable onPress={() => quitar(i)} hitSlop={10} accessibilityRole="button" accessibilityLabel={`Quitar ${c.nombre}`}>
                 <X size={20} color={color.textoTenue} />
               </Pressable>
@@ -90,9 +77,46 @@ export default function PasoClases() {
   );
 }
 
+// Precio de una clase: cápsula compacta con el mismo halo de enfoque que los demás campos.
+// En web se quita el contorno del navegador, que se encimaba con el número.
+function CampoPrecio({ nombre, valor, onCambio }: { nombre: string; valor: string; onCambio: (v: string) => void }) {
+  const { color, tipografia, radio } = useTema();
+  const [enfocado, setEnfocado] = useState(false);
+  return (
+    <View
+      style={[
+        estilos.precio,
+        {
+          borderRadius: radio.m,
+          backgroundColor: color.superficieElevada,
+          borderColor: enfocado ? color.marcaTexto : color.borde,
+          boxShadow: enfocado ? `0 0 0 4px ${color.marcaSuave}` : undefined,
+        },
+      ]}
+    >
+      <Texto variante="cuerpo" tono="tenue">
+        $
+      </Texto>
+      <TextInput
+        value={valor}
+        onChangeText={onCambio}
+        onFocus={() => setEnfocado(true)}
+        onBlur={() => setEnfocado(false)}
+        placeholder="0"
+        placeholderTextColor={color.textoTenue}
+        selectionColor={color.marcaTexto}
+        keyboardType="decimal-pad"
+        accessibilityLabel={`Precio mensual de ${nombre}`}
+        style={[tipografia.cuerpoFuerte, estilos.entradaPrecio, { color: color.texto }, Platform.OS === 'web' && ({ outlineStyle: 'none' } as object)]}
+      />
+    </View>
+  );
+}
+
 const estilos = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10 },
-  precio: { flexDirection: 'row', alignItems: 'center', gap: 2, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10 },
+  precio: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, paddingHorizontal: 12, height: 40 },
+  entradaPrecio: { width: 72, paddingVertical: 0, textAlign: 'right', fontVariant: ['tabular-nums'] },
   agregar: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
   botonMas: { width: 52, height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

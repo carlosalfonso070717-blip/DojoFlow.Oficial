@@ -12,7 +12,7 @@ const LLAVE_KIOSCO = 'kioscoToken';
 // Lo que dura el recorrido de una sucursal a otra, aunque la API conteste antes: así se alcanza a ver
 export const DURACION_VIAJE = 2200;
 // Lo que se queda la escena después de llegar, antes de desvanecerse
-const PAUSA_LLEGADA = 650;
+const PAUSA_LLEGADA = 1100;
 
 // Cambio de sucursal en curso: la animación muestra de dónde sale y a dónde llega
 export type Viaje = { desde: string; hacia: string; llego: boolean };
