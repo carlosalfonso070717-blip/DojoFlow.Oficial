@@ -16,7 +16,7 @@ import {
   type ConfiguracionAcademia,
 } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
-import { Bloque } from '@/components/Esqueleto';
+import { Bloque, Cargando } from '@/components/Esqueleto';
 import { IconoCerrarSesion, IconoFinanzas, IconoPagos, IconoSucursal } from '@/components/iconos/Iconly';
 import { PantallaSecundaria } from '@/components/PantallaSecundaria';
 import { COLORES_AJUSTE, IconoAjuste } from '@/components/Tarjetas';
@@ -177,7 +177,11 @@ export default function AjustesScreen() {
             onPress={() => router.push('/ajustes/clases')}
           >
             {/* El detalle ocupa su renglón mientras carga: la fila no cambia de alto */}
-            {!datos.config && <Bloque ancho={110} alto={11} style={{ marginTop: 5 }} />}
+            {!datos.config && (
+              <Cargando>
+                <Bloque ancho={110} alto={11} style={{ marginTop: 5 }} />
+              </Cargando>
+            )}
           </Fila>
         )}
         {esDueno && (
@@ -187,7 +191,11 @@ export default function AjustesScreen() {
             izquierda={<IconoAjuste icono={IconoPagos} fondo={COLORES_AJUSTE.verde} />}
             onPress={() => router.push('/ajustes/cobro')}
           >
-            {!cobro && <Bloque ancho={170} alto={11} style={{ marginTop: 5 }} />}
+            {!cobro && (
+              <Cargando>
+                <Bloque ancho={170} alto={11} style={{ marginTop: 5 }} />
+              </Cargando>
+            )}
           </Fila>
         )}
       </Grupo>

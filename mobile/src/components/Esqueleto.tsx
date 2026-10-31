@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { Easing, FadeIn, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 import { useTema } from '@/theme';
 import { Rejilla, Tarjeta, useSombra, Vidrio } from './Tarjetas';
 
@@ -50,10 +50,29 @@ export function Bloque({ ancho = '100%', alto = 14, radio = 6, style }: PropsBlo
   );
 }
 
-// Contenedor de cualquier estado de carga: aparece con un fundido y se anuncia a los lectores de pantalla
+// Solo se muestra si de verdad hay espera: si los datos llegan antes de esto, el esqueleto nunca se ve
+const ESPERA_VISIBLE = 300;
+
+// Contenedor de cualquier estado de carga: aparece con un fundido solo si la espera se alarga,
+// se desvanece al llegar los datos (desde la opacidad que tenga: si nunca se vio, sale sin verse)
+// y se anuncia a los lectores de pantalla
 export function Cargando({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const opacidad = useSharedValue(0);
+  useEffect(() => {
+    opacidad.value = withDelay(ESPERA_VISIBLE, withTiming(1, { duration: 220 }));
+  }, [opacidad]);
+  const visible = useAnimatedStyle(() => ({ opacity: opacidad.value }));
+
+  const salida = () => {
+    'worklet';
+    return {
+      initialValues: { opacity: opacidad.value },
+      animations: { opacity: withTiming(0, { duration: 180 }) },
+    };
+  };
+
   return (
-    <Animated.View entering={FadeIn.duration(220)} style={style} accessible accessibilityLabel="Cargando" accessibilityRole="progressbar">
+    <Animated.View exiting={salida} style={[style, visible]} accessible accessibilityLabel="Cargando" accessibilityRole="progressbar">
       {children}
     </Animated.View>
   );

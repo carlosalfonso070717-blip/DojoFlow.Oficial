@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SessionProvider, useSesion } from '@/auth/session';
+import { pantallaConEntrada } from '@/components/Transiciones';
 import { ProveedorTema, useTema } from '@/theme';
 
 // La splash se queda hasta tener fuentes y sesión: así la app abre ya con los colores de la academia
@@ -38,7 +39,7 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style={oscuro ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.fondo } }}>
+      <Stack screenLayout={pantallaConEntrada} screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.fondo } }}>
         <Stack.Protected guard={!!token}>
           <Stack.Screen name="(app)" />
         </Stack.Protected>

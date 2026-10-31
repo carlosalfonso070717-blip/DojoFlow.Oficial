@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { pantallaConEntrada } from '@/components/Transiciones';
 import { ProveedorRegistro } from '@/onboarding/RegistroContexto';
 import { ProveedorTema, useTema } from '@/theme';
 
@@ -6,6 +7,7 @@ function Pasos() {
   const { color } = useTema();
   return (
     <Stack
+      screenLayout={pantallaConEntrada}
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',

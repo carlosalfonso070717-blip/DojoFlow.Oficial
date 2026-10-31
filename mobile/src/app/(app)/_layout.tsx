@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { Platform, View } from 'react-native';
 import { BarraLateral } from '@/components/BarraLateral';
+import { pantallaConEntrada } from '@/components/Transiciones';
 import { ViajeSucursal } from '@/components/ViajeSucursal';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useTema } from '@/theme';
@@ -16,7 +17,7 @@ export default function AppLayout() {
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: color.fondo }}>
         {esEscritorio && <BarraLateral />}
         <View style={{ flex: 1 }}>
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.fondo } }}>
+          <Stack screenLayout={pantallaConEntrada} screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.fondo } }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen
               name="registrar"

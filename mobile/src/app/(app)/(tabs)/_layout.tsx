@@ -5,6 +5,7 @@ import { useSesion } from '@/auth/session';
 import { BarraLiquida, type PestanaLiquida } from '@/components/BarraLiquida';
 import { useDiseno } from '@/hooks/useDiseno';
 import { IconoFinanzas, IconoInicio, IconoPagos, IconoSucursal } from '@/components/iconos/Iconly';
+import { transicionPestanas } from '@/components/Transiciones';
 import { useObjetivoTour } from '@/tour/Tour';
 import { plural } from '@/utils/texto';
 
@@ -51,7 +52,7 @@ export default function TabsLayout() {
   const termino = perfil?.academia.terminoAlumno || 'Alumno';
   return (
     // En escritorio se navega con la barra lateral (en el layout de (app))
-    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => (esEscritorio ? null : <Barra {...props} />)}>
+    <Tabs screenOptions={{ headerShown: false, ...transicionPestanas }} tabBar={(props) => (esEscritorio ? null : <Barra {...props} />)}>
       <Tabs.Screen name="index" options={{ title: 'Inicio' }} />
       <Tabs.Screen name="alumnos" options={{ title: plural(termino) }} />
       <Tabs.Screen name="mensualidades" options={{ title: 'Cobros' }} />
