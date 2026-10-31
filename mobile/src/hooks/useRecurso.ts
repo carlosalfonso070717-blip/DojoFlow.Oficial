@@ -7,8 +7,16 @@ export function useRecurso<T>(cargador: () => Promise<T>, inicial: T) {
   const [datos, setDatos] = useState<T>(inicial);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Hasta la primera respuesta la pantalla muestra su esqueleto de carga; las recargas
+  // posteriores (al volver a la pantalla) conservan los datos que ya se ven
+  const [listo, setListo] = useState(false);
   // Al cambiar de sucursal la pantalla vuelve a cargar con los datos de la otra sede
   const academiaId = useSesion().perfil?.academia.id;
+  const [academiaCargada, setAcademiaCargada] = useState(academiaId);
+  if (academiaCargada !== academiaId) {
+    setAcademiaCargada(academiaId);
+    setListo(false);
+  }
 
   const recargar = useCallback(async () => {
     setCargando(true);
@@ -19,6 +27,7 @@ export function useRecurso<T>(cargador: () => Promise<T>, inicial: T) {
       setError((e as Error).message);
     } finally {
       setCargando(false);
+      setListo(true);
     }
     // cargador siempre es una función de @/api/endpoints (estable), por eso no va en las dependencias
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -32,5 +41,5 @@ export function useRecurso<T>(cargador: () => Promise<T>, inicial: T) {
     }, [recargar, academiaId]),
   );
 
-  return { datos, setDatos, cargando, error, recargar };
+  return { datos, setDatos, cargando, error, recargar, primeraCarga: !listo };
 }

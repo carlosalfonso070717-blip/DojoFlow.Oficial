@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
+import { Bloque, Cargando } from '@/components/Esqueleto';
 import { Presionable, Texto } from '@/components/ui';
 import { PantallaPaso } from '@/onboarding/PantallaPaso';
 import { useRegistro } from '@/onboarding/RegistroContexto';
@@ -30,7 +31,7 @@ const ICONOS: Record<string, LucideIcon> = {
 
 export default function PasoTipo() {
   const { color, radio } = useTema();
-  const { borrador, actualizar, tipos } = useRegistro();
+  const { borrador, actualizar, tipos, cargandoTipos } = useRegistro();
 
   function elegir(tipo: string) {
     const plantilla = tipos.find((t) => t.tipoNegocio === tipo);
@@ -52,6 +53,20 @@ export default function PasoTipo() {
       descripcion="Te propondremos colores y clases de inicio. Todo se puede cambiar después."
       continuar={{ onPress: () => router.push('/registro/alumnos'), deshabilitado: !borrador.tipoNegocio }}
     >
+      {cargandoTipos && (
+        // Las mismas tarjetas de dos en dos: ícono, nombre y clases sugeridas
+        <Cargando style={estilos.rejilla}>
+          {Array.from({ length: 6 }, (_, i) => (
+            <View key={i} style={[estilos.tarjeta, { borderRadius: radio.l, backgroundColor: color.superficie, borderColor: color.borde, borderWidth: StyleSheet.hairlineWidth * 2 }]}>
+              <View style={estilos.cabecera}>
+                <Bloque ancho={44} alto={44} radio={14} />
+              </View>
+              <Bloque ancho="60%" alto={14} />
+              <Bloque ancho="85%" alto={11} style={{ marginTop: 6 }} />
+            </View>
+          ))}
+        </Cargando>
+      )}
       <View style={estilos.rejilla}>
         {tipos.map((t) => {
           const activo = borrador.tipoNegocio === t.tipoNegocio;

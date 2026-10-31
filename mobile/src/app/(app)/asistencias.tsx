@@ -8,6 +8,7 @@ import { useSesion } from '@/auth/session';
 import { BotonAtras } from '@/components/BotonAtras';
 import { GraficaBarras, type DatoBarra } from '@/components/GraficaBarras';
 import { Segmentos } from '@/components/Segmentos';
+import { Bloque, Cargando, EsqueletoGrupo, EsqueletoIndicadores } from '@/components/Esqueleto';
 import { Indicador, LuzAmbiental, Rejilla, Tarjeta, TituloSeccion } from '@/components/Tarjetas';
 import { Avatar, Boton, EstadoVacio, Fila, Grupo, Insignia, Texto } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
@@ -130,22 +131,42 @@ export default function AsistenciasScreen() {
     />
   ) : error ? (
     <EstadoVacio icono={ShieldX} tono="error" titulo="No se pudo cargar el reporte" mensaje={error} />
+  ) : cargando ? (
+    // Mientras llega el periodo elegido: la misma estructura del reporte, con bloques que brillan
+    <Cargando style={{ gap: 24 }}>
+      <EsqueletoIndicadores columnas={esEscritorio || esTableta ? 4 : 2} cantidad={4} />
+      <Tarjeta style={{ gap: 12 }}>
+        <Bloque ancho={160} alto={16} />
+        <Bloque ancho={220} alto={12} />
+        <Bloque alto={146} radio={12} style={{ marginTop: 14 }} />
+      </Tarjeta>
+      <View style={esEscritorio ? estilos.columnas : { gap: 24 }}>
+        <View style={[{ gap: 10 }, esEscritorio && { flex: 1 }]}>
+          <TituloSeccion titulo="Más constantes" />
+          <EsqueletoGrupo filas={4} />
+        </View>
+        <View style={[{ gap: 10 }, esEscritorio && { flex: 1.4 }]}>
+          <TituloSeccion titulo="Registro de entradas" />
+          <EsqueletoGrupo filas={4} />
+        </View>
+      </View>
+    </Cargando>
   ) : (
     <>
       <Rejilla columnas={esEscritorio || esTableta ? 4 : 2}>
-        <Indicador icono={ClipboardCheck} etiqueta="Asistencias" valor={cargando ? '–' : String(entradas)} detalle={periodo === 'hoy' ? 'Hoy' : `Últimos ${dias} días`} />
-        <Indicador icono={UserCheck} tono="exito" etiqueta={`${plural(termino)} distintos`} valor={cargando ? '–' : String(distintos)} />
+        <Indicador icono={ClipboardCheck} etiqueta="Asistencias" valor={String(entradas)} detalle={periodo === 'hoy' ? 'Hoy' : `Últimos ${dias} días`} />
+        <Indicador icono={UserCheck} tono="exito" etiqueta={`${plural(termino)} distintos`} valor={String(distintos)} />
         <Indicador
           icono={periodo === 'hoy' ? Clock : CalendarDays}
           tono="neutro"
           etiqueta={periodo === 'hoy' ? 'Hora con más entradas' : 'Promedio por día'}
-          valor={cargando ? '–' : periodo === 'hoy' ? (datosGrafica[pico].valor > 0 ? `${datosGrafica[pico].etiqueta}:00` : '—') : (entradas / dias).toFixed(1)}
+          valor={periodo === 'hoy' ? (datosGrafica[pico].valor > 0 ? `${datosGrafica[pico].etiqueta}:00` : '—') : (entradas / dias).toFixed(1)}
         />
         <Indicador
           icono={ShieldX}
           tono={negados > 0 ? 'peligro' : 'neutro'}
           etiqueta="Accesos negados"
-          valor={cargando ? '–' : String(negados)}
+          valor={String(negados)}
           detalle="Por pago vencido"
         />
       </Rejilla>
@@ -203,7 +224,7 @@ export default function AsistenciasScreen() {
           {registros.length === 0 ? (
             <Tarjeta>
               <Texto variante="detalle" tono="suave">
-                {cargando ? 'Cargando…' : 'Sin registros en este periodo.'}
+                Sin registros en este periodo.
               </Texto>
             </Tarjeta>
           ) : (

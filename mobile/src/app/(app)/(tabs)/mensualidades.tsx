@@ -24,6 +24,7 @@ import {
   type TonoInsignia,
 } from '@/components/ui';
 import { useSeccionCristal } from '@/components/Cristal';
+import { Cargando, EsqueletoIndicadores, EsqueletoLista, EsqueletoResumenMovil } from '@/components/Esqueleto';
 import { Indicador, LuzAmbiental, Rejilla, ResumenMovil } from '@/components/Tarjetas';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -55,7 +56,7 @@ export default function CobrosScreen() {
   const seccion = useSeccionCristal('Cobros');
   const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
-  const { datos, cargando, error, recargar } = useRecurso(obtenerMensualidades, [] as Mensualidad[]);
+  const { datos, cargando, error, recargar, primeraCarga } = useRecurso(obtenerMensualidades, [] as Mensualidad[]);
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [seleccionado, setSeleccionado] = useState<Mensualidad | null>(null);
@@ -90,7 +91,11 @@ export default function CobrosScreen() {
     }
   }
 
-  const vacio = error ? (
+  const vacio = primeraCarga ? (
+    <Cargando>
+      <EsqueletoLista filas={8} columnas={rejilla.columnas} cuadrado derecha />
+    </Cargando>
+  ) : error ? (
     <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudieron cargar los recibos" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
   ) : cargando ? null : busqueda || filtro !== 'todos' ? (
     <EstadoVacio icono={IconoFiltro} titulo="Sin recibos con ese filtro" mensaje="Prueba con otro estado o búsqueda." />
@@ -115,7 +120,16 @@ export default function CobrosScreen() {
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={color.marcaTexto} progressViewOffset={seccion.arriba} />}
         ListHeaderComponent={
           <View style={estilos.cabecera} ref={refTour} collapsable={false}>
-            <Encabezado titulo="Cobros" detalle={porCobrar > 0 ? `${formatoMoneda(porCobrar)} por cobrar` : 'Todo cobrado'} />
+            <Encabezado
+              titulo="Cobros"
+              // Mientras carga no se afirma nada: "Todo cobrado" solo cuando de verdad lo está
+              detalle={primeraCarga ? undefined : porCobrar > 0 ? `${formatoMoneda(porCobrar)} por cobrar` : 'Todo cobrado'}
+            />
+            {primeraCarga && (
+              <Cargando style={{ gap: 16 }}>
+                {esEscritorio ? <EsqueletoIndicadores columnas={4} /> : <EsqueletoResumenMovil sangria={margen} cantidad={4} />}
+                              </Cargando>
+            )}
             {esEscritorio && datos.length > 0 && (
               <Rejilla columnas={4}>
                 <Indicador
@@ -251,7 +265,7 @@ export default function CobrosScreen() {
         {seleccionado && estadoSel && (
           <>
             <Superficie style={{ alignItems: 'center', gap: 10, paddingVertical: 24 }}>
-              <Texto variante="cifra" cifras style={{ fontSize: 40, lineHeight: 46 }}>
+              <Texto variante="cifra" cifras animada style={{ fontSize: 40, lineHeight: 46 }}>
                 {formatoMoneda(seleccionado.monto)}
               </Texto>
               <Insignia texto={estadoSel.texto} tono={estadoSel.tono} icono={estadoSel.icono} />

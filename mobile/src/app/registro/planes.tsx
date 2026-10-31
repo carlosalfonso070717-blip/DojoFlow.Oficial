@@ -3,6 +3,7 @@ import { Check } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { Bloque, Cargando } from '@/components/Esqueleto';
 import { Segmentos } from '@/components/Segmentos';
 import { Vidrio } from '@/components/Tarjetas';
 import { Boton, Insignia, Presionable, Texto } from '@/components/ui';
@@ -76,6 +77,15 @@ function Planes() {
         />
       </View>
 
+      {planes.length === 0 && (
+        <Cargando style={[estilos.planes, columnas && estilos.planesFila]}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={columnas ? { flex: 1 } : undefined}>
+              <EsqueletoPlan />
+            </View>
+          ))}
+        </Cargando>
+      )}
       <View style={[estilos.planes, columnas && estilos.planesFila]}>
         {planes.map((p, i) => (
           <Animated.View key={p.id} entering={FadeInDown.delay(120 + i * 70).duration(380)} style={columnas ? { flex: 1 } : undefined}>
@@ -84,6 +94,42 @@ function Planes() {
         ))}
       </View>
     </PantallaPaso>
+  );
+}
+
+// Igual que <TarjetaPlan>: nombre, lema, precio, beneficios y botón
+function EsqueletoPlan() {
+  const { color, radio } = useTema();
+  return (
+    <View
+      style={[
+        estilos.tarjeta,
+        {
+          borderRadius: radio.xl + 2,
+          backgroundColor: color.superficie,
+          borderColor: color.contorno,
+          borderTopColor: color.contornoLuz,
+          borderWidth: StyleSheet.hairlineWidth,
+          boxShadow: color.sombra,
+        } as ViewStyle,
+      ]}
+    >
+      <Vidrio radio={radio.xl + 1} />
+      <Bloque ancho="55%" alto={22} radio={8} />
+      <Bloque ancho="75%" alto={12} style={{ marginTop: 10 }} />
+      <Bloque ancho="45%" alto={40} radio={10} style={{ marginTop: 20 }} />
+      <Bloque ancho="40%" alto={11} style={{ marginTop: 8 }} />
+      <View style={[estilos.separador, { backgroundColor: color.borde }]} />
+      <View style={estilos.beneficios}>
+        {[0, 1, 2, 3].map((i) => (
+          <View key={i} style={estilos.beneficio}>
+            <Bloque ancho={22} alto={22} radio={11} />
+            <Bloque ancho={`${60 - i * 6}%`} alto={12} />
+          </View>
+        ))}
+      </View>
+      <Bloque alto={40} radio={radio.m} style={estilos.boton} />
+    </View>
   );
 }
 
@@ -124,7 +170,7 @@ function TarjetaPlan({ plan, periodo, elegido, onElegir }: { plan: Plan; periodo
       </Texto>
 
       <View style={estilos.precio}>
-        <Texto variante="cifra" cifras style={{ fontSize: 40, lineHeight: 44 }}>
+        <Texto variante="cifra" cifras animada style={{ fontSize: 40, lineHeight: 44 }}>
           {formatoPrecio(precio)}
         </Texto>
         <Texto variante="detalle" tono="suave" style={{ marginBottom: 6 }}>

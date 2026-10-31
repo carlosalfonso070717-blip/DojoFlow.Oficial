@@ -121,7 +121,7 @@ export function Indicador({ icono: Icono, etiqueta, valor, detalle, tono = 'marc
           <Icono size={19} color={color.sobreMarca} strokeWidth={1.9} />
         </View>
         <View style={{ gap: 2 }}>
-          <Texto variante="cifra" cifras numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 26, lineHeight: 30, color: color.sobreMarca }}>
+          <Texto variante="cifra" cifras animada="desde-cero" numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 26, lineHeight: 30, color: color.sobreMarca }}>
             {valor}
           </Texto>
           <Texto variante="detalle" numberOfLines={1} style={{ color: color.sobreMarca, opacity: 0.85 }}>
@@ -140,7 +140,7 @@ export function Indicador({ icono: Icono, etiqueta, valor, detalle, tono = 'marc
     <Tarjeta onPress={onPress} etiqueta={`${etiqueta}: ${valor}`} style={estilos.indicador}>
       <IconoTonal icono={Icono} tono={tono} tamano={38} />
       <View style={{ gap: 2 }}>
-        <Texto variante="cifra" cifras numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 26, lineHeight: 30 }}>
+        <Texto variante="cifra" cifras animada="desde-cero" numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 26, lineHeight: 30 }}>
           {valor}
         </Texto>
         <Texto variante="detalle" tono="suave" numberOfLines={1}>
@@ -256,7 +256,7 @@ function DatoResumenTarjeta({
           {etiqueta}
         </Texto>
       </View>
-      <Texto variante="encabezado" cifras numberOfLines={1} style={{ fontSize: 20, lineHeight: 24 }}>
+      <Texto variante="encabezado" cifras animada="desde-cero" numberOfLines={1} style={{ fontSize: 20, lineHeight: 24 }}>
         {valor}
       </Texto>
     </>

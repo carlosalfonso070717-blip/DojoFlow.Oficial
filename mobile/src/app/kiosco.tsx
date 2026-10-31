@@ -7,6 +7,7 @@ import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { checarAsistencia, obtenerMarcaKiosco, type MarcaAcademia, type ResultadoChequeo } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
+import { Bloque, Cargando } from '@/components/Esqueleto';
 import { Avatar, Boton, Insignia, Presionable, Texto } from '@/components/ui';
 import { IconoCandado } from '@/components/iconos/Iconly';
 import { ProveedorTema, useTema } from '@/theme';
@@ -24,7 +25,8 @@ type Estado =
 // El kiosco se pinta con la marca de la academia vinculada, haya o no sesión de coach
 export default function KioscoScreen() {
   const { tokenKiosco } = useSesion();
-  const [academia, setAcademia] = useState<MarcaAcademia | null>(null);
+  // undefined = todavía cargando la marca; null = no se pudo obtener
+  const [academia, setAcademia] = useState<MarcaAcademia | null | undefined>(undefined);
 
   useEffect(() => {
     if (!tokenKiosco) return;
@@ -63,7 +65,7 @@ function SinVincular() {
   );
 }
 
-function Terminal({ academia, tokenKiosco }: { academia: MarcaAcademia | null; tokenKiosco: string }) {
+function Terminal({ academia, tokenKiosco }: { academia: MarcaAcademia | null | undefined; tokenKiosco: string }) {
   const { color } = useTema();
   const { width } = useWindowDimensions();
   const horizontal = width >= 720;
@@ -122,10 +124,20 @@ function Terminal({ academia, tokenKiosco }: { academia: MarcaAcademia | null; t
 
       <View style={[estilos.cuerpo, horizontal && estilos.cuerpoHorizontal]}>
         <View style={[estilos.identidad, horizontal && { flex: 1 }]}>
-          {academia && <Avatar nombre={academia.nombre} logoUrl={academia.logoUrl} tamano={horizontal ? 96 : 72} />}
-          <Texto variante="titulo" style={{ textAlign: 'center' }} numberOfLines={2}>
-            {academia?.nombre ?? 'Registro de asistencia'}
-          </Texto>
+          {academia === undefined ? (
+            // Logo y nombre aún cargando: mismo lugar y tamaño, sin destello de "Registro de asistencia"
+            <Cargando style={{ alignItems: 'center', gap: 14 }}>
+              <Bloque ancho={horizontal ? 96 : 72} alto={horizontal ? 96 : 72} radio={48} />
+              <Bloque ancho={240} alto={32} radio={10} />
+            </Cargando>
+          ) : (
+            <>
+              {academia && <Avatar nombre={academia.nombre} logoUrl={academia.logoUrl} tamano={horizontal ? 96 : 72} />}
+              <Texto variante="titulo" style={{ textAlign: 'center' }} numberOfLines={2}>
+                {academia?.nombre ?? 'Registro de asistencia'}
+              </Texto>
+            </>
+          )}
           <Texto variante="cuerpo" tono="suave" style={{ textAlign: 'center' }}>
             Escribe tu PIN de 5 dígitos
           </Texto>

@@ -56,7 +56,7 @@ export function DatoCredencial({ valor, etiqueta, fondo }: { valor: string; etiq
   const tinta = textoSobre(fondo, '#14161a');
   return (
     <View style={{ flex: 1, gap: 2 }}>
-      <Texto variante="cifra" cifras style={{ color: tinta, fontSize: 28, lineHeight: 32 }} numberOfLines={1} adjustsFontSizeToFit>
+      <Texto variante="cifra" cifras animada="desde-cero" style={{ color: tinta, fontSize: 28, lineHeight: 32 }} numberOfLines={1} adjustsFontSizeToFit>
         {valor}
       </Texto>
       <Texto variante="pequeno" style={{ color: tinta === '#ffffff' ? 'rgba(255,255,255,0.72)' : 'rgba(20,22,26,0.65)' }}>

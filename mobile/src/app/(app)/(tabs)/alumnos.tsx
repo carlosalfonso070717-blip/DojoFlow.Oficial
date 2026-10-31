@@ -8,6 +8,7 @@ import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoAgregarAlumno, IconoEliminar, IconoPagos } from '@/components/iconos/Iconly';
 import { useSeccionCristal } from '@/components/Cristal';
+import { Cargando, EsqueletoBuscador, EsqueletoIndicadores, EsqueletoLista, EsqueletoResumenMovil } from '@/components/Esqueleto';
 import { Indicador, LuzAmbiental, Rejilla, ResumenMovil } from '@/components/Tarjetas';
 import {
   Avatar,
@@ -44,7 +45,7 @@ export default function AlumnosScreen() {
   const { perfil } = useSesion();
   const termino = perfil?.academia.terminoAlumno || 'Alumno';
   const seccion = useSeccionCristal(plural(termino));
-  const { datos: alumnos, setDatos, cargando, error, recargar } = useRecurso(obtenerAlumnos, [] as Alumno[]);
+  const { datos: alumnos, setDatos, cargando, error, recargar, primeraCarga } = useRecurso(obtenerAlumnos, [] as Alumno[]);
   const [busqueda, setBusqueda] = useState('');
 
   // La búsqueda de la barra lateral (web) llega como /alumnos?q=...; cada búsqueda nueva reemplaza la actual
@@ -76,7 +77,11 @@ export default function AlumnosScreen() {
   const cuotaMensual = alumnos.reduce((s, a) => s + a.costoMensualidad, 0);
   const clases = new Set(alumnos.flatMap((a) => a.disciplinas)).size;
 
-  const vacio = error ? (
+  const vacio = primeraCarga ? (
+    <Cargando>
+      <EsqueletoLista filas={8} columnas={rejilla.columnas} />
+    </Cargando>
+  ) : error ? (
     <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudo cargar la lista" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
   ) : busqueda ? (
     <EstadoVacio icono={SearchX} titulo="Sin resultados" mensaje={`Nadie coincide con "${busqueda}".`} />
@@ -119,6 +124,12 @@ export default function AlumnosScreen() {
                 )
               }
             />
+            {primeraCarga && (
+              <Cargando style={{ gap: 16 }}>
+                {esEscritorio ? <EsqueletoIndicadores columnas={4} /> : <EsqueletoResumenMovil sangria={margen} />}
+                <EsqueletoBuscador />
+              </Cargando>
+            )}
             {esEscritorio && alumnos.length > 0 && (
               <Rejilla columnas={4}>
                 <Indicador icono={Users} etiqueta={`${plural(termino)} inscritos`} valor={String(alumnos.length)} />

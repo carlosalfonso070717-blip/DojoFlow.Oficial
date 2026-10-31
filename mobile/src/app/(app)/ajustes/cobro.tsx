@@ -3,6 +3,7 @@ import { Minus, Plus, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { configurarCobro, obtenerConfiguracion, type ModoCobro } from '@/api/endpoints';
+import { Bloque, Cargando, EsqueletoGrupo } from '@/components/Esqueleto';
 import { PantallaSecundaria } from '@/components/PantallaSecundaria';
 import { Segmentos } from '@/components/Segmentos';
 import { Boton, Grupo, ParDato, Texto } from '@/components/ui';
@@ -44,92 +45,101 @@ export default function CobroScreen() {
     }
   }
 
-  if (!listo) return null;
-
   return (
     <PantallaSecundaria
       titulo="Forma de cobro"
       descripcion="Aplica a las inscripciones nuevas. Las cuotas que ya existen no cambian."
-      pie={<Boton titulo="Guardar cambios" onPress={guardar} cargando={guardando} />}
+      pie={<Boton titulo="Guardar cambios" onPress={guardar} cargando={guardando} deshabilitado={!listo} />}
     >
-      <View style={{ gap: 12 }}>
-        <Segmentos<ModoCobro>
-          valor={modo}
-          onCambio={setModo}
-          opciones={[
-            { valor: 'PorClase', etiqueta: 'Por clase' },
-            { valor: 'Paquete', etiqueta: 'Por paquete' },
-          ]}
-        />
-        <Texto variante="detalle" tono="suave">
-          {modo === 'PorClase'
-            ? 'La cuota es la suma del precio de cada clase que toma la persona.'
-            : 'La cuota depende de cuántas clases toma. Si toma más clases que paquetes, se usa el más grande.'}
-        </Texto>
-      </View>
-
-      {modo === 'Paquete' && (
-        <View style={{ gap: 10 }}>
-          <Grupo>
-            {paquetes.map((p, i) => (
-              <View key={i} style={estilos.paquete}>
-                <Texto variante="cuerpoFuerte" style={{ flex: 1 }}>
-                  {i + 1} {i === 0 ? 'clase' : 'clases'}
-                </Texto>
-                <View style={[estilos.precio, { borderColor: color.borde, backgroundColor: color.fondo }]}>
-                  <Texto variante="cuerpo" tono="tenue">
-                    $
-                  </Texto>
-                  <TextInput
-                    value={p}
-                    onChangeText={(v) => setPaquetes((l) => l.map((x, j) => (j === i ? v.replace(/[^0-9.]/g, '') : x)))}
-                    keyboardType="decimal-pad"
-                    placeholder="0"
-                    placeholderTextColor={color.textoTenue}
-                    accessibilityLabel={`Precio por ${i + 1} clases`}
-                    style={[tipografia.cuerpoFuerte, { color: color.texto, width: 80, paddingVertical: 8, fontVariant: ['tabular-nums'] }]}
-                  />
-                </View>
-                {i === paquetes.length - 1 ? (
-                  <Pressable onPress={() => setPaquetes((l) => l.slice(0, -1))} hitSlop={10} accessibilityLabel="Quitar este paquete">
-                    <X size={20} color={color.textoTenue} />
-                  </Pressable>
-                ) : (
-                  <View style={{ width: 20 }} />
-                )}
-              </View>
-            ))}
-          </Grupo>
-          <Boton titulo={`Agregar paquete de ${paquetes.length + 1} clases`} icono={Plus} variante="contorno" tamano="compacto" onPress={() => setPaquetes((l) => [...l, ''])} />
-        </View>
-      )}
-
-      <Grupo titulo="Vencimiento">
-        <ParDato etiqueta="Los recibos vencen el día">
-          <View style={estilos.contador}>
-            <Pressable
-              onPress={() => setDia((d) => Math.max(1, d - 1))}
-              style={[estilos.paso, { borderColor: color.borde }]}
-              accessibilityLabel="Un día antes"
-            >
-              <Minus size={18} color={color.texto} />
-            </Pressable>
-            <Texto variante="subtitulo" cifras style={{ minWidth: 28, textAlign: 'center' }}>
-              {dia}
+      {!listo ? (
+        // Misma estructura que el formulario: selector, paquetes y día de vencimiento
+        <Cargando style={{ gap: 24 }}>
+          <Bloque alto={40} radio={20} />
+          <EsqueletoGrupo filas={3} avatar={false} />
+          <EsqueletoGrupo filas={1} avatar={false} />
+        </Cargando>
+      ) : (
+        <>
+          <View style={{ gap: 12 }}>
+            <Segmentos<ModoCobro>
+              valor={modo}
+              onCambio={setModo}
+              opciones={[
+                { valor: 'PorClase', etiqueta: 'Por clase' },
+                { valor: 'Paquete', etiqueta: 'Por paquete' },
+              ]}
+            />
+            <Texto variante="detalle" tono="suave">
+              {modo === 'PorClase'
+                ? 'La cuota es la suma del precio de cada clase que toma la persona.'
+                : 'La cuota depende de cuántas clases toma. Si toma más clases que paquetes, se usa el más grande.'}
             </Texto>
-            <Pressable
-              onPress={() => setDia((d) => Math.min(28, d + 1))}
-              style={[estilos.paso, { borderColor: color.borde }]}
-              accessibilityLabel="Un día después"
-            >
-              <Plus size={18} color={color.texto} />
-            </Pressable>
           </View>
-        </ParDato>
-      </Grupo>
-      <Texto variante="pequeno" tono="tenue">
-        Del 1 al 28, para que exista en todos los meses. El recibo del mes siguiente aparece 7 días antes.
-      </Texto>
+
+          {modo === 'Paquete' && (
+            <View style={{ gap: 10 }}>
+              <Grupo>
+                {paquetes.map((p, i) => (
+                  <View key={i} style={estilos.paquete}>
+                    <Texto variante="cuerpoFuerte" style={{ flex: 1 }}>
+                      {i + 1} {i === 0 ? 'clase' : 'clases'}
+                    </Texto>
+                    <View style={[estilos.precio, { borderColor: color.borde, backgroundColor: color.fondo }]}>
+                      <Texto variante="cuerpo" tono="tenue">
+                        $
+                      </Texto>
+                      <TextInput
+                        value={p}
+                        onChangeText={(v) => setPaquetes((l) => l.map((x, j) => (j === i ? v.replace(/[^0-9.]/g, '') : x)))}
+                        keyboardType="decimal-pad"
+                        placeholder="0"
+                        placeholderTextColor={color.textoTenue}
+                        accessibilityLabel={`Precio por ${i + 1} clases`}
+                        style={[tipografia.cuerpoFuerte, { color: color.texto, width: 80, paddingVertical: 8, fontVariant: ['tabular-nums'] }]}
+                      />
+                    </View>
+                    {i === paquetes.length - 1 ? (
+                      <Pressable onPress={() => setPaquetes((l) => l.slice(0, -1))} hitSlop={10} accessibilityLabel="Quitar este paquete">
+                        <X size={20} color={color.textoTenue} />
+                      </Pressable>
+                    ) : (
+                      <View style={{ width: 20 }} />
+                    )}
+                  </View>
+                ))}
+              </Grupo>
+              <Boton titulo={`Agregar paquete de ${paquetes.length + 1} clases`} icono={Plus} variante="contorno" tamano="compacto" onPress={() => setPaquetes((l) => [...l, ''])} />
+            </View>
+          )}
+
+          <Grupo titulo="Vencimiento">
+            <ParDato etiqueta="Los recibos vencen el día">
+              <View style={estilos.contador}>
+                <Pressable
+                  onPress={() => setDia((d) => Math.max(1, d - 1))}
+                  style={[estilos.paso, { borderColor: color.borde }]}
+                  accessibilityLabel="Un día antes"
+                >
+                  <Minus size={18} color={color.texto} />
+                </Pressable>
+                <Texto variante="subtitulo" cifras animada style={{ minWidth: 28, textAlign: 'center' }}>
+                  {dia}
+                </Texto>
+                <Pressable
+                  onPress={() => setDia((d) => Math.min(28, d + 1))}
+                  style={[estilos.paso, { borderColor: color.borde }]}
+                  accessibilityLabel="Un día después"
+                >
+                  <Plus size={18} color={color.texto} />
+                </Pressable>
+              </View>
+            </ParDato>
+          </Grupo>
+          <Texto variante="pequeno" tono="tenue">
+            Del 1 al 28, para que exista en todos los meses. El recibo del mes siguiente aparece 7 días antes.
+          </Texto>
+        </>
+      )}
     </PantallaSecundaria>
   );
 }

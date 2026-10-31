@@ -52,6 +52,8 @@ type Contexto = {
   borrador: Borrador;
   actualizar: (cambios: Partial<Borrador>) => void;
   tipos: TipoNegocio[];
+  // Mientras llega el catálogo de tipos de negocio
+  cargandoTipos: boolean;
   plantilla: TipoNegocio | undefined;
   // Sesión creada al verificar el correo; se usa en "listo" para entrar
   token: string | null;
@@ -74,6 +76,7 @@ export function ProveedorRegistro({ children }: { children: ReactNode }) {
     return google ? { ...INICIAL, google, nombre: google.nombre, email: google.email } : INICIAL;
   });
   const [tipos, setTipos] = useState<TipoNegocio[]>([]);
+  const [cargandoTipos, setCargandoTipos] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [eleccion, setEleccion] = useState<{ plan: Plan; periodo: Periodo } | null>(null);
   const [suscripcion, setSuscripcion] = useState<Suscripcion | null>(null);
@@ -81,7 +84,8 @@ export function ProveedorRegistro({ children }: { children: ReactNode }) {
   useEffect(() => {
     obtenerTiposNegocio()
       .then(setTipos)
-      .catch(() => setTipos([]));
+      .catch(() => setTipos([]))
+      .finally(() => setCargandoTipos(false));
   }, []);
 
   const plantilla = tipos.find((t) => t.tipoNegocio === borrador.tipoNegocio);
@@ -107,6 +111,7 @@ export function ProveedorRegistro({ children }: { children: ReactNode }) {
     borrador,
     actualizar: (cambios) => setBorrador((b) => ({ ...b, ...cambios })),
     tipos,
+    cargandoTipos,
     plantilla,
     token,
     setToken,

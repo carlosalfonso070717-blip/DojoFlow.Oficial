@@ -17,6 +17,7 @@ import {
 import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { Cristal, useDesplazamiento } from '@/components/Cristal';
+import { Cargando, EsqueletoGrafica, EsqueletoGrupo, EsqueletoIndicadores, EsqueletoLista } from '@/components/Esqueleto';
 import { GraficaArea } from '@/components/GraficaArea';
 import { IconoAgregarAlumno, IconoAjustes, IconoPagos } from '@/components/iconos/Iconly';
 import { IconoTonal, Indicador, LuzAmbiental, Rejilla, Tarjeta, TarjetaAccion, TituloSeccion, useSombra, Vidrio } from '@/components/Tarjetas';
@@ -107,7 +108,7 @@ export default function InicioScreen() {
   const espacioBarra = useEspacioBarra();
   const { perfil, vincularKiosco } = useSesion();
   const { iniciar: iniciarTour } = useTour();
-  const { datos, cargando, recargar, error } = useRecurso(cargarResumen, VACIO);
+  const { datos, cargando, recargar, error, primeraCarga } = useRecurso(cargarResumen, VACIO);
   const desplazamiento = useDesplazamiento();
 
   const refCredencial = useObjetivoTour('credencial');
@@ -142,7 +143,13 @@ export default function InicioScreen() {
 
   const ingresos = (
     <View ref={refCredencial} collapsable={false}>
-      <TarjetaIngresos academia={academia} finanzas={datos.finanzas} />
+      {primeraCarga ? (
+        <Cargando>
+          <EsqueletoGrafica alto={esEscritorio ? 190 : 150} />
+        </Cargando>
+      ) : (
+        <TarjetaIngresos academia={academia} finanzas={datos.finanzas} />
+      )}
     </View>
   );
 
@@ -151,55 +158,65 @@ export default function InicioScreen() {
     <View ref={refPendiente} collapsable={false} style={{ gap: 12 }}>
       {!esEscritorio && <TituloSeccion titulo="Resumen" />}
       {/* En escritorio las asistencias son una cifra más de la fila: las columnas de abajo quedan parejas */}
-      <Rejilla columnas={esEscritorio ? (conAsistencias ? 5 : 4) : esTableta ? 4 : 2}>
-        <Indicador
-          destacado
-          icono={Users}
-          etiqueta={plural(termino)}
-          valor={String(datos.alumnos)}
-          detalle="Inscritos"
-          onPress={() => router.navigate('/alumnos')}
-        />
-        <Indicador
-          icono={IconoPagos}
-          tono="aviso"
-          etiqueta="Por cobrar"
-          valor={formatoCorto(porCobrar)}
-          detalle={cantidad(datos.pendientes.n + datos.vencidos.n, 'recibo', 'recibos')}
-          onPress={() => router.navigate('/mensualidades')}
-        />
-        <Indicador
-          icono={TriangleAlert}
-          tono={datos.vencidos.n > 0 ? 'peligro' : 'exito'}
-          etiqueta="Vencidos"
-          valor={String(datos.vencidos.n)}
-          detalle={datos.vencidos.n > 0 ? `${formatoCorto(datos.vencidos.monto)} sin pagar` : 'Nadie atrasado'}
-          onPress={() => router.navigate('/mensualidades')}
-        />
-        <Indicador
-          icono={Package}
-          tono={datos.alertasStock > 0 ? 'aviso' : 'neutro'}
-          etiqueta="Por resurtir"
-          valor={String(datos.alertasStock)}
-          detalle={datos.alertasStock > 0 ? 'Llegaron a su mínimo' : 'Todo surtido'}
-          onPress={() => router.navigate('/inventario')}
-        />
-        {esEscritorio && conAsistencias && (
+      {primeraCarga ? (
+        <Cargando>
+          <EsqueletoIndicadores columnas={esEscritorio ? (conAsistencias ? 5 : 4) : esTableta ? 4 : 2} cantidad={esEscritorio && conAsistencias ? 5 : 4} />
+        </Cargando>
+      ) : (
+        <Rejilla columnas={esEscritorio ? (conAsistencias ? 5 : 4) : esTableta ? 4 : 2}>
           <Indicador
-            icono={ClipboardCheck}
-            tono="exito"
-            etiqueta="Asistencias hoy"
-            valor={String(datos.asistenciasHoy)}
-            detalle="Ver el reporte"
-            onPress={() => router.push('/asistencias')}
+            destacado
+            icono={Users}
+            etiqueta={plural(termino)}
+            valor={String(datos.alumnos)}
+            detalle="Inscritos"
+            onPress={() => router.navigate('/alumnos')}
           />
-        )}
-      </Rejilla>
+          <Indicador
+            icono={IconoPagos}
+            tono="aviso"
+            etiqueta="Por cobrar"
+            valor={formatoCorto(porCobrar)}
+            detalle={cantidad(datos.pendientes.n + datos.vencidos.n, 'recibo', 'recibos')}
+            onPress={() => router.navigate('/mensualidades')}
+          />
+          <Indicador
+            icono={TriangleAlert}
+            tono={datos.vencidos.n > 0 ? 'peligro' : 'exito'}
+            etiqueta="Vencidos"
+            valor={String(datos.vencidos.n)}
+            detalle={datos.vencidos.n > 0 ? `${formatoCorto(datos.vencidos.monto)} sin pagar` : 'Nadie atrasado'}
+            onPress={() => router.navigate('/mensualidades')}
+          />
+          <Indicador
+            icono={Package}
+            tono={datos.alertasStock > 0 ? 'aviso' : 'neutro'}
+            etiqueta="Por resurtir"
+            valor={String(datos.alertasStock)}
+            detalle={datos.alertasStock > 0 ? 'Llegaron a su mínimo' : 'Todo surtido'}
+            onPress={() => router.navigate('/inventario')}
+          />
+          {esEscritorio && conAsistencias && (
+            <Indicador
+              icono={ClipboardCheck}
+              tono="exito"
+              etiqueta="Asistencias hoy"
+              valor={String(datos.asistenciasHoy)}
+              detalle="Ver el reporte"
+              onPress={() => router.push('/asistencias')}
+            />
+          )}
+        </Rejilla>
+      )}
     </View>
   );
 
   // Solo para quienes usan el registrador de asistencias
-  const asistencias = academia.asistenciasActivas && (
+  const asistencias = academia.asistenciasActivas && primeraCarga ? (
+    <Cargando>
+      <EsqueletoLista filas={1} cuadrado />
+    </Cargando>
+  ) : academia.asistenciasActivas && (
     <Tarjeta onPress={() => router.push('/asistencias')} etiqueta="Ver reporte de asistencias">
       <View style={estilos.estadoTarjeta}>
         <IconoTonal icono={ClipboardCheck} tono="exito" />
@@ -253,7 +270,14 @@ export default function InicioScreen() {
                   <TarjetaAccion icono={ShoppingCart} titulo="Vender" detalle="Descuenta una pieza del inventario" onPress={() => router.navigate('/inventario')} />
                 </Rejilla>
               </View>
-              <Pendientes datos={datos} error={!!error} todoAlDia={todoAlDia} />
+              {primeraCarga ? (
+                <Cargando style={{ gap: 10 }}>
+                  <TituloSeccion titulo="Requiere atención" />
+                  <EsqueletoGrupo filas={3} />
+                </Cargando>
+              ) : (
+                <Pendientes datos={datos} error={!!error} todoAlDia={todoAlDia} />
+              )}
             </View>
           </View>
         </ScrollView>
@@ -490,13 +514,13 @@ function TarjetaIngresos({ academia, finanzas }: { academia: MarcaAcademia; fina
             {enCurso ? ' · en curso' : ''}
           </Texto>
           <View style={estilos.cifraIngresos}>
-            <Texto variante="gigante" cifras numberOfLines={1} adjustsFontSizeToFit style={{ flexShrink: 1 }}>
+            <Texto variante="gigante" cifras animada="desde-cero" numberOfLines={1} adjustsFontSizeToFit style={{ flexShrink: 1 }}>
               {formatoMoneda(mes.total)}
             </Texto>
             {cambio !== null && (
               <View style={[estilos.cambio, { backgroundColor: sube ? color.exitoSuave : color.peligroSuave }]}>
                 {sube ? <TrendingUp size={13} color={color.exito} strokeWidth={2.4} /> : <TrendingDown size={13} color={color.peligro} strokeWidth={2.4} />}
-                <Texto variante="pequeno" cifras style={{ color: sube ? color.exito : color.peligro, fontFamily: 'Inter_700Bold' }}>
+                <Texto variante="pequeno" cifras animada style={{ color: sube ? color.exito : color.peligro, fontFamily: 'Inter_700Bold' }}>
                   {sube ? '+' : ''}
                   {Math.round(cambio)}% vs {anterior.corto}
                 </Texto>
@@ -548,7 +572,7 @@ function Parte({ etiqueta, valor, punto, corto }: { etiqueta: string; valor: num
           {etiqueta}
         </Texto>
       </View>
-      <Texto variante="subtitulo" cifras numberOfLines={1} adjustsFontSizeToFit>
+      <Texto variante="subtitulo" cifras animada="desde-cero" numberOfLines={1} adjustsFontSizeToFit>
         {corto ? formatoCorto(valor) : formatoMoneda(valor)}
       </Texto>
     </View>

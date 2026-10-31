@@ -16,6 +16,7 @@ import {
   type ConfiguracionAcademia,
 } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
+import { Bloque } from '@/components/Esqueleto';
 import { IconoCerrarSesion, IconoFinanzas, IconoPagos, IconoSucursal } from '@/components/iconos/Iconly';
 import { PantallaSecundaria } from '@/components/PantallaSecundaria';
 import { COLORES_AJUSTE, IconoAjuste } from '@/components/Tarjetas';
@@ -174,7 +175,10 @@ export default function AjustesScreen() {
             detalle={datos.config ? `${activas} ${activas === 1 ? 'clase activa' : 'clases activas'}` : undefined}
             izquierda={<IconoAjuste icono={BookOpen} fondo={COLORES_AJUSTE.naranja} />}
             onPress={() => router.push('/ajustes/clases')}
-          />
+          >
+            {/* El detalle ocupa su renglón mientras carga: la fila no cambia de alto */}
+            {!datos.config && <Bloque ancho={110} alto={11} style={{ marginTop: 5 }} />}
+          </Fila>
         )}
         {esDueno && (
           <Fila
@@ -182,7 +186,9 @@ export default function AjustesScreen() {
             detalle={cobro ? `${cobro.modoCobro === 'Paquete' ? 'Por paquete' : 'Por clase'}, vence el día ${cobro.diaVencimiento}` : undefined}
             izquierda={<IconoAjuste icono={IconoPagos} fondo={COLORES_AJUSTE.verde} />}
             onPress={() => router.push('/ajustes/cobro')}
-          />
+          >
+            {!cobro && <Bloque ancho={170} alto={11} style={{ marginTop: 5 }} />}
+          </Fila>
         )}
       </Grupo>
 

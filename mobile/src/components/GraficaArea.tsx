@@ -129,7 +129,7 @@ export function GraficaArea({ datos, elegido, onElegir, colores, formatoGuia, fo
                 <Texto variante="pequeno" numberOfLines={1} style={{ color: colores.textoGloboSuave, fontSize: 11 }}>
                   {tituloGlobo(elegido)}
                 </Texto>
-                <Texto variante="cuerpoFuerte" cifras numberOfLines={1} style={{ color: colores.textoGlobo, fontSize: 15 }}>
+                <Texto variante="cuerpoFuerte" cifras animada numberOfLines={1} style={{ color: colores.textoGlobo, fontSize: 15 }}>
                   {formatoGlobo(dato.valor)}
                 </Texto>
               </View>

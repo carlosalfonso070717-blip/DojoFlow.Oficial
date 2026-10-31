@@ -8,6 +8,7 @@ import { useSesion } from '@/auth/session';
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoEditar, IconoSucursal } from '@/components/iconos/Iconly';
 import { useSeccionCristal } from '@/components/Cristal';
+import { Cargando, EsqueletoGrupo } from '@/components/Esqueleto';
 import { IconoTonal, LuzAmbiental } from '@/components/Tarjetas';
 import { Boton, BotonIcono, Campo, confirmar, Encabezado, EstadoVacio, Fila, Grupo, Hoja, Insignia, Texto } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
@@ -26,7 +27,7 @@ export default function SucursalesScreen() {
   const { perfil, cambiarSucursal, viaje } = useSesion();
   const esDueno = perfil?.usuario.rol === 'Dueno';
   const activas = !!perfil?.academia.sucursalesActivas;
-  const { datos, cargando, error, recargar } = useRecurso(obtenerSucursales, [] as Sucursal[]);
+  const { datos, cargando, error, recargar, primeraCarga } = useRecurso(obtenerSucursales, [] as Sucursal[]);
   const [formulario, setFormulario] = useState<Formulario | null>(null);
   const [guardando, setGuardando] = useState(false);
 
@@ -94,6 +95,10 @@ export default function SucursalesScreen() {
       titulo={`Estás en ${perfil.academia.nombreSucursal ?? perfil.academia.nombre}`}
       mensaje="Solo la persona dueña del negocio puede cambiar de sucursal."
     />
+  ) : primeraCarga ? (
+    <Cargando>
+      <EsqueletoGrupo filas={2} />
+    </Cargando>
   ) : error ? (
     <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudieron cargar las sucursales" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
   ) : (

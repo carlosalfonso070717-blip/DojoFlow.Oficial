@@ -2,6 +2,7 @@ import { BookOpen, Plus } from 'lucide-react-native';
 import { useState } from 'react';
 import { Switch, View } from 'react-native';
 import { crearClase, editarClase, eliminarClase, obtenerClases, type Clase } from '@/api/endpoints';
+import { Cargando, EsqueletoGrupo } from '@/components/Esqueleto';
 import { IconoEliminar } from '@/components/iconos/Iconly';
 import { PantallaSecundaria } from '@/components/PantallaSecundaria';
 import { Boton, BotonIcono, Campo, confirmar, EstadoVacio, Fila, formatoMoneda, Grupo, Hoja, Insignia, ParDato, Texto } from '@/components/ui';
@@ -13,7 +14,7 @@ type Edicion = { clase: Clase | null; nombre: string; precio: string; activa: bo
 
 export default function ClasesScreen() {
   const { color } = useTema();
-  const { datos: clases, recargar, cargando } = useRecurso(obtenerClases, [] as Clase[]);
+  const { datos: clases, recargar, cargando, primeraCarga } = useRecurso(obtenerClases, [] as Clase[]);
   const [edicion, setEdicion] = useState<Edicion | null>(null);
   const [guardando, setGuardando] = useState(false);
 
@@ -54,7 +55,11 @@ export default function ClasesScreen() {
       descripcion="El precio es mensual y se usa cuando cobras por clase."
       acciones={<BotonIcono destacado etiqueta="Agregar clase" icono={<Plus size={22} color={color.sobreMarca} />} onPress={nueva} />}
     >
-      {clases.length === 0 && !cargando ? (
+      {primeraCarga ? (
+        <Cargando>
+          <EsqueletoGrupo filas={4} avatar={false} />
+        </Cargando>
+      ) : clases.length === 0 && !cargando ? (
         <EstadoVacio icono={BookOpen} titulo="Aún no hay clases" mensaje="Agrega las clases que ofreces para poder inscribir." accion={{ titulo: 'Agregar clase', onPress: nueva }} />
       ) : (
         <Grupo>

@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { obtenerClases, registrarAlumno, type AlumnoRegistrado, type Clase } from '@/api/endpoints';
 import { useSesion } from '@/auth/session';
+import { Bloque, Cargando } from '@/components/Esqueleto';
 import { BotonAtras } from '@/components/BotonAtras';
 import { useDiseno } from '@/hooks/useDiseno';
 import { Boton, Campo, Chip, EstadoVacio, Superficie, Texto } from '@/components/ui';
@@ -17,7 +18,7 @@ export default function InscribirScreen() {
   const { margen, arriba } = useDiseno();
   const { perfil } = useSesion();
   const termino = (perfil?.academia.terminoAlumno || 'Alumno').toLowerCase();
-  const { datos: clases, cargando: cargandoClases } = useRecurso(obtenerClases, [] as Clase[]);
+  const { datos: clases, cargando: cargandoClases, primeraCarga } = useRecurso(obtenerClases, [] as Clase[]);
   const clasesActivas = useMemo(() => clases.filter((c) => c.activa), [clases]);
 
   const [nombre, setNombre] = useState('');
@@ -131,7 +132,14 @@ export default function InscribirScreen() {
 
         <View style={{ gap: 10 }}>
           <Texto variante="subtitulo">Clases</Texto>
-          {clasesActivas.length === 0 && !cargandoClases ? (
+          {primeraCarga ? (
+            // Chips de clases con el ancho de un nombre corto, como los reales
+            <Cargando style={estilos.chips}>
+              {[96, 120, 84, 132, 104].map((ancho, i) => (
+                <Bloque key={i} ancho={ancho} alto={40} radio={20} />
+              ))}
+            </Cargando>
+          ) : clasesActivas.length === 0 && !cargandoClases ? (
             <EstadoVacio icono={BookOpen} titulo="Tu academia aún no tiene clases" mensaje="Agrégalas en Ajustes para poder inscribir." />
           ) : (
             <View style={estilos.chips}>

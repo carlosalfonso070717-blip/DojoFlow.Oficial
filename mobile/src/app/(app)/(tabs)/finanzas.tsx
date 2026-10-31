@@ -6,7 +6,8 @@ import { eliminarMesFinanzas, obtenerFinanzas, type RegistroFinanciero } from '@
 import { useEspacioBarra } from '@/components/BarraLiquida';
 import { IconoDescargar, IconoEliminar, IconoFinanzas, IconoPagos } from '@/components/iconos/Iconly';
 import { useSeccionCristal } from '@/components/Cristal';
-import { Indicador, LuzAmbiental, Rejilla } from '@/components/Tarjetas';
+import { Bloque, Cargando, EsqueletoIndicadores, EsqueletoLista } from '@/components/Esqueleto';
+import { Indicador, LuzAmbiental, Rejilla, Tarjeta } from '@/components/Tarjetas';
 import { Boton, BotonIcono, confirmar, Encabezado, EstadoVacio, Fila, formatoMoneda, CeldaLista, Grupo, Hoja, ParDato, Superficie, Texto, useRejilla } from '@/components/ui';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -32,7 +33,7 @@ export default function FinanzasScreen() {
   const seccion = useSeccionCristal('Finanzas');
   const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
-  const { datos, cargando, error, recargar } = useRecurso(obtenerFinanzas, [] as RegistroFinanciero[]);
+  const { datos, cargando, error, recargar, primeraCarga } = useRecurso(obtenerFinanzas, [] as RegistroFinanciero[]);
   const [seleccionado, setSeleccionado] = useState<RegistroFinanciero | null>(null);
   const [descargando, setDescargando] = useState<FormatoReporte | null>(null);
   const { perfil } = useSesion();
@@ -90,6 +91,26 @@ export default function FinanzasScreen() {
               }
             />
 
+            {primeraCarga && (
+              <Cargando style={{ gap: 16 }}>
+                {esEscritorio ? (
+                  <EsqueletoIndicadores columnas={4} />
+                ) : (
+                  <Tarjeta style={{ gap: 20, padding: 20 }}>
+                    <View style={{ gap: 10 }}>
+                      <Bloque ancho="45%" alto={12} />
+                      <Bloque ancho="60%" alto={32} radio={8} />
+                    </View>
+                    <Bloque alto={10} radio={5} />
+                    <View style={{ flexDirection: 'row', gap: 16 }}>
+                      <Bloque ancho="40%" alto={16} />
+                      <Bloque ancho="40%" alto={16} />
+                    </View>
+                  </Tarjeta>
+                )}
+                <Bloque ancho={72} alto={12} style={{ marginLeft: 4, marginTop: 8 }} />
+              </Cargando>
+            )}
             {/* Escritorio: cifras del mes en tarjetas; celular: una tarjeta con la proporción */}
             {actual && esEscritorio && (
               <Rejilla columnas={4}>
@@ -117,7 +138,7 @@ export default function FinanzasScreen() {
                   <Texto variante="detalle" tono="suave">
                     Ingresos de {nombreMes(actual.mesAnio).toLowerCase()}
                   </Texto>
-                  <Texto variante="cifra" cifras>
+                  <Texto variante="cifra" cifras animada="desde-cero">
                     {formatoMoneda(total)}
                   </Texto>
                 </View>
@@ -144,6 +165,10 @@ export default function FinanzasScreen() {
         ListEmptyComponent={
           error ? (
             <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudieron cargar las finanzas" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
+          ) : primeraCarga ? (
+            <Cargando>
+              <EsqueletoLista filas={6} columnas={rejilla.columnas} avatar={false} derecha />
+            </Cargando>
           ) : cargando ? null : (
             <EstadoVacio icono={IconoFinanzas} titulo="Aún no hay movimientos" mensaje="Los cobros y las ventas se suman aquí automáticamente." />
           )
@@ -222,7 +247,7 @@ function Desglose({ etiqueta, valor, colorPunto }: { etiqueta: string; valor: nu
           {etiqueta}
         </Texto>
       </View>
-      <Texto variante="subtitulo" cifras>
+      <Texto variante="subtitulo" cifras animada="desde-cero">
         {formatoMoneda(valor)}
       </Texto>
     </View>

@@ -38,6 +38,7 @@ import {
   useRejilla,
 } from '@/components/ui';
 import { useSeccionCristal } from '@/components/Cristal';
+import { Cargando, EsqueletoBuscador, EsqueletoIndicadores, EsqueletoProductos, EsqueletoResumenMovil } from '@/components/Esqueleto';
 import { Indicador, LuzAmbiental, Rejilla, ResumenMovil, useSombra } from '@/components/Tarjetas';
 import { useDiseno } from '@/hooks/useDiseno';
 import { useRecurso } from '@/hooks/useRecurso';
@@ -89,7 +90,7 @@ export default function InventarioScreen() {
   const anchoTarjeta = (Math.min(ancho, anchoSeccion + margen * 2) - margen * 2 - ESPACIO_PRODUCTOS) / 2;
   const rejilla = useRejilla();
   const espacioBarra = useEspacioBarra();
-  const { datos, cargando, error, recargar } = useRecurso(cargarInventario, { productos: [], alertas: [] });
+  const { datos, cargando, error, recargar, primeraCarga } = useRecurso(cargarInventario, { productos: [], alertas: [] });
   const [busqueda, setBusqueda] = useState('');
   const [modo, setModo] = useState<Modo | null>(null);
   const [guardando, setGuardando] = useState(false);
@@ -204,7 +205,11 @@ export default function InventarioScreen() {
   const nuevo = () =>
     setModo({ tipo: 'nuevo', nombre: '', cantidad: '10', minimo: '3', precio: '', enCatalogo: true, foto: null, quitarFoto: false });
 
-  const vacio = error ? (
+  const vacio = primeraCarga ? (
+    <Cargando>
+      <EsqueletoProductos cantidad={esEscritorio ? rejilla.columnas * 2 : 6} columnas={esEscritorio ? rejilla.columnas : 2} proporcion={esEscritorio ? 16 / 10 : 4 / 3} />
+    </Cargando>
+  ) : error ? (
     <EstadoVacio icono={WifiOff} tono="error" titulo="No se pudo cargar el inventario" mensaje={error} accion={{ titulo: 'Reintentar', onPress: recargar }} />
   ) : cargando ? null : busqueda ? (
     <EstadoVacio icono={SearchX} titulo="Sin resultados" mensaje={`Ningún producto coincide con "${busqueda}".`} />
@@ -258,6 +263,12 @@ export default function InventarioScreen() {
                 )
               }
             />
+            {primeraCarga && (
+              <Cargando style={{ gap: 16 }}>
+                {esEscritorio ? <EsqueletoIndicadores columnas={4} /> : <EsqueletoResumenMovil sangria={margen} cantidad={4} />}
+                <EsqueletoBuscador />
+              </Cargando>
+            )}
             {esEscritorio && datos.productos.length > 0 && (
               <Rejilla columnas={4}>
                 <Indicador
@@ -335,7 +346,7 @@ export default function InventarioScreen() {
               <Texto variante="detalle" tono="suave">
                 En existencia
               </Texto>
-              <Texto variante="cifra" cifras style={{ fontSize: 44, lineHeight: 50 }}>
+              <Texto variante="cifra" cifras animada style={{ fontSize: 44, lineHeight: 50 }}>
                 {modo.producto.stockActual}
               </Texto>
             </Superficie>
@@ -488,7 +499,7 @@ function TarjetaProducto({ producto, columnas, onPress }: { producto: Producto; 
             </Texto>
           </View>
           <View style={[estilos.pastilla, { backgroundColor: bajo ? color.peligroSuave : color.fondo }]}>
-            <Texto variante="pequeno" cifras style={{ color: bajo ? color.peligro : color.textoSuave, fontFamily: 'Inter_700Bold' }}>
+            <Texto variante="pequeno" cifras animada style={{ color: bajo ? color.peligro : color.textoSuave, fontFamily: 'Inter_700Bold' }}>
               {bajo ? `Quedan ${producto.stockActual}` : `${producto.stockActual} en existencia`}
             </Texto>
           </View>
@@ -520,7 +531,7 @@ function TarjetaProductoMovil({ producto, ancho, onPress }: { producto: Producto
       <View>
         <FotoProducto url={producto.imagenUrl} style={[estilos.fotoMovil, { borderRadius: radio.m + 2 }]} />
         <View style={[estilos.existencia, { backgroundColor: bajo ? color.peligro : color.superficie }]}>
-          <Texto variante="pequeno" cifras style={{ color: bajo ? '#ffffff' : color.texto, fontFamily: 'Inter_700Bold' }}>
+          <Texto variante="pequeno" cifras animada style={{ color: bajo ? '#ffffff' : color.texto, fontFamily: 'Inter_700Bold' }}>
             {producto.stockActual} pz
           </Texto>
         </View>
@@ -529,7 +540,7 @@ function TarjetaProductoMovil({ producto, ancho, onPress }: { producto: Producto
         <Texto variante="detalle" numberOfLines={2} style={{ fontFamily: 'Inter_600SemiBold', color: color.texto }}>
           {producto.nombre}
         </Texto>
-        <Texto variante="cuerpoFuerte" cifras>
+        <Texto variante="cuerpoFuerte" cifras animada>
           {producto.precio > 0 ? formatoMoneda(producto.precio) : 'Sin precio'}
         </Texto>
         <Texto variante="pequeno" numberOfLines={1} style={{ color: bajo ? color.peligro : color.textoTenue }}>
